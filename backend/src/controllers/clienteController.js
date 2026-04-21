@@ -3,13 +3,24 @@ import prisma from '../config/prisma.js'
 //TODO O CRUD DO CLIENTE 
 
 export async function criarCliente(req, res){
+    
     try{
-        const {nome, telefone} = req.body;
-
+        const {nome,cpf,email,dataNascimento,rg,cep,endereco,bairro,cidade,uf,numero,celular} = req.body;  
+        console.log(req.body)
         const cliente = await prisma.cliente.create({
             data: {
                 nome,
-                telefone
+                cpf,
+                email,
+                dataNascimento: new Date(dataNascimento),
+                rg,
+                cep,
+                endereco,
+                bairro,
+                cidade,
+                uf,
+                numero,
+                celular
             }
         })
         res.status(201).json(cliente)
@@ -33,12 +44,23 @@ export async function listarClientes(req, res){
 export async function editarClientes(req, res){
     try{
         const { id } = req.params
-        const {nome, telefone} = req.body
-
+        const {nome,cpf,email,dataNascimento,rg,cep,endereco,bairro,cidade,uf,numero,celular} = req.body
+        console.log(req.body)
         const cliente = await prisma.cliente.update({
             where: {id: Number(id)},
             data: {
-                nome, telefone
+               nome,
+                cpf,
+                email,
+                dataNascimento,
+                rg,
+                cep,
+                endereco,
+                bairro,
+                cidade,
+                uf,
+                numero,
+                celular
             }
         })
         res.json(cliente)
