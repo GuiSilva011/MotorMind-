@@ -1,4 +1,5 @@
-import Clientes from './pages/clientes';
+import Clientes from './pages/cadastroCliente';
+
 
 function App() {
   return <Clientes />;
