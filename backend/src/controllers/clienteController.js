@@ -1,5 +1,7 @@
 import prisma from '../config/prisma.js'
 
+//TODO O CRUD DO CLIENTE 
+
 export async function criarCliente(req, res){
     try{
         const {nome, telefone} = req.body;
@@ -25,5 +27,37 @@ export async function listarClientes(req, res){
     }catch(error){
         console.log(error)
         res.status(500).json({erro: 'Erro ao exibir clientes'})
+    }
+}
+
+export async function editarClientes(req, res){
+    try{
+        const { id } = req.params
+        const {nome, telefone} = req.body
+
+        const cliente = await prisma.cliente.update({
+            where: {id: Number(id)},
+            data: {
+                nome, telefone
+            }
+        })
+        res.json(cliente)
+}catch(error){
+    console.log(error)
+    res.status(500).json({ erro: 'Erro ao atualizar o cliente'})
+    }
+}
+
+export async function deletarClientes(req, res){
+    try{
+        const {id} = req.params
+
+        await prisma.cliente.delete({
+            where: { id: Number(id)}
+        })
+        res.json({ mensagem: "Cliente deletado com sucesso "})
+    }catch(error){
+        console.log(error)
+        res.status(500).json({erro : "Erro ao deletar cliente"})
     }
 }

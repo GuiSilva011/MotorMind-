@@ -1,10 +1,12 @@
 import express from 'express'
-import {criarCliente, listarClientes} from '../controllers/clienteController.js'
+import {criarCliente, deletarClientes, editarClientes, listarClientes} from '../controllers/clienteController.js'
 
 const router = express.Router()
 
-router.post('/', criarCliente)
-router.get('/', listarClientes)
+router.get('/', listarClientes);
+router.post('/', criarCliente);
+router.put('/:id', editarClientes);
+router.delete('/:id', deletarClientes);
 
 export default router;
 
