@@ -7,7 +7,6 @@ function Clientes() {
   const [telefone, setTelefone] = useState('');
   const [editandoId, setEditandoId] = useState(null);
 
-  // 🔄 carregar clientes
   async function carregarClientes() {
     try {
       const response = await api.get('/clientes');
@@ -21,7 +20,7 @@ function Clientes() {
     carregarClientes();
   }, []);
 
-  // 💾 criar ou atualizar
+  // criar ou atualizar
   async function salvarCliente(e) {
     e.preventDefault();
 
