@@ -20,29 +20,30 @@ model Cliente {
   id              Int      @id @default(autoincrement())
   nome            String
   cpf             String   @db.VarChar(11)
-  email           String
-  dataNascimento  DateTime
-  rg              String   @db.VarChar(20)
-  cep             String   @db.VarChar(8)
-  endereco        String
-  bairro          String
-  cidade          String
-  uf              String   @db.VarChar(2)
-  numero          String
-  celular         String
-  createdAt       DateTime @default(now())
 
+  email           String?
+  dataNascimento  DateTime?
+  rg              String?
+  cep             String?
+  endereco        String?
+  bairro          String?
+  cidade          String?
+  uf              String?  @db.VarChar(2)
+  numero          String?
+  celular         String?
+
+  createdAt       DateTime @default(now())
   veiculos        Veiculo[]
 }
 
 model Veiculo {
   id         Int      @id @default(autoincrement())
   placa      String   @db.VarChar(7)
-  chassi     String   @unique @db.VarChar(17)
-  marca      String
-  modelo     String
-  ano        Int
-  anoModelo  Int
+  chassi     String?  @unique @db.VarChar(17)
+  marca      String?
+  modelo     String?
+  ano        Int?
+  anoModelo  Int?
   createdAt  DateTime @default(now())
 
   clienteId  Int
