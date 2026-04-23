@@ -21,6 +21,7 @@ const formClienteCadastro = {
 const veiculoInicial = {
   placa: '',
   chassi: '',
+  marca: '',
   modelo: '',
   ano: '',
   anoModelo: '',
@@ -33,9 +34,36 @@ function CadastroCliente() {
   const [veiculos, setVeiculos] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [novoVeiculo, setNovoVeiculo] = useState(veiculoInicial);
+  const [editandoIndex, setEditandoIndex] = useState(null);
 
   function onlyNumbers(value) {
     return value.replace(/\D/g, '');
+  }
+
+  function capitalizeWords(value) {
+    return value.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+  }
+
+  function maskPlaca(value) {
+    return value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 7);
+  }
+
+  function maskAno(value) {
+    return value.replace(/\D/g, '').slice(0, 4);
+  }
+
+  function formatVeiculoField(name, value) {
+    const map = {
+      placa: maskPlaca,
+      chassi: (v) => v.replace(/\s/g, '').toUpperCase().slice(0, 17),
+      ano: maskAno,
+      anoModelo: maskAno,
+      marca: capitalizeWords,
+      modelo: capitalizeWords,
+      cor: capitalizeWords
+    };
+
+    return map[name] ? map[name](value) : value;
   }
 
   function handleVeiculoChange(event) {
@@ -43,18 +71,48 @@ function CadastroCliente() {
 
     setNovoVeiculo((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: formatVeiculoField(name, value)
     }));
   }
 
+  function abrirModalNovoVeiculo() {
+    setNovoVeiculo(veiculoInicial);
+    setEditandoIndex(null);
+    setModalOpen(true);
+    setMensagem('');
+  }
+
+  function fecharModalVeiculo() {
+    setModalOpen(false);
+    setNovoVeiculo(veiculoInicial);
+    setEditandoIndex(null);
+  }
+
+  function editarVeiculo(index) {
+    setNovoVeiculo(veiculos[index]);
+    setEditandoIndex(index);
+    setModalOpen(true);
+    setMensagem('');
+  }
+
   function adicionarVeiculo() {
-    if (!novoVeiculo.placa || !novoVeiculo.modelo || !novoVeiculo.chassi) {
-      setMensagem('Preencha pelo menos placa, chassi e modelo do veículo.');
+    if (!novoVeiculo.placa) {
+      setMensagem('Preencha pelo menos a placa do veiculo');
       return;
     }
 
-    setVeiculos((prevState) => [...prevState, novoVeiculo]);
+    if (editandoIndex !== null) {
+      setVeiculos((prevState) =>
+        prevState.map((veiculo, index) =>
+          index === editandoIndex ? novoVeiculo : veiculo
+        )
+      );
+    } else {
+      setVeiculos((prevState) => [...prevState, novoVeiculo]);
+    }
+
     setNovoVeiculo(veiculoInicial);
+    setEditandoIndex(null);
     setModalOpen(false);
     setMensagem('');
   }
@@ -135,7 +193,10 @@ function CadastroCliente() {
     setVeiculos([]);
     setNovoVeiculo(veiculoInicial);
     setMensagem('');
+    setModalOpen(false);
+    setEditandoIndex(null);
   }
+
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -149,14 +210,17 @@ function CadastroCliente() {
         cep: formData.cep.replace(/\D/g, ''),
         dataNascimento: formData.dataNascimento || null,
         veiculos
-  };
-      
+      };
+
+
 
       await api.post('/clientes', payload);
       setMensagem('Cliente cadastrado com sucesso!');
       setFormData(formClienteCadastro);
       setVeiculos([]);
       setNovoVeiculo(veiculoInicial);
+      setEditandoIndex(null);
+      setModalOpen(false);
     } catch (error) {
       console.error(error);
       setMensagem('Erro ao cadastrar cliente.');
@@ -375,7 +439,7 @@ function CadastroCliente() {
               <button
                 type="button"
                 className="add-veiculo-btn"
-                onClick={() => setModalOpen(true)}
+                onClick={abrirModalNovoVeiculo}
               >
                 + Adicionar veículo
               </button>
@@ -410,18 +474,28 @@ function CadastroCliente() {
                   <div className="veiculo-row" key={index}>
                     <span>{veiculo.placa}</span>
                     <span>{veiculo.chassi}</span>
-                    <span>{veiculo.modelo}</span>
+                    <span>{veiculo.marca} / {veiculo.modelo}</span>
                     <span>{veiculo.ano}</span>
                     <span>{veiculo.anoModelo}</span>
                     <span>{veiculo.cor}</span>
 
-                    <button
-                      type="button"
-                      className="btn-remover-veiculo"
-                      onClick={() => removerVeiculo(index)}
-                    >
-                      Remover
-                    </button>
+                    <div className="veiculo-acoes">
+                      <button
+                        type="button"
+                        className="btn-editar-veiculo"
+                        onClick={() => editarVeiculo(index)}
+                      >
+                        Editar
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-remover-veiculo"
+                        onClick={() => removerVeiculo(index)}
+                      >
+                        Remover
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -447,54 +521,101 @@ function CadastroCliente() {
       </main>
 
       {modalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-veiculo">
-            <h2>Adicionar veículo</h2>
+        <div className="modal-overlay" onClick={fecharModalVeiculo}>
+          <div
+            className="modal-veiculo"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>{editandoIndex !== null ? 'Editar veículo' : 'Adicionar veículo'}</h2>
 
             <div className="modal-grid">
-              <input
-                name="placa"
-                placeholder="Placa"
-                value={novoVeiculo.placa}
-                onChange={handleVeiculoChange}
-              />
-              <input
-                name="chassi"
-                placeholder="Chassi"
-                value={novoVeiculo.chassi}
-                onChange={handleVeiculoChange}
-              />
-              <input
-                name="modelo"
-                placeholder="Modelo"
-                value={novoVeiculo.modelo}
-                onChange={handleVeiculoChange}
-              />
-              <input
-                name="ano"
-                placeholder="Ano"
-                value={novoVeiculo.ano}
-                onChange={handleVeiculoChange}
-              />
-              <input
-                name="anoModelo"
-                placeholder="Ano Modelo"
-                value={novoVeiculo.anoModelo}
-                onChange={handleVeiculoChange}
-              />
-              <input
-                name="cor"
-                placeholder="Cor"
-                value={novoVeiculo.cor}
-                onChange={handleVeiculoChange}
-              />
+              <div className="field-group">
+                <label htmlFor="placa">Placa</label>
+                <input
+                  id="placa"
+                  name="placa"
+                  placeholder="ABC1D23"
+                  value={novoVeiculo.placa}
+                  onChange={handleVeiculoChange}
+                  maxLength={7}
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="chassi">Chassi</label>
+                <input
+                  id="chassi"
+                  name="chassi"
+                  placeholder="Chassi"
+                  value={novoVeiculo.chassi}
+                  onChange={handleVeiculoChange}
+                  maxLength={17}
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="marca">Marca</label>
+                <input
+                  id="marca"
+                  name="marca"
+                  placeholder="Ex.: Fiat"
+                  value={novoVeiculo.marca}
+                  onChange={handleVeiculoChange}
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="modelo">Modelo</label>
+                <input
+                  id="modelo"
+                  name="modelo"
+                  placeholder="Ex.: Uno"
+                  value={novoVeiculo.modelo}
+                  onChange={handleVeiculoChange}
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="ano">Ano</label>
+                <input
+                  id="ano"
+                  name="ano"
+                  placeholder="2020"
+                  value={novoVeiculo.ano}
+                  onChange={handleVeiculoChange}
+                  maxLength={4}
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="anoModelo">Ano Modelo</label>
+                <input
+                  id="anoModelo"
+                  name="anoModelo"
+                  placeholder="2021"
+                  value={novoVeiculo.anoModelo}
+                  onChange={handleVeiculoChange}
+                  maxLength={4}
+                />
+              </div>
+
+              <div className="field-group modal-field-full">
+                <label htmlFor="cor">Cor</label>
+                <input
+                  id="cor"
+                  name="cor"
+                  placeholder="Ex.: Prata"
+                  value={novoVeiculo.cor}
+                  onChange={handleVeiculoChange}
+                />
+              </div>
             </div>
 
             <div className="modal-actions">
               <button
                 type="button"
                 className="btn-secondary"
-                onClick={() => setModalOpen(false)}
+                onClick={fecharModalVeiculo}
               >
                 Cancelar
               </button>
@@ -504,7 +625,7 @@ function CadastroCliente() {
                 className="btn-primary"
                 onClick={adicionarVeiculo}
               >
-                Salvar
+                {editandoIndex !== null ? 'Atualizar' : 'Salvar'}
               </button>
             </div>
           </div>
