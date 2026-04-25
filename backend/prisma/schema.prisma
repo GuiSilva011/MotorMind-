@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Usuario {
@@ -17,45 +17,70 @@ model Usuario {
 }
 
 model Cliente {
-  id              Int       @id @default(autoincrement())
-  nome            String
-  cpf             String?   @db.VarChar(11)
-  email           String?
-  dataNascimento  DateTime?
-  cep             String?
-  endereco        String?
-  bairro          String?
-  cidade          String?
-  uf              String?  @db.VarChar(2)
-  numero          String?
-  complemento     String?
-  celular         String?
+  id             Int       @id @default(autoincrement())
+  nome           String
+  cpf            String?   @db.VarChar(11)
+  email          String?
+  dataNascimento DateTime?
+  cep            String?
+  endereco       String?
+  bairro         String?
+  cidade         String?
+  uf             String?   @db.VarChar(2)
+  numero         String?
+  complemento    String?
+  celular        String?
 
-  createdAt       DateTime @default(now())
-  veiculos        Veiculo[]
+  createdAt    DateTime      @default(now())
+  veiculos     Veiculo[]
+  agendamentos Agendamento[]
 }
 
 model Veiculo {
-  id               Int      @id @default(autoincrement())
-  placa            String   @unique @db.VarChar(7)
-  chassi           String?  @db.VarChar(17)
-  modelo           String?
-  fabricante       String?
-  ano_modelo       Int?
-  ano_fabricacao   Int?
-  motor            String?
-  km               String?
-  cor              String?
-  ar               Boolean?
-  
-  createdAt        DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  placa          String   @unique @db.VarChar(7)
+  chassi         String?  @db.VarChar(17)
+  modelo         String?
+  fabricante     String?
+  ano_modelo     Int?
+  ano_fabricacao Int?
+  motor          String?
+  km             String?
+  cor            String?
+  ar             Boolean?
 
-  clienteId  Int
-  cliente    Cliente  @relation(fields: [clienteId], references: [id])
+  createdAt DateTime @default(now())
+
+  clienteId    Int
+  cliente      Cliente       @relation(fields: [clienteId], references: [id])
+  agendamentos Agendamento[]
+}
+
+model Agendamento {
+  id           Int               @id @default(autoincrement())
+  clienteId    Int
+  veiculoId    Int
+  dataHora     DateTime
+  mecanico     String?
+  tipo_servico String?
+  servico      String
+  status       StatusAgendamento @default(AGENDADO)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  veiculo Veiculo @relation(fields: [veiculoId], references: [id])
 }
 
 enum Role {
   ADMIN
   OPERADOR
   TECNICO
+}
+
+enum StatusAgendamento {
+  AGENDADO
+  EM_ANDAMENTO
+  CONCLUIDO
+  CANCELADO
 }

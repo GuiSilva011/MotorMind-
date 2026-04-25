@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Layout from '../components/Layout';
 import '../styles/visualizarClientes.css';
+import "../styles/layout.css";
+
 
 function formatCpf(cpf) {
   if (!cpf) return '-';

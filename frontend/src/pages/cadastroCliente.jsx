@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import Layout from '../components/Layout';
+import "../styles/layout.css";
 import '../styles/cadastroClientes.css';
+
+
 
 const formClienteCadastro = {
   nome: '',
