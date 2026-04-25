@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import Layout from '../components/Layout';
 import '../styles/cadastroClientes.css';
@@ -8,33 +9,60 @@ const formClienteCadastro = {
   cpf: '',
   email: '',
   dataNascimento: '',
-  rg: '',
   cep: '',
   endereco: '',
   bairro: '',
   cidade: '',
   uf: '',
   numero: '',
+  complemento: '',
   celular: ''
 };
 
 const veiculoInicial = {
   placa: '',
   chassi: '',
-  marca: '',
   modelo: '',
-  ano: '',
-  anoModelo: '',
-  cor: ''
+  fabricante: '',
+  ano_modelo: '',
+  ano_fabricacao: '',
+  motor: '',
+  km: '',
+  cor: '',
+  ar: ''
 };
 
+function formatDateInput(value) {
+  if (!value) return '';
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+function formatBooleanToSelect(value) {
+  if (value === null || value === undefined || value === '') return '';
+  return value ? 'true' : 'false';
+}
+
 function CadastroCliente() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nomeBusca = searchParams.get('nome');
+  const isVisualizacao = searchParams.get('visualizar') === '1';
+
   const [formData, setFormData] = useState(formClienteCadastro);
+  const [clienteEmEdicaoId, setClienteEmEdicaoId] = useState(null);
   const [mensagem, setMensagem] = useState('');
   const [veiculos, setVeiculos] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [novoVeiculo, setNovoVeiculo] = useState(veiculoInicial);
   const [editandoIndex, setEditandoIndex] = useState(null);
+  const [loadingCliente, setLoadingCliente] = useState(false);
 
   function onlyNumbers(value) {
     return value.replace(/\D/g, '');
@@ -52,14 +80,19 @@ function CadastroCliente() {
     return value.replace(/\D/g, '').slice(0, 4);
   }
 
+  function maskChassi(value) {
+    return value.replace(/\s/g, '').toUpperCase().slice(0, 17);
+  }
+
   function formatVeiculoField(name, value) {
     const map = {
       placa: maskPlaca,
-      chassi: (v) => v.replace(/\s/g, '').toUpperCase().slice(0, 17),
-      ano: maskAno,
-      anoModelo: maskAno,
-      marca: capitalizeWords,
+      chassi: maskChassi,
+      ano_modelo: maskAno,
+      ano_fabricacao: maskAno,
       modelo: capitalizeWords,
+      fabricante: capitalizeWords,
+      motor: (v) => v.toUpperCase(),
       cor: capitalizeWords
     };
 
@@ -67,6 +100,8 @@ function CadastroCliente() {
   }
 
   function handleVeiculoChange(event) {
+    if (isVisualizacao) return;
+
     const { name, value } = event.target;
 
     setNovoVeiculo((prevState) => ({
@@ -76,6 +111,8 @@ function CadastroCliente() {
   }
 
   function abrirModalNovoVeiculo() {
+    if (isVisualizacao) return;
+
     setNovoVeiculo(veiculoInicial);
     setEditandoIndex(null);
     setModalOpen(true);
@@ -89,26 +126,109 @@ function CadastroCliente() {
   }
 
   function editarVeiculo(index) {
-    setNovoVeiculo(veiculos[index]);
+    const veiculoSelecionado = veiculos[index];
+
+    setNovoVeiculo({
+      ...veiculoSelecionado,
+      ar: formatBooleanToSelect(veiculoSelecionado.ar)
+    });
     setEditandoIndex(index);
     setModalOpen(true);
     setMensagem('');
   }
 
+  useEffect(() => {
+    async function carregarClienteEmEdicao() {
+      if (!nomeBusca) {
+        setClienteEmEdicaoId(null);
+        return;
+      }
+
+      setLoadingCliente(true);
+      setMensagem('');
+
+      try {
+        const { data } = await api.get('/clientes/buscar-por-nome', {
+          params: { nome: nomeBusca }
+        });
+
+        setClienteEmEdicaoId(data.id);
+
+        setFormData({
+          nome: data.nome || '',
+          cpf: data.cpf ? maskCPF(String(data.cpf)) : '',
+          email: data.email || '',
+          dataNascimento: formatDateInput(data.dataNascimento),
+          cep: data.cep ? maskCEP(String(data.cep)) : '',
+          endereco: data.endereco || '',
+          bairro: data.bairro || '',
+          cidade: data.cidade || '',
+          uf: data.uf || '',
+          numero: data.numero || '',
+          complemento: data.complemento || '',
+          celular: data.celular ? maskPhone(String(data.celular)) : ''
+        });
+
+        setVeiculos(
+          (data.veiculos || []).map((veiculo) => ({
+            placa: veiculo.placa || '',
+            chassi: veiculo.chassi || '',
+            modelo: veiculo.modelo || '',
+            fabricante: veiculo.fabricante || '',
+            ano_modelo: veiculo.ano_modelo ? String(veiculo.ano_modelo) : '',
+            ano_fabricacao: veiculo.ano_fabricacao
+              ? String(veiculo.ano_fabricacao)
+              : '',
+            motor: veiculo.motor || '',
+            km: veiculo.km || '',
+            cor: veiculo.cor || '',
+            ar: veiculo.ar
+          }))
+        );
+      } catch (error) {
+        console.error(error);
+        setClienteEmEdicaoId(null);
+        setMensagem('Não foi possível carregar os dados do cliente para edição.');
+      } finally {
+        setLoadingCliente(false);
+      }
+    }
+
+    carregarClienteEmEdicao();
+  }, [nomeBusca]);
+
   function adicionarVeiculo() {
+    if (isVisualizacao) return;
+
     if (!novoVeiculo.placa) {
-      setMensagem('Preencha pelo menos a placa do veiculo');
+      setMensagem('Preencha pelo menos a placa do veículo.');
       return;
     }
+
+    const veiculoFormatado = {
+      ...novoVeiculo,
+      chassi: novoVeiculo.chassi || null,
+      modelo: novoVeiculo.modelo || null,
+      fabricante: novoVeiculo.fabricante || null,
+      ano_modelo: novoVeiculo.ano_modelo || null,
+      ano_fabricacao: novoVeiculo.ano_fabricacao || null,
+      motor: novoVeiculo.motor || null,
+      km: novoVeiculo.km || null,
+      cor: novoVeiculo.cor || null,
+      ar:
+        novoVeiculo.ar === ''
+          ? null
+          : novoVeiculo.ar === 'true'
+    };
 
     if (editandoIndex !== null) {
       setVeiculos((prevState) =>
         prevState.map((veiculo, index) =>
-          index === editandoIndex ? novoVeiculo : veiculo
+          index === editandoIndex ? veiculoFormatado : veiculo
         )
       );
     } else {
-      setVeiculos((prevState) => [...prevState, novoVeiculo]);
+      setVeiculos((prevState) => [...prevState, veiculoFormatado]);
     }
 
     setNovoVeiculo(veiculoInicial);
@@ -118,6 +238,8 @@ function CadastroCliente() {
   }
 
   function removerVeiculo(index) {
+    if (isVisualizacao) return;
+
     setVeiculos((prevState) => prevState.filter((_, i) => i !== index));
   }
 
@@ -127,15 +249,6 @@ function CadastroCliente() {
     return numbers
       .replace(/^(\d{3})(\d)/, '$1.$2')
       .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
-      .replace(/\.(\d{3})(\d)/, '.$1-$2');
-  }
-
-  function maskRG(value) {
-    const numbers = onlyNumbers(value).slice(0, 9);
-
-    return numbers
-      .replace(/^(\d{2})(\d)/, '$1.$2')
-      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
       .replace(/\.(\d{3})(\d)/, '.$1-$2');
   }
 
@@ -169,7 +282,6 @@ function CadastroCliente() {
   function applyMask(name, value) {
     const maskMap = {
       cpf: maskCPF,
-      rg: maskRG,
       celular: maskPhone,
       cep: maskCEP,
       uf: maskUF,
@@ -180,6 +292,8 @@ function CadastroCliente() {
   }
 
   function handleChange(event) {
+    if (isVisualizacao) return;
+
     const { name, value } = event.target;
 
     setFormData((prevState) => ({
@@ -195,35 +309,89 @@ function CadastroCliente() {
     setMensagem('');
     setModalOpen(false);
     setEditandoIndex(null);
+
+    if (isVisualizacao) {
+      navigate('/clientes/consultar', { replace: true });
+      return;
+    }
+
+    if (nomeBusca) {
+      navigate('/clientes/cadastro', { replace: true });
+    }
   }
 
+  async function handleExcluirCliente() {
+    if (!clienteEmEdicaoId) {
+      setMensagem('Não foi possível identificar o cliente para exclusão.');
+      return;
+    }
+
+    const confirmar = window.confirm('Tem certeza que deseja excluir?');
+
+    if (!confirmar) {
+      return;
+    }
+
+    try {
+      await api.delete(`/clientes/${clienteEmEdicaoId}`);
+      navigate('/clientes/consultar', {
+        replace: true,
+        state: {
+          refresh: true,
+          toast: {
+            type: 'success',
+            text: 'Cliente excluído com sucesso.'
+          }
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      setMensagem('Erro ao excluir cliente.');
+    }
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (isVisualizacao) {
+      return;
+    }
+
     try {
       const payload = {
         ...formData,
-        cpf: formData.cpf.replace(/\D/g, ''),
-        rg: formData.rg.replace(/\D/g, ''),
-        celular: formData.celular.replace(/\D/g, ''),
-        cep: formData.cep.replace(/\D/g, ''),
+        cpf: formData.cpf.replace(/\D/g, '') || null,
+        celular: formData.celular.replace(/\D/g, '') || null,
+        cep: formData.cep.replace(/\D/g, '') || null,
         dataNascimento: formData.dataNascimento || null,
         veiculos
       };
 
-
+      if (clienteEmEdicaoId) {
+        await api.put(`/clientes/${clienteEmEdicaoId}`, payload);
+        navigate('/clientes/consultar', {
+          replace: true,
+          state: {
+            refresh: true,
+            toast: {
+              type: 'success',
+              text: 'Cliente atualizado com sucesso.'
+            }
+          }
+        });
+        return;
+      }
 
       await api.post('/clientes', payload);
       setMensagem('Cliente cadastrado com sucesso!');
-      setFormData(formClienteCadastro);
-      setVeiculos([]);
-      setNovoVeiculo(veiculoInicial);
-      setEditandoIndex(null);
-      setModalOpen(false);
+      limparFormulario();
     } catch (error) {
       console.error(error);
-      setMensagem('Erro ao cadastrar cliente.');
+      setMensagem(
+        clienteEmEdicaoId
+          ? 'Erro ao atualizar cliente.'
+          : 'Erro ao cadastrar cliente.'
+      );
     }
   }
 
@@ -231,9 +399,27 @@ function CadastroCliente() {
     <Layout>
       <main className="cadastro-content">
         <div className="cadastro-header">
-          <h1>Cadastro de Clientes</h1>
-          <p>Preencha os dados do cliente</p>
+          <h1>{isVisualizacao ? 'Visualizar Cliente' : nomeBusca ? 'Editar Cliente' : 'Cadastro de Clientes'}</h1>
+          <p>
+            {isVisualizacao
+              ? 'Confira os dados do cliente e dos veículos cadastrados.'
+              : nomeBusca
+                ? 'Atualize os dados do cliente e dos veículos cadastrados.'
+                : 'Preencha os dados do cliente'}
+          </p>
         </div>
+
+        {isVisualizacao && (
+          <div className="view-mode-banner">
+            Modo visualizacao: para alterar dados, clique em "Editar".
+          </div>
+        )}
+
+        {loadingCliente && (
+          <p className="form-message info">Carregando dados do cliente...</p>
+        )}
+
+        {mensagem && <p className="toast-message">{mensagem}</p>}
 
         <form className="cadastro-form" onSubmit={handleSubmit}>
           <section className="form-section">
@@ -255,6 +441,8 @@ function CadastroCliente() {
                   name="nome"
                   value={formData.nome}
                   onChange={handleChange}
+                  readOnly={isVisualizacao}
+                  required
                 />
               </div>
 
@@ -266,6 +454,7 @@ function CadastroCliente() {
                   name="dataNascimento"
                   value={formData.dataNascimento}
                   onChange={handleChange}
+                  disabled={isVisualizacao}
                 />
               </div>
             </div>
@@ -281,19 +470,7 @@ function CadastroCliente() {
                   value={formData.cpf}
                   onChange={handleChange}
                   maxLength={14}
-                />
-              </div>
-
-              <div className="field-group">
-                <label htmlFor="rg">RG</label>
-                <input
-                  id="rg"
-                  type="text"
-                  name="rg"
-                  placeholder="00.000.000-0"
-                  value={formData.rg}
-                  onChange={handleChange}
-                  maxLength={12}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
@@ -307,11 +484,10 @@ function CadastroCliente() {
                   value={formData.celular}
                   onChange={handleChange}
                   maxLength={15}
+                  readOnly={isVisualizacao}
                 />
               </div>
-            </div>
 
-            <div className="form-grid one-column">
               <div className="field-group">
                 <label htmlFor="email">E-mail</label>
                 <input
@@ -321,6 +497,7 @@ function CadastroCliente() {
                   placeholder="exemplo@email.com"
                   value={formData.email}
                   onChange={handleChange}
+                  readOnly={isVisualizacao}
                 />
               </div>
             </div>
@@ -349,6 +526,7 @@ function CadastroCliente() {
                     value={formData.cep}
                     onChange={handleChange}
                     maxLength={9}
+                    readOnly={isVisualizacao}
                   />
 
                   <img
@@ -368,6 +546,7 @@ function CadastroCliente() {
                   placeholder="Rua / Avenida"
                   value={formData.endereco}
                   onChange={handleChange}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
@@ -381,6 +560,7 @@ function CadastroCliente() {
                   value={formData.numero}
                   onChange={handleChange}
                   maxLength={6}
+                  readOnly={isVisualizacao}
                 />
               </div>
             </div>
@@ -395,6 +575,7 @@ function CadastroCliente() {
                   placeholder="Bairro"
                   value={formData.bairro}
                   onChange={handleChange}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
@@ -407,6 +588,7 @@ function CadastroCliente() {
                   placeholder="Cidade"
                   value={formData.cidade}
                   onChange={handleChange}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
@@ -420,6 +602,22 @@ function CadastroCliente() {
                   value={formData.uf}
                   onChange={handleChange}
                   maxLength={2}
+                  readOnly={isVisualizacao}
+                />
+              </div>
+            </div>
+
+            <div className="form-grid one-column">
+              <div className="field-group">
+                <label htmlFor="complemento">Complemento</label>
+                <input
+                  id="complemento"
+                  type="text"
+                  name="complemento"
+                  placeholder="Apartamento, bloco, referência..."
+                  value={formData.complemento}
+                  onChange={handleChange}
+                  readOnly={isVisualizacao}
                 />
               </div>
             </div>
@@ -436,23 +634,28 @@ function CadastroCliente() {
                 Veículos do cliente
               </h2>
 
-              <button
-                type="button"
-                className="add-veiculo-btn"
-                onClick={abrirModalNovoVeiculo}
-              >
-                + Adicionar veículo
-              </button>
+              {!isVisualizacao && (
+                <button
+                  type="button"
+                  className="add-veiculo-btn"
+                  onClick={abrirModalNovoVeiculo}
+                >
+                  + Adicionar veículo
+                </button>
+              )}
             </div>
 
             <div className="veiculos-box">
               <div className="veiculos-table-header">
                 <span>Placa</span>
                 <span>Chassi</span>
-                <span>Marca / Modelo</span>
-                <span>Ano</span>
+                <span>Fabricante / Modelo</span>
+                <span>Motor</span>
+                <span>Km</span>
+                <span>Ano Fab.</span>
                 <span>Ano Modelo</span>
                 <span>Cor</span>
+                <span>Ar-cond.</span>
                 <span>Ações</span>
               </div>
 
@@ -472,12 +675,23 @@ function CadastroCliente() {
               ) : (
                 veiculos.map((veiculo, index) => (
                   <div className="veiculo-row" key={index}>
-                    <span>{veiculo.placa}</span>
-                    <span>{veiculo.chassi}</span>
-                    <span>{veiculo.marca} / {veiculo.modelo}</span>
-                    <span>{veiculo.ano}</span>
-                    <span>{veiculo.anoModelo}</span>
-                    <span>{veiculo.cor}</span>
+                    <span>{veiculo.placa || '-'}</span>
+                    <span>{veiculo.chassi || '-'}</span>
+                    <span>
+                      {veiculo.fabricante || '-'} / {veiculo.modelo || '-'}
+                    </span>
+                    <span>{veiculo.motor || '-'}</span>
+                    <span>{veiculo.km || '-'}</span>
+                    <span>{veiculo.ano_fabricacao || '-'}</span>
+                    <span>{veiculo.ano_modelo || '-'}</span>
+                    <span>{veiculo.cor || '-'}</span>
+                    <span>
+                      {veiculo.ar === null
+                        ? '-'
+                        : veiculo.ar
+                          ? 'Sim'
+                          : 'Não'}
+                    </span>
 
                     <div className="veiculo-acoes">
                       <button
@@ -485,16 +699,18 @@ function CadastroCliente() {
                         className="btn-editar-veiculo"
                         onClick={() => editarVeiculo(index)}
                       >
-                        Editar
+                        {isVisualizacao ? 'Ver' : 'Editar'}
                       </button>
 
-                      <button
-                        type="button"
-                        className="btn-remover-veiculo"
-                        onClick={() => removerVeiculo(index)}
-                      >
-                        Remover
-                      </button>
+                      {!isVisualizacao && (
+                        <button
+                          type="button"
+                          className="btn-remover-veiculo"
+                          onClick={() => removerVeiculo(index)}
+                        >
+                          Remover
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
@@ -508,12 +724,38 @@ function CadastroCliente() {
               className="btn-secondary"
               onClick={limparFormulario}
             >
-              Cancelar
+              {isVisualizacao ? 'Voltar' : 'Cancelar'}
             </button>
 
-            <button type="submit" className="btn-primary">
-              Cadastrar cliente
-            </button>
+            {isVisualizacao ? (
+              <>
+                <button
+                  type="button"
+                  className="btn-edit-cliente"
+                  onClick={() =>
+                    navigate(
+                      `/clientes/cadastro?nome=${encodeURIComponent(
+                        nomeBusca || ''
+                      )}`
+                    )
+                  }
+                >
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-delete-cliente"
+                  onClick={handleExcluirCliente}
+                >
+                  Excluir
+                </button>
+              </>
+            ) : (
+              <button type="submit" className="btn-primary">
+                {nomeBusca ? 'Salvar alterações' : 'Cadastrar cliente'}
+              </button>
+            )}
           </div>
 
           {mensagem && <p className="form-message">{mensagem}</p>}
@@ -522,11 +764,10 @@ function CadastroCliente() {
 
       {modalOpen && (
         <div className="modal-overlay" onClick={fecharModalVeiculo}>
-          <div
-            className="modal-veiculo"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2>{editandoIndex !== null ? 'Editar veículo' : 'Adicionar veículo'}</h2>
+          <div className="modal-veiculo" onClick={(e) => e.stopPropagation()}>
+            <h2>
+              {editandoIndex !== null ? 'Editar veículo' : 'Adicionar veículo'}
+            </h2>
 
             <div className="modal-grid">
               <div className="field-group">
@@ -538,6 +779,7 @@ function CadastroCliente() {
                   value={novoVeiculo.placa}
                   onChange={handleVeiculoChange}
                   maxLength={7}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
@@ -547,20 +789,22 @@ function CadastroCliente() {
                   id="chassi"
                   name="chassi"
                   placeholder="Chassi"
-                  value={novoVeiculo.chassi}
+                  value={novoVeiculo.chassi || ''}
                   onChange={handleVeiculoChange}
                   maxLength={17}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
               <div className="field-group">
-                <label htmlFor="marca">Marca</label>
+                <label htmlFor="fabricante">Fabricante</label>
                 <input
-                  id="marca"
-                  name="marca"
+                  id="fabricante"
+                  name="fabricante"
                   placeholder="Ex.: Fiat"
-                  value={novoVeiculo.marca}
+                  value={novoVeiculo.fabricante || ''}
                   onChange={handleVeiculoChange}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
@@ -570,44 +814,87 @@ function CadastroCliente() {
                   id="modelo"
                   name="modelo"
                   placeholder="Ex.: Uno"
-                  value={novoVeiculo.modelo}
+                  value={novoVeiculo.modelo || ''}
                   onChange={handleVeiculoChange}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
               <div className="field-group">
-                <label htmlFor="ano">Ano</label>
+                <label htmlFor="ano_fabricacao">Ano fabricação</label>
                 <input
-                  id="ano"
-                  name="ano"
+                  id="ano_fabricacao"
+                  name="ano_fabricacao"
                   placeholder="2020"
-                  value={novoVeiculo.ano}
+                  value={novoVeiculo.ano_fabricacao || ''}
                   onChange={handleVeiculoChange}
                   maxLength={4}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
               <div className="field-group">
-                <label htmlFor="anoModelo">Ano Modelo</label>
+                <label htmlFor="ano_modelo">Ano modelo</label>
                 <input
-                  id="anoModelo"
-                  name="anoModelo"
+                  id="ano_modelo"
+                  name="ano_modelo"
                   placeholder="2021"
-                  value={novoVeiculo.anoModelo}
+                  value={novoVeiculo.ano_modelo || ''}
                   onChange={handleVeiculoChange}
                   maxLength={4}
+                  readOnly={isVisualizacao}
                 />
               </div>
 
-              <div className="field-group modal-field-full">
+              <div className="field-group">
+                <label htmlFor="motor">Motor</label>
+                <input
+                  id="motor"
+                  name="motor"
+                  placeholder="Ex.: 1.0"
+                  value={novoVeiculo.motor || ''}
+                  onChange={handleVeiculoChange}
+                  readOnly={isVisualizacao}
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="km">Quilometragem</label>
+                <input
+                  id="km"
+                  name="km"
+                  placeholder="Ex.: 120000"
+                  value={novoVeiculo.km || ''}
+                  onChange={handleVeiculoChange}
+                  readOnly={isVisualizacao}
+                />
+              </div>
+
+              <div className="field-group">
                 <label htmlFor="cor">Cor</label>
                 <input
                   id="cor"
                   name="cor"
                   placeholder="Ex.: Prata"
-                  value={novoVeiculo.cor}
+                  value={novoVeiculo.cor || ''}
                   onChange={handleVeiculoChange}
+                  readOnly={isVisualizacao}
                 />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="ar">Ar-condicionado</label>
+                <select
+                  id="ar"
+                  name="ar"
+                  value={novoVeiculo.ar}
+                  onChange={handleVeiculoChange}
+                  disabled={isVisualizacao}
+                >
+                  <option value="">Não informado</option>
+                  <option value="true">Sim</option>
+                  <option value="false">Não</option>
+                </select>
               </div>
             </div>
 
@@ -617,16 +904,18 @@ function CadastroCliente() {
                 className="btn-secondary"
                 onClick={fecharModalVeiculo}
               >
-                Cancelar
+                {isVisualizacao ? 'Fechar' : 'Cancelar'}
               </button>
 
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={adicionarVeiculo}
-              >
-                {editandoIndex !== null ? 'Atualizar' : 'Salvar'}
-              </button>
+              {!isVisualizacao && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={adicionarVeiculo}
+                >
+                  {editandoIndex !== null ? 'Atualizar' : 'Salvar'}
+                </button>
+              )}
             </div>
           </div>
         </div>

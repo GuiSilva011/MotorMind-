@@ -2,25 +2,29 @@ import prisma from '../config/prisma.js'
 
 export async function criarVeiculo(req, res) {
   try {
-    const { clienteId, placa, chassi, marca, modelo, ano, anoModelo } = req.body;
+    const { clienteId, placa,modelo,chassi,fabricante, ano_modelo, ano_fabricacao, motor, km, cor,ar } = req.body;
     console.log(req.body);
 
     const veiculo = await prisma.veiculo.create({
       data: {
         clienteId: Number(clienteId),
         placa,
-        chassi: chassi || null,
-        marca: marca || null,
         modelo: modelo || null,
-        ano: ano ? Number(ano) : null,
-        anoModelo: anoModelo ? Number(anoModelo) : null
+        chassi: chassi || null,
+        fabricante: fabricante || null,
+        ano_modelo: ano_modelo ? Number(ano_modelo) : null,
+        ano_fabricacao: ano_fabricacao ? Number(ano_fabricacao) : null,
+        motor: motor || null,
+        km: km || null,
+        cor: cor || null,
+        ar: ar !== undefined ? ar : null
       }
     });
 
     res.status(201).json(veiculo);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ erro: 'Falha ao criar veiculo' });
+    res.status(500).json({erro : "Falha ao cadastrar veiculo"});
   }
 }
 
@@ -42,7 +46,7 @@ export async function listarVeiculo(req, res) {
 export async function editarVeiculo(req, res) {
   try {
     const { id } = req.params;
-    const { clienteId, placa, chassi, marca, modelo, ano, anoModelo } = req.body;
+    const { clienteId, placa,modelo,chassi,fabricante, ano_modelo, ano_fabricacao, motor, km, cor,ar} = req.body;
     console.log(req.body);
 
     const veiculo = await prisma.veiculo.update({
@@ -50,11 +54,15 @@ export async function editarVeiculo(req, res) {
       data: {
         clienteId: Number(clienteId),
         placa,
-        chassi: chassi || null,
-        marca: marca || null,
         modelo: modelo || null,
-        ano: ano ? Number(ano) : null,
-        anoModelo: anoModelo ? Number(anoModelo) : null
+        chassi: chassi || null,
+        fabricante: fabricante || null,
+        ano_modelo: ano_modelo ? Number(ano_modelo) : null,
+        ano_fabricacao: ano_fabricacao ? Number(ano_fabricacao) : null,
+        motor: motor || null,
+        km: km || null,
+        cor: cor || null,
+        ar: ar !== undefined ? ar : null
       }
     });
 

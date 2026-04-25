@@ -1,3 +1,5 @@
+import { NavLink } from 'react-router-dom';
+
 function Sidebar() {
   return (
     <aside className="sidebar">
@@ -8,28 +10,38 @@ function Sidebar() {
           Motor<span className="text-orange">Mind</span>
         </div>
 
-            {/* MENU */}
+        {/* MENU */}
         <nav className="sidebar-menu">
 
-          <button className="menu-item active">
+          <NavLink
+            to="/clientes/cadastro"
+            className={({ isActive }) =>
+              isActive ? 'menu-item active' : 'menu-item'
+            }
+          >
             <img
               src="/icons/cliente.svg"
               alt="Clientes"
               className="menu-icon"
             />
             CADASTRAR CLIENTES
-          </button>
+          </NavLink>
 
-          <button className="menu-item">
+          <NavLink
+            to="/clientes/consultar"
+            className={({ isActive }) =>
+              isActive ? 'menu-item active' : 'menu-item'
+            }
+          >
             <img
               src="/icons/consultar-clientes.svg"
               alt="Consultar clientes"
               className="menu-icon"
             />
             CONSULTAR CLIENTES
-          </button>
+          </NavLink>
 
-          <button className="menu-item">
+          <button type="button" className="menu-item">
             <img
               src="/icons/agendamento.svg"
               alt="Agendamentos"
@@ -38,7 +50,7 @@ function Sidebar() {
             AGENDAMENTOS
           </button>
 
-          <button className="menu-item">
+          <button type="button" className="menu-item">
             <img
               src="/icons/ordemservico.svg"
               alt="Ordem de serviço"
@@ -51,7 +63,7 @@ function Sidebar() {
       </div>
 
       {/* LOGOUT */}
-      <button className="logout-btn">
+      <button type="button" className="logout-btn">
         <img
           src="/icons/logout.svg"
           alt="Logout"

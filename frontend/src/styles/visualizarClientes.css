@@ -1,0 +1,185 @@
+.consulta-clientes-container {
+  min-height: 100vh;
+  background: #f4f7fb;
+  padding: 32px;
+  font-family: Arial, sans-serif;
+}
+
+.consulta-clientes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.consulta-clientes-header h1 {
+  color: #1f2937;
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.consulta-clientes-header p {
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.btn-novo-cliente {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-novo-cliente:hover {
+  background: #1d4ed8;
+}
+
+.barra-busca {
+  margin-bottom: 24px;
+}
+
+.barra-busca input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+}
+
+.barra-busca input:focus {
+  border-color: #2563eb;
+}
+
+.status-message {
+  font-size: 14px;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.status-message.error {
+  color: #b91c1c;
+}
+
+.toast-message {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #ecfdf3;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lista-clientes {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card-cliente {
+  background: white;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  display: grid;
+  grid-template-columns: 1.5fr 1.3fr auto;
+  gap: 24px;
+  align-items: center;
+}
+
+.cliente-info h2 {
+  font-size: 21px;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.cliente-dados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 8px 18px;
+}
+
+.cliente-dados p {
+  color: #374151;
+  font-size: 14px;
+}
+
+.veiculos-area h3 {
+  color: #1f2937;
+  font-size: 17px;
+  margin-bottom: 10px;
+}
+
+.lista-veiculos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.veiculo-item {
+  background: #f3f4f6;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.veiculo-item span {
+  color: #111827;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.veiculo-item small {
+  color: #6b7280;
+  margin-top: 3px;
+}
+
+.sem-veiculo {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.acoes-cliente button {
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 11px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.acoes-cliente button:hover {
+  background: #374151;
+}
+
+.sem-clientes {
+  background: white;
+  padding: 28px;
+  border-radius: 12px;
+  text-align: center;
+  color: #6b7280;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 900px) {
+  .card-cliente {
+    grid-template-columns: 1fr;
+  }
+
+  .cliente-dados {
+    grid-template-columns: 1fr;
+  }
+
+  .consulta-clientes-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
