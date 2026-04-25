@@ -262,18 +262,7 @@ app.use(cors());
 * NÃO subir `node_modules`
 * Sempre rodar backend e frontend juntos
 
----
 
-# 🚀 COMO CONTINUAR O PROJETO
-
-Sugestões:
-
-* Adicionar CPF, endereço no cliente
-* Criar módulo de veículos
-* Criar agendamento
-* Melhorar layout
-
----
 
 # 👨‍💻 OBS
 
