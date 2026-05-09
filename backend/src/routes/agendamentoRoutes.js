@@ -1,12 +1,5 @@
 import express from 'express';
-
-import {
-  criarAgendamento,
-  listarAgendamentos,
-  buscarAgendamentoPorId,
-  editarAgendamento,
-  deletarAgendamento
-} from '../controllers/agendamentoController.js';
+import {criarAgendamento,listarAgendamentos,buscarAgendamentoPorId,editarAgendamento,deletarAgendamento} from '../controllers/agendamentoController.js';
 
 const router = express.Router();
 

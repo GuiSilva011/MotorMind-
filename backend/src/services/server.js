@@ -1,8 +1,8 @@
 import express from 'express'
 import cors from 'cors'
-import clienteRoutes from './routes/clienteRoutes.js'
-import veiculoRoutes from './routes/veiculoRoutes.js'
-import agendamentoRoutes from './routes/agendamentoRoutes.js';
+import clienteRoutes from '../routes/clienteRoutes.js'
+import veiculoRoutes from '../routes/veiculoRoutes.js'
+import agendamentoRoutes from '../routes/agendamentoRoutes.js';
 
 const app = express()
 const port = 3000
