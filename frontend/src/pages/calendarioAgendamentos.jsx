@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../server/api';
+import api from '../services/api';
 import Layout from '../components/Layout';
 import "../styles/layout.css";
 
