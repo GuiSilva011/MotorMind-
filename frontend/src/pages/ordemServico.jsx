@@ -1,81 +1,411 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Layout from '../components/Layout';
+import api from '../services/api';
 import '../styles/ordemServico.css';
 
+const OS_RASCUNHO_KEY = 'motormind_ordem_servico_rascunho';
+const OS_RASCUNHO_TOAST_ID = 'motormind_ordem_servico_rascunho_toast';
+
+const ordemInicial = {
+  id: null,
+  codigo: '',
+  cliente: {
+    id: '',
+    nome: '',
+  },
+  veiculo: {
+    id: '',
+    placa: '',
+    marca: '',
+    modelo: '',
+    ano: '',
+    motor: '',
+    cor: '',
+    km: '',
+    chassi: '',
+    possuiAr: false,
+  },
+  observacoes: '',
+  diagnosticos: [],
+  servicosSemDiagnostico: [],
+  pecasAvulsas: [],
+};
+
+const filtrosBuscaOSInicial = {
+  termo: '',
+  status: '',
+  dataInicio: '',
+  dataFim: '',
+};
+
 function OrdemServico() {
-  const [ordem, setOrdem] = useState({
-    codigo: '2778',
-    cliente: {
-      nome: '',
-      cpfCnpj: '',
-      telefone: '',
-      email: '',
-      tipoPessoa: 'Física',
-    },
-    veiculo: {
-      placa: '',
-      marca: '',
-      modelo: '',
-      ano: '',
-      motor: '',
-      combustivel: '',
-      cor: '',
-      km: '',
-      chassi: '',
-      possuiAr: false,
-    },
+  const navigate = useNavigate();
+  const iniciouTelaRef = useRef(false);
+
+  const [ordem, setOrdem] = useState(ordemInicial);
+  const [modoTela, setModoTela] = useState('nova');
+  const [rascunhoCarregado, setRascunhoCarregado] = useState(false);
+
+  const [catalogos, setCatalogos] = useState({
     diagnosticos: [],
-    servicosSemDiagnostico: [],
+    servicos: [],
+    pecas: [],
+    fornecedores: [],
   });
 
-  const [modalCotacaoAberto, setModalCotacaoAberto] = useState(false);
+  const [busca, setBusca] = useState('');
+  const [resultadosBusca, setResultadosBusca] = useState([]);
+  const [buscandoVeiculo, setBuscandoVeiculo] = useState(false);
+  const [clienteNaoEncontrado, setClienteNaoEncontrado] = useState(false);
 
-  const [fornecedores, setFornecedores] = useState([
-    { id: 1, nome: 'Fornecedor Auto Peças Central', selecionado: false },
-    { id: 2, nome: 'Distribuidora Motor Parts', selecionado: false },
-    { id: 3, nome: 'Peças Rápidas Brasil', selecionado: false },
-  ]);
+  const [carregandoCatalogos, setCarregandoCatalogos] = useState(false);
+  const [carregandoCodigo, setCarregandoCodigo] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+
+  const [modalCotacaoAberto, setModalCotacaoAberto] = useState(false);
+  const [fornecedoresCotacao, setFornecedoresCotacao] = useState([]);
+
+  const [modalCatalogo, setModalCatalogo] = useState({
+    aberto: false,
+    tipo: '',
+    diagnosticoId: null,
+    servicoId: null,
+    pecaId: null,
+    origem: '',
+  });
+
+  const [modalBuscarOSAberto, setModalBuscarOSAberto] = useState(false);
+  const [filtrosBuscaOS, setFiltrosBuscaOS] = useState(filtrosBuscaOSInicial);
+  const [ordensEncontradas, setOrdensEncontradas] = useState([]);
+  const [buscandoOrdens, setBuscandoOrdens] = useState(false);
+  const [carregandoOrdem, setCarregandoOrdem] = useState(false);
+
+  const podeEditar = modoTela === 'nova' || modoTela === 'edicao';
+  const estaVisualizando = modoTela === 'visualizacao';
+
+  useEffect(() => {
+  if (iniciouTelaRef.current) return;
+
+  iniciouTelaRef.current = true;
+  iniciarTelaOrdemServico();
+}, []);
+
+  useEffect(() => {
+    if (!rascunhoCarregado) return;
+    if (modoTela === 'visualizacao') return;
+
+    const temAlgumProgresso =
+      ordem.veiculo.id ||
+      ordem.cliente.nome ||
+      ordem.observacoes ||
+      ordem.diagnosticos.length > 0 ||
+      ordem.servicosSemDiagnostico.length > 0 ||
+      ordem.pecasAvulsas.length > 0;
+
+    if (!temAlgumProgresso) return;
+
+    const dados = {
+      ordem,
+      modoTela,
+      busca,
+      fornecedoresCotacao,
+      salvoEm: new Date().toISOString(),
+    };
+
+    localStorage.setItem(OS_RASCUNHO_KEY, JSON.stringify(dados));
+  }, [ordem, modoTela, busca, fornecedoresCotacao, rascunhoCarregado]);
+
+  async function iniciarTelaOrdemServico() {
+  try {
+    await carregarCatalogos();
+
+    const rascunho = localStorage.getItem(OS_RASCUNHO_KEY);
+
+    if (rascunho) {
+      toast.info(
+        ({ closeToast }) => (
+          <div className="os-toast-draft">
+            <strong>OS em andamento encontrada</strong>
+
+            <span>
+              Existe um rascunho salvo desta ordem de serviço. Deseja
+              recuperar?
+            </span>
+
+            <div className="os-toast-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const dados = JSON.parse(rascunho);
+
+                    setOrdem(dados.ordem || ordemInicial);
+                    setModoTela(dados.modoTela || 'nova');
+                    setBusca(dados.busca || '');
+                    setFornecedoresCotacao(dados.fornecedoresCotacao || []);
+                    setRascunhoCarregado(true);
+
+                    toast.success('Rascunho recuperado com sucesso!');
+                    closeToast();
+                  } catch (error) {
+                    console.error('Erro ao recuperar rascunho:', error);
+
+                    localStorage.removeItem(OS_RASCUNHO_KEY);
+                    setRascunhoCarregado(true);
+                    carregarProximoCodigo();
+
+                    toast.error(
+                      'Erro ao recuperar rascunho. Ele foi descartado.'
+                    );
+
+                    closeToast();
+                  }
+                }}
+              >
+                Recuperar
+              </button>
+
+              <button
+                type="button"
+                className="secondary"
+                onClick={async () => {
+                  localStorage.removeItem(OS_RASCUNHO_KEY);
+
+                  await carregarProximoCodigo();
+                  setRascunhoCarregado(true);
+
+                  toast.info('Rascunho descartado.');
+                  closeToast();
+                }}
+              >
+                Descartar
+              </button>
+            </div>
+          </div>
+        ),
+        {
+          toastId: OS_RASCUNHO_TOAST_ID,
+          autoClose: false,
+          closeOnClick: false,
+          draggable: false,
+        }
+      );
+
+      return;
+    }
+
+    await carregarProximoCodigo();
+    setRascunhoCarregado(true);
+  } catch (error) {
+    console.error('Erro ao iniciar tela da OS:', error);
+    setRascunhoCarregado(true);
+    toast.error('Erro ao iniciar a tela da ordem de serviço.');
+  }
+}
+
+  async function carregarProximoCodigo() {
+    try {
+      setCarregandoCodigo(true);
+
+      const response = await api.get('/ordens-servico/proximo-codigo');
+
+      setOrdem((prev) => ({
+        ...prev,
+        codigo: response.data?.codigo || '',
+      }));
+    } catch (error) {
+      console.error('Erro ao carregar próximo código da OS:', error);
+      toast.error('Erro ao gerar o próximo código da ordem de serviço.');
+    } finally {
+      setCarregandoCodigo(false);
+    }
+  }
+
+  async function carregarCatalogos() {
+    try {
+      setCarregandoCatalogos(true);
+
+      const [
+        diagnosticosResponse,
+        servicosResponse,
+        pecasResponse,
+        fornecedoresResponse,
+      ] = await Promise.all([
+        api.get('/diagnosticos'),
+        api.get('/servicos'),
+        api.get('/pecas'),
+        api.get('/fornecedores'),
+      ]);
+
+      setCatalogos({
+        diagnosticos: diagnosticosResponse.data || [],
+        servicos: servicosResponse.data || [],
+        pecas: pecasResponse.data || [],
+        fornecedores: fornecedoresResponse.data || [],
+      });
+    } catch (error) {
+      console.error('Erro ao carregar catálogos:', error);
+      toast.error(
+        'Erro ao carregar diagnósticos, serviços, peças ou fornecedores.'
+      );
+    } finally {
+      setCarregandoCatalogos(false);
+    }
+  }
+
+  async function buscarClienteOuVeiculo() {
+    try {
+      const termo = busca.trim();
+
+      if (!termo) {
+        toast.warning('Digite o nome do cliente ou a placa do veículo.');
+        return;
+      }
+
+      setBuscandoVeiculo(true);
+      setClienteNaoEncontrado(false);
+
+      const response = await api.get('/veiculos/buscar-para-os', {
+        params: { termo },
+      });
+
+      const resultados = response.data || [];
+
+      setResultadosBusca(resultados);
+      setClienteNaoEncontrado(resultados.length === 0);
+
+      if (resultados.length === 0) {
+        toast.info('Nenhum cliente ou veículo encontrado.');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar cliente/veículo:', error);
+
+      setResultadosBusca([]);
+      setClienteNaoEncontrado(true);
+
+      toast.error(
+        error.response?.data?.erro ||
+          'Nenhum cliente ou veículo encontrado para a busca informada.'
+      );
+    } finally {
+      setBuscandoVeiculo(false);
+    }
+  }
+
+  function selecionarVeiculo(veiculo) {
+    const cliente = veiculo.cliente;
+
+    setOrdem((prev) => ({
+      ...prev,
+      cliente: {
+        id: cliente?.id || '',
+        nome: cliente?.nome || '',
+      },
+      veiculo: {
+        id: veiculo.id || '',
+        placa: veiculo.placa || '',
+        marca: veiculo.fabricante || '',
+        modelo: veiculo.modelo || '',
+        ano: montarAnoVeiculo(veiculo),
+        motor: veiculo.motor || '',
+        cor: veiculo.cor || '',
+        km: veiculo.km || '',
+        chassi: veiculo.chassi || '',
+        possuiAr: Boolean(veiculo.ar),
+      },
+    }));
+
+    setResultadosBusca([]);
+    setBusca(`${cliente?.nome || ''} - ${veiculo.placa || ''}`);
+    setClienteNaoEncontrado(false);
+  }
+
+  function montarAnoVeiculo(veiculo) {
+    if (veiculo.ano_fabricacao && veiculo.ano_modelo) {
+      return `${veiculo.ano_fabricacao}/${veiculo.ano_modelo}`;
+    }
+
+    return veiculo.ano_modelo || veiculo.ano_fabricacao || '';
+  }
+
+  function atualizarCampoOrdem(campo, valor) {
+    if (!podeEditar) return;
+
+    setOrdem((prev) => ({
+      ...prev,
+      [campo]: valor,
+    }));
+  }
 
   function letraDiagnostico(index) {
     return String.fromCharCode(65 + index);
   }
 
-  function atualizarCliente(campo, valor) {
-    setOrdem((prev) => ({
-      ...prev,
-      cliente: {
-        ...prev.cliente,
-        [campo]: valor,
-      },
-    }));
+  function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
   }
 
-  function atualizarVeiculo(campo, valor) {
-    setOrdem((prev) => ({
-      ...prev,
-      veiculo: {
-        ...prev.veiculo,
-        [campo]: valor,
-      },
-    }));
+  function formatarData(data) {
+    if (!data) return '-';
+
+    return new Date(data).toLocaleDateString('pt-BR');
+  }
+
+  function criarDiagnostico() {
+    return {
+      id: crypto.randomUUID(),
+      diagnosticoCatalogoId: '',
+      descricao: '',
+      observacao: '',
+      servicos: [],
+    };
+  }
+
+  function criarServico() {
+    return {
+      id: crypto.randomUUID(),
+      servicoCatalogoId: '',
+      codigoServico: '',
+      descricao: '',
+      responsavel: '',
+      tipo: '',
+      precoVenda: '',
+      desconto: '',
+      pecas: [],
+    };
+  }
+
+  function criarPeca() {
+    return {
+      id: crypto.randomUUID(),
+      pecaCatalogoId: '',
+      codigoPeca: '',
+      descricao: '',
+      fornecedorId: '',
+      fornecedorNome: '',
+      quantidade: 1,
+      custoUnitario: '',
+      desconto: '',
+    };
   }
 
   function adicionarDiagnostico() {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
-      diagnosticos: [
-        ...prev.diagnosticos,
-        {
-          id: crypto.randomUUID(),
-          descricao: '',
-          observacao: '',
-          servicos: [],
-        },
-      ],
+      diagnosticos: [...prev.diagnosticos, criarDiagnostico()],
     }));
   }
 
   function atualizarDiagnostico(diagnosticoId, campo, valor) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       diagnosticos: prev.diagnosticos.map((diagnostico) =>
@@ -86,7 +416,28 @@ function OrdemServico() {
     }));
   }
 
+  function aplicarDiagnosticoCatalogo(diagnosticoId, diagnosticoCatalogoId) {
+    const diagnosticoCatalogo = catalogos.diagnosticos.find(
+      (item) => Number(item.id) === Number(diagnosticoCatalogoId)
+    );
+
+    if (!diagnosticoCatalogo) {
+      atualizarDiagnostico(diagnosticoId, 'diagnosticoCatalogoId', '');
+      return;
+    }
+
+    atualizarDiagnostico(
+      diagnosticoId,
+      'diagnosticoCatalogoId',
+      diagnosticoCatalogo.id
+    );
+
+    atualizarDiagnostico(diagnosticoId, 'descricao', diagnosticoCatalogo.nome);
+  }
+
   function removerDiagnostico(diagnosticoId) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       diagnosticos: prev.diagnosticos.filter(
@@ -95,19 +446,9 @@ function OrdemServico() {
     }));
   }
 
-  function criarServico() {
-    return {
-      id: crypto.randomUUID(),
-      descricao: '',
-      responsavel: '',
-      tipo: '',
-      precoVenda: '',
-      desconto: '',
-      pecas: [],
-    };
-  }
-
   function adicionarServicoAoDiagnostico(diagnosticoId) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       diagnosticos: prev.diagnosticos.map((diagnostico) =>
@@ -122,6 +463,8 @@ function OrdemServico() {
   }
 
   function adicionarServicoSemDiagnostico() {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       servicosSemDiagnostico: [
@@ -137,6 +480,8 @@ function OrdemServico() {
     campo,
     valor
   ) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       diagnosticos: prev.diagnosticos.map((diagnostico) =>
@@ -155,6 +500,8 @@ function OrdemServico() {
   }
 
   function atualizarServicoSemDiagnostico(servicoId, campo, valor) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       servicosSemDiagnostico: prev.servicosSemDiagnostico.map((servico) =>
@@ -163,7 +510,104 @@ function OrdemServico() {
     }));
   }
 
+  function aplicarServicoCatalogo(diagnosticoId, servicoId, servicoCatalogoId) {
+    const servicoCatalogo = catalogos.servicos.find(
+      (item) => Number(item.id) === Number(servicoCatalogoId)
+    );
+
+    if (!servicoCatalogo) {
+      atualizarServicoDiagnostico(
+        diagnosticoId,
+        servicoId,
+        'servicoCatalogoId',
+        ''
+      );
+      return;
+    }
+
+    atualizarServicoDiagnostico(
+      diagnosticoId,
+      servicoId,
+      'servicoCatalogoId',
+      servicoCatalogo.id
+    );
+
+    atualizarServicoDiagnostico(
+      diagnosticoId,
+      servicoId,
+      'codigoServico',
+      servicoCatalogo.codigo || ''
+    );
+
+    atualizarServicoDiagnostico(
+      diagnosticoId,
+      servicoId,
+      'descricao',
+      servicoCatalogo.nome || ''
+    );
+
+    atualizarServicoDiagnostico(
+      diagnosticoId,
+      servicoId,
+      'tipo',
+      servicoCatalogo.categoria || ''
+    );
+
+    atualizarServicoDiagnostico(
+      diagnosticoId,
+      servicoId,
+      'precoVenda',
+      servicoCatalogo.valorPadrao || ''
+    );
+  }
+
+  function aplicarServicoCatalogoSemDiagnostico(
+    servicoId,
+    servicoCatalogoId
+  ) {
+    const servicoCatalogo = catalogos.servicos.find(
+      (item) => Number(item.id) === Number(servicoCatalogoId)
+    );
+
+    if (!servicoCatalogo) {
+      atualizarServicoSemDiagnostico(servicoId, 'servicoCatalogoId', '');
+      return;
+    }
+
+    atualizarServicoSemDiagnostico(
+      servicoId,
+      'servicoCatalogoId',
+      servicoCatalogo.id
+    );
+
+    atualizarServicoSemDiagnostico(
+      servicoId,
+      'codigoServico',
+      servicoCatalogo.codigo || ''
+    );
+
+    atualizarServicoSemDiagnostico(
+      servicoId,
+      'descricao',
+      servicoCatalogo.nome || ''
+    );
+
+    atualizarServicoSemDiagnostico(
+      servicoId,
+      'tipo',
+      servicoCatalogo.categoria || ''
+    );
+
+    atualizarServicoSemDiagnostico(
+      servicoId,
+      'precoVenda',
+      servicoCatalogo.valorPadrao || ''
+    );
+  }
+
   function removerServicoDiagnostico(diagnosticoId, servicoId) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       diagnosticos: prev.diagnosticos.map((diagnostico) =>
@@ -180,6 +624,8 @@ function OrdemServico() {
   }
 
   function removerServicoSemDiagnostico(servicoId) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       servicosSemDiagnostico: prev.servicosSemDiagnostico.filter(
@@ -188,18 +634,9 @@ function OrdemServico() {
     }));
   }
 
-  function criarPeca() {
-    return {
-      id: crypto.randomUUID(),
-      descricao: '',
-      fornecedor: '',
-      quantidade: 1,
-      custoUnitario: '',
-      desconto: '',
-    };
-  }
-
   function adicionarPecaDiagnostico(diagnosticoId, servicoId) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       diagnosticos: prev.diagnosticos.map((diagnostico) =>
@@ -221,6 +658,8 @@ function OrdemServico() {
   }
 
   function adicionarPecaSemDiagnostico(servicoId) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       servicosSemDiagnostico: prev.servicosSemDiagnostico.map((servico) =>
@@ -234,6 +673,15 @@ function OrdemServico() {
     }));
   }
 
+  function adicionarPecaAvulsa() {
+    if (!podeEditar) return;
+
+    setOrdem((prev) => ({
+      ...prev,
+      pecasAvulsas: [...prev.pecasAvulsas, criarPeca()],
+    }));
+  }
+
   function atualizarPecaDiagnostico(
     diagnosticoId,
     servicoId,
@@ -241,6 +689,8 @@ function OrdemServico() {
     campo,
     valor
   ) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       diagnosticos: prev.diagnosticos.map((diagnostico) =>
@@ -252,9 +702,7 @@ function OrdemServico() {
                   ? {
                       ...servico,
                       pecas: servico.pecas.map((peca) =>
-                        peca.id === pecaId
-                          ? { ...peca, [campo]: valor }
-                          : peca
+                        peca.id === pecaId ? { ...peca, [campo]: valor } : peca
                       ),
                     }
                   : servico
@@ -266,6 +714,8 @@ function OrdemServico() {
   }
 
   function atualizarPecaSemDiagnostico(servicoId, pecaId, campo, valor) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       servicosSemDiagnostico: prev.servicosSemDiagnostico.map((servico) =>
@@ -281,7 +731,173 @@ function OrdemServico() {
     }));
   }
 
+  function atualizarPecaAvulsa(pecaId, campo, valor) {
+    if (!podeEditar) return;
+
+    setOrdem((prev) => ({
+      ...prev,
+      pecasAvulsas: prev.pecasAvulsas.map((peca) =>
+        peca.id === pecaId ? { ...peca, [campo]: valor } : peca
+      ),
+    }));
+  }
+
+  function aplicarPecaCatalogo(
+    diagnosticoId,
+    servicoId,
+    pecaId,
+    pecaCatalogoId
+  ) {
+    const pecaCatalogo = catalogos.pecas.find(
+      (item) => Number(item.id) === Number(pecaCatalogoId)
+    );
+
+    if (!pecaCatalogo) {
+      atualizarPecaDiagnostico(
+        diagnosticoId,
+        servicoId,
+        pecaId,
+        'pecaCatalogoId',
+        ''
+      );
+      return;
+    }
+
+    atualizarPecaDiagnostico(
+      diagnosticoId,
+      servicoId,
+      pecaId,
+      'pecaCatalogoId',
+      pecaCatalogo.id
+    );
+
+    atualizarPecaDiagnostico(
+      diagnosticoId,
+      servicoId,
+      pecaId,
+      'codigoPeca',
+      pecaCatalogo.codigo || ''
+    );
+
+    atualizarPecaDiagnostico(
+      diagnosticoId,
+      servicoId,
+      pecaId,
+      'descricao',
+      pecaCatalogo.nome || ''
+    );
+  }
+
+  function aplicarPecaCatalogoSemDiagnostico(
+    servicoId,
+    pecaId,
+    pecaCatalogoId
+  ) {
+    const pecaCatalogo = catalogos.pecas.find(
+      (item) => Number(item.id) === Number(pecaCatalogoId)
+    );
+
+    if (!pecaCatalogo) {
+      atualizarPecaSemDiagnostico(servicoId, pecaId, 'pecaCatalogoId', '');
+      return;
+    }
+
+    atualizarPecaSemDiagnostico(
+      servicoId,
+      pecaId,
+      'pecaCatalogoId',
+      pecaCatalogo.id
+    );
+
+    atualizarPecaSemDiagnostico(
+      servicoId,
+      pecaId,
+      'codigoPeca',
+      pecaCatalogo.codigo || ''
+    );
+
+    atualizarPecaSemDiagnostico(
+      servicoId,
+      pecaId,
+      'descricao',
+      pecaCatalogo.nome || ''
+    );
+  }
+
+  function aplicarPecaCatalogoAvulsa(pecaId, pecaCatalogoId) {
+    const pecaCatalogo = catalogos.pecas.find(
+      (item) => Number(item.id) === Number(pecaCatalogoId)
+    );
+
+    if (!pecaCatalogo) {
+      atualizarPecaAvulsa(pecaId, 'pecaCatalogoId', '');
+      return;
+    }
+
+    atualizarPecaAvulsa(pecaId, 'pecaCatalogoId', pecaCatalogo.id);
+    atualizarPecaAvulsa(pecaId, 'codigoPeca', pecaCatalogo.codigo || '');
+    atualizarPecaAvulsa(pecaId, 'descricao', pecaCatalogo.nome || '');
+  }
+
+  function aplicarFornecedorPecaDiagnostico(
+    diagnosticoId,
+    servicoId,
+    pecaId,
+    fornecedorId
+  ) {
+    const fornecedor = catalogos.fornecedores.find(
+      (item) => Number(item.id) === Number(fornecedorId)
+    );
+
+    atualizarPecaDiagnostico(
+      diagnosticoId,
+      servicoId,
+      pecaId,
+      'fornecedorId',
+      fornecedorId
+    );
+
+    atualizarPecaDiagnostico(
+      diagnosticoId,
+      servicoId,
+      pecaId,
+      'fornecedorNome',
+      fornecedor?.nome || ''
+    );
+  }
+
+  function aplicarFornecedorPecaSemDiagnostico(servicoId, pecaId, fornecedorId) {
+    const fornecedor = catalogos.fornecedores.find(
+      (item) => Number(item.id) === Number(fornecedorId)
+    );
+
+    atualizarPecaSemDiagnostico(
+      servicoId,
+      pecaId,
+      'fornecedorId',
+      fornecedorId
+    );
+
+    atualizarPecaSemDiagnostico(
+      servicoId,
+      pecaId,
+      'fornecedorNome',
+      fornecedor?.nome || ''
+    );
+  }
+
+  function aplicarFornecedorPecaAvulsa(pecaId, fornecedorId) {
+    const fornecedor = catalogos.fornecedores.find(
+      (item) => Number(item.id) === Number(fornecedorId)
+    );
+
+    atualizarPecaAvulsa(pecaId, 'fornecedorId', fornecedorId);
+    atualizarPecaAvulsa(pecaId, 'fornecedorNome', fornecedor?.nome || '');
+  }
+
   function removerPecaDiagnostico(diagnosticoId, servicoId, pecaId) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       diagnosticos: prev.diagnosticos.map((diagnostico) =>
@@ -303,6 +919,8 @@ function OrdemServico() {
   }
 
   function removerPecaSemDiagnostico(servicoId, pecaId) {
+    if (!podeEditar) return;
+
     setOrdem((prev) => ({
       ...prev,
       servicosSemDiagnostico: prev.servicosSemDiagnostico.map((servico) =>
@@ -314,6 +932,397 @@ function OrdemServico() {
           : servico
       ),
     }));
+  }
+
+  function removerPecaAvulsa(pecaId) {
+    if (!podeEditar) return;
+
+    setOrdem((prev) => ({
+      ...prev,
+      pecasAvulsas: prev.pecasAvulsas.filter((peca) => peca.id !== pecaId),
+    }));
+  }
+
+  function abrirModalCatalogo({
+    tipo,
+    diagnosticoId = null,
+    servicoId = null,
+    pecaId = null,
+    origem = '',
+  }) {
+    if (!podeEditar) return;
+
+    setModalCatalogo({
+      aberto: true,
+      tipo,
+      diagnosticoId,
+      servicoId,
+      pecaId,
+      origem,
+    });
+  }
+
+  function fecharModalCatalogo() {
+    setModalCatalogo({
+      aberto: false,
+      tipo: '',
+      diagnosticoId: null,
+      servicoId: null,
+      pecaId: null,
+      origem: '',
+    });
+  }
+
+  function obterItensModalCatalogo() {
+    if (modalCatalogo.tipo === 'diagnostico') return catalogos.diagnosticos;
+    if (modalCatalogo.tipo === 'servico') return catalogos.servicos;
+    if (modalCatalogo.tipo === 'peca') return catalogos.pecas;
+
+    return [];
+  }
+
+  function obterTituloModalCatalogo() {
+    if (modalCatalogo.tipo === 'diagnostico') return 'Selecionar diagnóstico';
+    if (modalCatalogo.tipo === 'servico') return 'Selecionar serviço';
+    if (modalCatalogo.tipo === 'peca') return 'Selecionar peça';
+
+    return 'Selecionar cadastro';
+  }
+
+  function obterTextoVazioModalCatalogo() {
+    if (modalCatalogo.tipo === 'diagnostico') {
+      return 'Nenhum diagnóstico cadastrado.';
+    }
+
+    if (modalCatalogo.tipo === 'servico') {
+      return 'Nenhum serviço cadastrado.';
+    }
+
+    if (modalCatalogo.tipo === 'peca') {
+      return 'Nenhuma peça cadastrada.';
+    }
+
+    return 'Nenhum cadastro encontrado.';
+  }
+
+  function obterRotaCadastroCatalogo() {
+    if (modalCatalogo.tipo === 'diagnostico') {
+      return '/diagnosticos/cadastro';
+    }
+
+    if (modalCatalogo.tipo === 'servico') {
+      return '/servicos/cadastro';
+    }
+
+    if (modalCatalogo.tipo === 'peca') {
+      return '/pecas/cadastro';
+    }
+
+    return '/';
+  }
+
+  function obterTextoBotaoCadastroCatalogo() {
+    if (modalCatalogo.tipo === 'diagnostico') {
+      return '+ Cadastrar novo diagnóstico';
+    }
+
+    if (modalCatalogo.tipo === 'servico') {
+      return '+ Cadastrar novo serviço';
+    }
+
+    if (modalCatalogo.tipo === 'peca') {
+      return '+ Cadastrar nova peça';
+    }
+
+    return '+ Cadastrar novo';
+  }
+
+  function abrirCadastroCatalogoNovaAba() {
+    const rota = obterRotaCadastroCatalogo();
+
+    window.open(rota, '_blank', 'noopener,noreferrer');
+  }
+
+  async function atualizarListaCatalogoModal() {
+    await carregarCatalogos();
+    toast.success('Lista atualizada.');
+  }
+
+  function selecionarItemCatalogo(item) {
+    if (modalCatalogo.tipo === 'diagnostico') {
+      aplicarDiagnosticoCatalogo(modalCatalogo.diagnosticoId, item.id);
+      fecharModalCatalogo();
+      return;
+    }
+
+    if (modalCatalogo.tipo === 'servico') {
+      if (modalCatalogo.origem === 'diagnostico') {
+        aplicarServicoCatalogo(
+          modalCatalogo.diagnosticoId,
+          modalCatalogo.servicoId,
+          item.id
+        );
+      } else {
+        aplicarServicoCatalogoSemDiagnostico(modalCatalogo.servicoId, item.id);
+      }
+
+      fecharModalCatalogo();
+      return;
+    }
+
+    if (modalCatalogo.tipo === 'peca') {
+      if (modalCatalogo.origem === 'diagnostico') {
+        aplicarPecaCatalogo(
+          modalCatalogo.diagnosticoId,
+          modalCatalogo.servicoId,
+          modalCatalogo.pecaId,
+          item.id
+        );
+      } else if (modalCatalogo.origem === 'servico-sem-diagnostico') {
+        aplicarPecaCatalogoSemDiagnostico(
+          modalCatalogo.servicoId,
+          modalCatalogo.pecaId,
+          item.id
+        );
+      } else {
+        aplicarPecaCatalogoAvulsa(modalCatalogo.pecaId, item.id);
+      }
+
+      fecharModalCatalogo();
+    }
+  }
+
+  function obterDetalheCatalogo(item) {
+    if (modalCatalogo.tipo === 'diagnostico') {
+      return item.descricao || '-';
+    }
+
+    if (modalCatalogo.tipo === 'servico') {
+      const valor = item.valorPadrao
+        ? Number(item.valorPadrao).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          })
+        : null;
+
+      return [item.categoria, valor].filter(Boolean).join(' | ') || '-';
+    }
+
+    if (modalCatalogo.tipo === 'peca') {
+      const detalhe = [item.marca, item.aplicacao].filter(Boolean).join(' - ');
+      return detalhe || '-';
+    }
+
+    return '-';
+  }
+
+  function abrirModalBuscarOS() {
+    setModalBuscarOSAberto(true);
+    buscarOrdensAntigas();
+  }
+
+  function fecharModalBuscarOS() {
+    setModalBuscarOSAberto(false);
+  }
+
+  function atualizarFiltroBuscaOS(campo, valor) {
+    setFiltrosBuscaOS((prev) => ({
+      ...prev,
+      [campo]: valor,
+    }));
+  }
+
+  async function buscarOrdensAntigas() {
+    try {
+      setBuscandoOrdens(true);
+
+      const params = {};
+
+      if (filtrosBuscaOS.termo) params.termo = filtrosBuscaOS.termo;
+      if (filtrosBuscaOS.status) params.status = filtrosBuscaOS.status;
+      if (filtrosBuscaOS.dataInicio) {
+        params.dataInicio = filtrosBuscaOS.dataInicio;
+      }
+      if (filtrosBuscaOS.dataFim) {
+        params.dataFim = filtrosBuscaOS.dataFim;
+      }
+
+      const response = await api.get('/ordens-servico/buscar', { params });
+
+      setOrdensEncontradas(response.data || []);
+
+      if (!response.data || response.data.length === 0) {
+        toast.info('Nenhuma ordem de serviço encontrada.');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar OS antigas:', error);
+
+      toast.error(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao buscar ordens de serviço.'
+      );
+    } finally {
+      setBuscandoOrdens(false);
+    }
+  }
+
+  function limparFiltrosBuscaOS() {
+    setFiltrosBuscaOS(filtrosBuscaOSInicial);
+    setOrdensEncontradas([]);
+  }
+
+  async function abrirOrdemExistente(ordemId) {
+    try {
+      setCarregandoOrdem(true);
+
+      const response = await api.get(`/ordens-servico/${ordemId}`);
+
+      carregarOrdemNaTela(response.data);
+
+      setModoTela('visualizacao');
+      setModalBuscarOSAberto(false);
+      localStorage.removeItem(OS_RASCUNHO_KEY);
+
+      toast.success('Ordem de serviço carregada.');
+    } catch (error) {
+      console.error('Erro ao abrir OS:', error);
+
+      toast.error(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao abrir ordem de serviço.'
+      );
+    } finally {
+      setCarregandoOrdem(false);
+    }
+  }
+
+  function carregarOrdemNaTela(os) {
+    const veiculo = os.veiculo || {};
+    const cliente = veiculo.cliente || {};
+
+    const diagnosticos = (os.diagnosticos || []).map((diagnostico) => ({
+      id: diagnostico.id,
+      diagnosticoCatalogoId: diagnostico.diagnosticoCatalogoId || '',
+      descricao: diagnostico.nomeDiagnostico || diagnostico.descricao || '',
+      observacao: diagnostico.observacoes || '',
+      servicos: (diagnostico.servicos || []).map((servico) =>
+        mapearServicoParaTela(servico)
+      ),
+    }));
+
+    const servicosSemDiagnostico = (os.servicos || [])
+      .filter((servico) => !servico.ordemDiagnosticoId)
+      .map((servico) => mapearServicoParaTela(servico));
+
+    const pecasAvulsas = (os.pecas || [])
+      .filter((peca) => !peca.ordemDiagnosticoId && !peca.ordemServicoItemId)
+      .map((peca) => mapearPecaParaTela(peca));
+
+    setOrdem({
+      id: os.id || null,
+      codigo: os.codigo || '',
+      cliente: {
+        id: cliente.id || '',
+        nome: cliente.nome || '',
+      },
+      veiculo: {
+        id: veiculo.id || os.veiculoId || '',
+        placa: veiculo.placa || '',
+        marca: veiculo.fabricante || '',
+        modelo: veiculo.modelo || '',
+        ano: montarAnoVeiculo(veiculo),
+        motor: veiculo.motor || '',
+        cor: veiculo.cor || '',
+        km: veiculo.km || '',
+        chassi: veiculo.chassi || '',
+        possuiAr: Boolean(veiculo.ar),
+      },
+      observacoes: os.observacoes || '',
+      diagnosticos,
+      servicosSemDiagnostico,
+      pecasAvulsas,
+    });
+
+    setBusca(
+      `${cliente.nome || ''}${veiculo.placa ? ` - ${veiculo.placa}` : ''}`
+    );
+  }
+
+  function mapearServicoParaTela(servico) {
+    return {
+      id: servico.id,
+      servicoCatalogoId: servico.servicoCatalogoId || '',
+      codigoServico: servico.codigoVisual || '',
+      descricao: servico.nomeServico || servico.descricao || '',
+      responsavel: servico.responsavel || '',
+      tipo: servico.tipo || '',
+      precoVenda: servico.precoVenda || '',
+      desconto: servico.desconto || '',
+      pecas: (servico.pecas || []).map((peca) => mapearPecaParaTela(peca)),
+    };
+  }
+
+  function mapearPecaParaTela(peca) {
+    return {
+      id: peca.id,
+      pecaCatalogoId: peca.pecaCatalogoId || '',
+      codigoPeca: peca.codigoPeca || '',
+      descricao: peca.nomePeca || '',
+      fornecedorId: peca.fornecedorId || '',
+      fornecedorNome: peca.fornecedorNome || '',
+      quantidade: peca.quantidade || 1,
+      custoUnitario: peca.custoUnitario || '',
+      desconto: peca.desconto || '',
+    };
+  }
+
+  function novaOrdemServico() {
+    toast.warning(
+      ({ closeToast }) => (
+        <div className="os-toast-draft">
+          <strong>Iniciar nova OS?</strong>
+
+          <span>O rascunho atual será apagado. Deseja continuar?</span>
+
+          <div className="os-toast-actions">
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem(OS_RASCUNHO_KEY);
+
+                setModoTela('nova');
+                setOrdem(ordemInicial);
+                setBusca('');
+                setResultadosBusca([]);
+                setClienteNaoEncontrado(false);
+                setFornecedoresCotacao([]);
+                carregarProximoCodigo();
+
+                toast.success('Nova ordem de serviço iniciada.');
+                closeToast();
+              }}
+            >
+              Sim, iniciar
+            </button>
+
+            <button type="button" className="secondary" onClick={closeToast}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
+  }
+
+  function editarOrdemAtual() {
+    setModoTela('edicao');
   }
 
   const totais = useMemo(() => {
@@ -329,17 +1338,27 @@ function OrdemServico() {
       return acc + Math.max(preco - desconto, 0);
     }, 0);
 
-    const totalPecas = todosServicos.reduce((acc, servico) => {
+    const totalPecasDosServicos = todosServicos.reduce((acc, servico) => {
       const totalServicoPecas = servico.pecas.reduce((soma, peca) => {
-        const qtd = Number(peca.quantidade || 0);
-        const custo = Number(peca.custoUnitario || 0);
+        const quantidade = Number(peca.quantidade || 0);
+        const custoUnitario = Number(peca.custoUnitario || 0);
         const desconto = Number(peca.desconto || 0);
 
-        return soma + Math.max(qtd * custo - desconto, 0);
+        return soma + Math.max(quantidade * custoUnitario - desconto, 0);
       }, 0);
 
       return acc + totalServicoPecas;
     }, 0);
+
+    const totalPecasAvulsas = ordem.pecasAvulsas.reduce((acc, peca) => {
+      const quantidade = Number(peca.quantidade || 0);
+      const custoUnitario = Number(peca.custoUnitario || 0);
+      const desconto = Number(peca.desconto || 0);
+
+      return acc + Math.max(quantidade * custoUnitario - desconto, 0);
+    }, 0);
+
+    const totalPecas = totalPecasDosServicos + totalPecasAvulsas;
 
     return {
       totalServicos,
@@ -380,49 +1399,288 @@ function OrdemServico() {
         }))
     );
 
-    return [...pecasComDiagnostico, ...pecasSemDiagnostico];
+    const pecasAvulsas = ordem.pecasAvulsas.map((peca, pecaIndex) => ({
+      ...peca,
+      codigoDiagnostico: null,
+      codigoServico: null,
+      codigoPeca: `P.${pecaIndex + 1}`,
+      diagnostico: null,
+      servico: null,
+    }));
+
+    return [...pecasComDiagnostico, ...pecasSemDiagnostico, ...pecasAvulsas];
   }, [ordem]);
 
-  function formatarMoeda(valor) {
-    return Number(valor || 0).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
+  function montarPayloadOrdemServico() {
+    return {
+      codigo: ordem.codigo,
+      veiculoId: Number(ordem.veiculo.id),
+      operadorId: 1,
+      tecnicoId: 1,
+      observacoes: ordem.observacoes || null,
+
+      diagnosticos: ordem.diagnosticos.map((diagnostico) => ({
+        diagnosticoCatalogoId: diagnostico.diagnosticoCatalogoId
+          ? Number(diagnostico.diagnosticoCatalogoId)
+          : null,
+        descricao: diagnostico.descricao || null,
+        observacoes: diagnostico.observacao || null,
+
+        servicos: diagnostico.servicos.map((servico) => ({
+          servicoCatalogoId: servico.servicoCatalogoId
+            ? Number(servico.servicoCatalogoId)
+            : null,
+          descricao: servico.descricao || null,
+          responsavel: servico.responsavel || null,
+          tipo: servico.tipo || null,
+          precoVenda: Number(servico.precoVenda || 0),
+          desconto: Number(servico.desconto || 0),
+
+          pecas: servico.pecas.map((peca) => ({
+            pecaCatalogoId: peca.pecaCatalogoId
+              ? Number(peca.pecaCatalogoId)
+              : null,
+            descricao: peca.descricao || null,
+            fornecedorId: peca.fornecedorId ? Number(peca.fornecedorId) : null,
+            fornecedorNome: peca.fornecedorNome || null,
+            quantidade: Number(peca.quantidade || 1),
+            custoUnitario: Number(peca.custoUnitario || 0),
+            desconto: Number(peca.desconto || 0),
+          })),
+        })),
+      })),
+
+      servicosSemDiagnostico: ordem.servicosSemDiagnostico.map((servico) => ({
+        servicoCatalogoId: servico.servicoCatalogoId
+          ? Number(servico.servicoCatalogoId)
+          : null,
+        descricao: servico.descricao || null,
+        responsavel: servico.responsavel || null,
+        tipo: servico.tipo || null,
+        precoVenda: Number(servico.precoVenda || 0),
+        desconto: Number(servico.desconto || 0),
+
+        pecas: servico.pecas.map((peca) => ({
+          pecaCatalogoId: peca.pecaCatalogoId
+            ? Number(peca.pecaCatalogoId)
+            : null,
+          descricao: peca.descricao || null,
+          fornecedorId: peca.fornecedorId ? Number(peca.fornecedorId) : null,
+          fornecedorNome: peca.fornecedorNome || null,
+          quantidade: Number(peca.quantidade || 1),
+          custoUnitario: Number(peca.custoUnitario || 0),
+          desconto: Number(peca.desconto || 0),
+        })),
+      })),
+
+      pecasAvulsas: ordem.pecasAvulsas.map((peca) => ({
+        pecaCatalogoId: peca.pecaCatalogoId
+          ? Number(peca.pecaCatalogoId)
+          : null,
+        descricao: peca.descricao || null,
+        fornecedorId: peca.fornecedorId ? Number(peca.fornecedorId) : null,
+        fornecedorNome: peca.fornecedorNome || null,
+        quantidade: Number(peca.quantidade || 1),
+        custoUnitario: Number(peca.custoUnitario || 0),
+        desconto: Number(peca.desconto || 0),
+      })),
+    };
   }
 
-  function alternarFornecedor(id) {
-    setFornecedores((prev) =>
-      prev.map((fornecedor) =>
-        fornecedor.id === id
-          ? { ...fornecedor, selecionado: !fornecedor.selecionado }
-          : fornecedor
-      )
+  async function salvarOrdemServico() {
+    try {
+      if (!ordem.codigo) {
+        toast.warning('O código da OS ainda não foi gerado.');
+        return;
+      }
+
+      if (!ordem.veiculo.id) {
+        toast.warning(
+          'Busque e selecione um cliente/veículo antes de salvar a OS.'
+        );
+        return;
+      }
+
+      setSalvando(true);
+
+      const payload = montarPayloadOrdemServico();
+
+      const response =
+        modoTela === 'edicao' && ordem.id
+          ? await api.put(`/ordens-servico/${ordem.id}`, payload)
+          : await api.post('/ordens-servico', payload);
+
+      carregarOrdemNaTela(response.data);
+      setModoTela('visualizacao');
+
+      localStorage.removeItem(OS_RASCUNHO_KEY);
+
+      toast.success('Ordem de serviço salva com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar OS:', error);
+
+      toast.error(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao salvar ordem de serviço.'
+      );
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  function voltarPagina() {
+    navigate(-1);
+  }
+
+  function alternarFornecedorCotacao(id) {
+    setFornecedoresCotacao((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   }
 
-  function salvarOrdemServico() {
-    console.log('OS para salvar:', ordem);
-    alert('OS pronta para integrar com o backend.');
-  }
-
   function enviarCotacao() {
+    const fornecedoresSelecionados = catalogos.fornecedores.filter(
+      (fornecedor) => fornecedoresCotacao.includes(fornecedor.id)
+    );
+
+    if (fornecedoresSelecionados.length === 0) {
+      toast.warning('Selecione pelo menos um fornecedor para enviar a cotação.');
+      return;
+    }
+
     const payload = {
       ordemServicoCodigo: ordem.codigo,
-      veiculo: {
-        marca: ordem.veiculo.marca,
-        modelo: ordem.veiculo.modelo,
-        ano: ordem.veiculo.ano,
-        motor: ordem.veiculo.motor,
-        possuiAr: ordem.veiculo.possuiAr,
-        chassi: ordem.veiculo.chassi,
-      },
+      veiculo: ordem.veiculo,
       pecas: pecasParaCotacao,
-      fornecedores: fornecedores.filter((fornecedor) => fornecedor.selecionado),
+      fornecedores: fornecedoresSelecionados,
     };
 
     console.log('Cotação:', payload);
+
     setModalCotacaoAberto(false);
-    alert('Cotação pronta para envio.');
+    toast.success('Cotação pronta para envio.');
+  }
+
+  function renderPeca({
+    peca,
+    pecaIndex,
+    codigoPecaCompleto,
+    onAbrirCatalogo,
+    onAplicarFornecedor,
+    onAtualizar,
+    onRemover,
+  }) {
+    return (
+      <div className="os-piece-row" key={peca.id}>
+        <div className="os-piece-title-row">
+          <div className="os-code os-code-piece">{pecaIndex + 1}</div>
+
+          <div>
+            <strong>Peça {pecaIndex + 1}</strong>
+            <small>{codigoPecaCompleto}</small>
+          </div>
+        </div>
+
+        <div className="os-form-grid os-grid-piece">
+          <div className="os-field os-col-2">
+            <label>Peça</label>
+
+            <button
+              type="button"
+              className="os-select-modal-btn"
+              onClick={onAbrirCatalogo}
+              disabled={!podeEditar}
+            >
+              {peca.pecaCatalogoId
+                ? peca.descricao
+                : 'Selecionar peça cadastrada'}
+            </button>
+          </div>
+
+          <div className="os-field os-col-2">
+            <label>Descrição complementar</label>
+            <input
+              value={peca.descricao}
+              disabled={!podeEditar}
+              onChange={(event) => onAtualizar('descricao', event.target.value)}
+              placeholder="Detalhe específico desta peça na OS"
+            />
+          </div>
+
+          <div className="os-field">
+            <label>Fornecedor</label>
+            <select
+              value={peca.fornecedorId}
+              disabled={!podeEditar}
+              onChange={(event) => onAplicarFornecedor(event.target.value)}
+            >
+              <option value="">Selecione</option>
+
+              {catalogos.fornecedores.map((fornecedor) => (
+                <option key={fornecedor.id} value={fornecedor.id}>
+                  {fornecedor.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="os-field">
+            <label>Qtd.</label>
+            <input
+              type="number"
+              value={peca.quantidade}
+              disabled={!podeEditar}
+              onChange={(event) =>
+                onAtualizar('quantidade', event.target.value)
+              }
+            />
+          </div>
+
+          <div className="os-field">
+            <label>Custo</label>
+            <input
+              type="number"
+              value={peca.custoUnitario}
+              disabled={!podeEditar}
+              onChange={(event) =>
+                onAtualizar('custoUnitario', event.target.value)
+              }
+              placeholder="0,00"
+            />
+          </div>
+
+          <div className="os-field">
+            <label>Desconto</label>
+            <input
+              type="number"
+              value={peca.desconto}
+              disabled={!podeEditar}
+              onChange={(event) => onAtualizar('desconto', event.target.value)}
+              placeholder="0,00"
+            />
+          </div>
+
+          <div className="os-field">
+            <label>Total</label>
+            <input
+              readOnly
+              value={formatarMoeda(
+                Number(peca.quantidade || 0) *
+                  Number(peca.custoUnitario || 0) -
+                  Number(peca.desconto || 0)
+              )}
+            />
+          </div>
+        </div>
+
+        {podeEditar && (
+          <button type="button" className="os-icon-btn" onClick={onRemover}>
+            ×
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -431,187 +1689,204 @@ function OrdemServico() {
         <section className="os-top">
           <div>
             <h1>Ordem de Serviço</h1>
-            <p>Monte a OS relacionando diagnóstico, serviço e peças.</p>
+
+            <p>
+              {modoTela === 'nova' && 'Monte uma nova OS.'}
+              {modoTela === 'visualizacao' &&
+                'Visualizando uma ordem de serviço existente.'}
+              {modoTela === 'edicao' &&
+                'Editando uma ordem de serviço existente.'}
+            </p>
+
+            {(carregandoCatalogos || carregandoCodigo || carregandoOrdem) && (
+              <small>Carregando dados da OS...</small>
+            )}
           </div>
 
           <div className="os-top-actions">
-            <button type="button" className="os-action os-action-red">
-              Voltar
-            </button>
-
             <button
               type="button"
-              className="os-action os-action-dark"
-              onClick={salvarOrdemServico}
+              className="os-small-btn os-dark"
+              onClick={abrirModalBuscarOS}
             >
-              Salvar
+              Buscar OS existente
             </button>
+
+            {modoTela !== 'nova' && (
+              <button
+                type="button"
+                className="os-small-btn os-outline"
+                onClick={novaOrdemServico}
+              >
+                Nova OS
+              </button>
+            )}
+
+            {estaVisualizando && (
+              <button
+                type="button"
+                className="os-small-btn os-blue"
+                onClick={editarOrdemAtual}
+              >
+                Editar OS
+              </button>
+            )}
           </div>
         </section>
 
         <section className="os-panel">
           <div className="os-panel-title">
             <h2>Cliente e veículo</h2>
-            <span>Dados principais da ordem de serviço</span>
+            <span>Busque por nome do cliente ou placa do veículo.</span>
           </div>
-
-          <div className="os-subtitle">Dados do cliente</div>
 
           <div className="os-form-grid os-grid-4">
             <div className="os-field os-col-2">
-              <label>Cliente</label>
-              <input
-                value={ordem.cliente.nome}
-                onChange={(e) => atualizarCliente('nome', e.target.value)}
-                placeholder="Nome completo"
-              />
-            </div>
+              <label>Buscar cliente ou placa</label>
 
-            <div className="os-field">
-              <label>CPF/CNPJ</label>
-              <input
-                value={ordem.cliente.cpfCnpj}
-                onChange={(e) => atualizarCliente('cpfCnpj', e.target.value)}
-                placeholder="000.000.000-00"
-              />
-            </div>
+              <div className="os-search-line">
+                <input
+                  value={busca}
+                  disabled={!podeEditar}
+                  onChange={(event) => setBusca(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      buscarClienteOuVeiculo();
+                    }
+                  }}
+                  placeholder="Digite o nome do cliente ou placa"
+                />
 
-            <div className="os-field">
-              <label>Tipo</label>
-              <select
-                value={ordem.cliente.tipoPessoa}
-                onChange={(e) => atualizarCliente('tipoPessoa', e.target.value)}
-              >
-                <option>Física</option>
-                <option>Jurídica</option>
-              </select>
-            </div>
-
-            <div className="os-field">
-              <label>Telefone</label>
-              <input
-                value={ordem.cliente.telefone}
-                onChange={(e) => atualizarCliente('telefone', e.target.value)}
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-
-            <div className="os-field os-col-2">
-              <label>E-mail</label>
-              <input
-                value={ordem.cliente.email}
-                onChange={(e) => atualizarCliente('email', e.target.value)}
-                placeholder="cliente@email.com"
-              />
+                <button
+                  type="button"
+                  onClick={buscarClienteOuVeiculo}
+                  disabled={buscandoVeiculo || !podeEditar}
+                >
+                  {buscandoVeiculo ? 'Buscando...' : 'Buscar'}
+                </button>
+              </div>
             </div>
 
             <div className="os-field">
               <label>Código da OS</label>
+              <input value={ordem.codigo} readOnly placeholder="Automático" />
+            </div>
+          </div>
+
+          {resultadosBusca.length > 0 && podeEditar && (
+            <div className="os-search-results">
+              {resultadosBusca.map((veiculo) => (
+                <button
+                  type="button"
+                  key={veiculo.id}
+                  className="os-search-result-item"
+                  onClick={() => selecionarVeiculo(veiculo)}
+                >
+                  <strong>{veiculo.cliente?.nome || 'Cliente sem nome'}</strong>
+
+                  <span>
+                    {veiculo.placa || '-'} | {veiculo.fabricante || '-'}{' '}
+                    {veiculo.modelo || '-'} | {montarAnoVeiculo(veiculo) || '-'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {clienteNaoEncontrado && podeEditar && (
+            <div className="os-not-found">
+              <span>Nenhum cliente ou veículo encontrado.</span>
+
+              <button
+                type="button"
+                className="os-small-btn os-blue"
+                onClick={() => navigate('/clientes/cadastro')}
+              >
+                Cadastrar novo cliente
+              </button>
+            </div>
+          )}
+
+          <div className="os-divider" />
+
+          <div className="os-subtitle">Cliente selecionado</div>
+
+          <div className="os-form-grid os-grid-4">
+            <div className="os-field os-col-2">
+              <label>Nome do cliente</label>
               <input
-                value={ordem.codigo}
-                onChange={(e) =>
-                  setOrdem((prev) => ({ ...prev, codigo: e.target.value }))
-                }
+                value={ordem.cliente.nome}
+                readOnly
+                placeholder="Nenhum cliente selecionado"
               />
             </div>
+          </div>
 
-            <div className="os-divider" />
+          <div className="os-divider" />
 
-            <div className="os-subtitle os-col-full">Dados do veículo</div>
+          <div className="os-subtitle">Dados do veículo</div>
 
+          <div className="os-form-grid os-grid-4">
             <div className="os-field">
               <label>Placa</label>
-              <input
-                value={ordem.veiculo.placa}
-                onChange={(e) => atualizarVeiculo('placa', e.target.value)}
-                placeholder="ABC1D23"
-              />
+              <input value={ordem.veiculo.placa} readOnly />
             </div>
 
             <div className="os-field">
               <label>Marca</label>
-              <input
-                value={ordem.veiculo.marca}
-                onChange={(e) => atualizarVeiculo('marca', e.target.value)}
-                placeholder="Ford"
-              />
+              <input value={ordem.veiculo.marca} readOnly />
             </div>
 
             <div className="os-field">
               <label>Modelo</label>
-              <input
-                value={ordem.veiculo.modelo}
-                onChange={(e) => atualizarVeiculo('modelo', e.target.value)}
-                placeholder="Pinto 77"
-              />
+              <input value={ordem.veiculo.modelo} readOnly />
             </div>
 
             <div className="os-field">
               <label>Ano</label>
-              <input
-                value={ordem.veiculo.ano}
-                onChange={(e) => atualizarVeiculo('ano', e.target.value)}
-                placeholder="1977/1978"
-              />
+              <input value={ordem.veiculo.ano} readOnly />
             </div>
 
             <div className="os-field">
               <label>Motor</label>
-              <input
-                value={ordem.veiculo.motor}
-                onChange={(e) => atualizarVeiculo('motor', e.target.value)}
-                placeholder="4000 Diesel"
-              />
-            </div>
-
-            <div className="os-field">
-              <label>Combustível</label>
-              <input
-                value={ordem.veiculo.combustivel}
-                onChange={(e) =>
-                  atualizarVeiculo('combustivel', e.target.value)
-                }
-                placeholder="Diesel"
-              />
+              <input value={ordem.veiculo.motor} readOnly />
             </div>
 
             <div className="os-field">
               <label>Cor</label>
-              <input
-                value={ordem.veiculo.cor}
-                onChange={(e) => atualizarVeiculo('cor', e.target.value)}
-                placeholder="Preta"
-              />
+              <input value={ordem.veiculo.cor} readOnly />
             </div>
 
             <div className="os-field">
               <label>KM</label>
-              <input
-                value={ordem.veiculo.km}
-                onChange={(e) => atualizarVeiculo('km', e.target.value)}
-                placeholder="78000"
-              />
+              <input value={ordem.veiculo.km} readOnly />
             </div>
 
-            <div className="os-field os-col-3">
+            <div className="os-field os-col-2">
               <label>Chassi</label>
-              <input
-                value={ordem.veiculo.chassi}
-                onChange={(e) => atualizarVeiculo('chassi', e.target.value)}
-                placeholder="Chassi do veículo"
-              />
+              <input value={ordem.veiculo.chassi} readOnly />
             </div>
 
             <label className="os-check">
               <input
                 type="checkbox"
                 checked={ordem.veiculo.possuiAr}
-                onChange={(e) =>
-                  atualizarVeiculo('possuiAr', e.target.checked)
-                }
+                readOnly
               />
               Possui ar-condicionado
             </label>
+
+            <div className="os-field os-col-full">
+              <label>Observações da OS</label>
+              <input
+                value={ordem.observacoes}
+                disabled={!podeEditar}
+                onChange={(event) =>
+                  atualizarCampoOrdem('observacoes', event.target.value)
+                }
+                placeholder="Observações gerais da ordem de serviço"
+              />
+            </div>
           </div>
         </section>
 
@@ -619,32 +1894,43 @@ function OrdemServico() {
           <div className="os-panel-title os-title-row">
             <div>
               <h2>Diagnósticos, serviços e peças</h2>
-              <span>Crie a hierarquia da ordem de serviço</span>
+              <span>Crie a hierarquia da ordem de serviço.</span>
             </div>
 
-            <div className="os-title-actions">
-              <button
-                type="button"
-                className="os-small-btn os-blue"
-                onClick={adicionarDiagnostico}
-              >
-                + Novo diagnóstico
-              </button>
+            {podeEditar && (
+              <div className="os-title-actions">
+                <button
+                  type="button"
+                  className="os-small-btn os-blue"
+                  onClick={adicionarDiagnostico}
+                >
+                  + Novo diagnóstico
+                </button>
 
-              <button
-                type="button"
-                className="os-small-btn os-dark"
-                onClick={adicionarServicoSemDiagnostico}
-              >
-                + Serviço sem diagnóstico
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="os-small-btn os-dark"
+                  onClick={adicionarServicoSemDiagnostico}
+                >
+                  + Serviço sem diagnóstico
+                </button>
+
+                <button
+                  type="button"
+                  className="os-small-btn os-outline"
+                  onClick={adicionarPecaAvulsa}
+                >
+                  + Peça avulsa
+                </button>
+              </div>
+            )}
           </div>
 
           {ordem.diagnosticos.length === 0 &&
-            ordem.servicosSemDiagnostico.length === 0 && (
+            ordem.servicosSemDiagnostico.length === 0 &&
+            ordem.pecasAvulsas.length === 0 && (
               <div className="os-empty">
-                Nenhum diagnóstico ou serviço adicionado.
+                Nenhum diagnóstico, serviço ou peça adicionado.
               </div>
             )}
 
@@ -658,38 +1944,64 @@ function OrdemServico() {
                     {codigoDiagnostico}
                   </div>
 
+                  <div className="os-field">
+                    <label>Modelo de diagnóstico</label>
+
+                    <button
+                      type="button"
+                      className="os-select-modal-btn"
+                      onClick={() =>
+                        abrirModalCatalogo({
+                          tipo: 'diagnostico',
+                          diagnosticoId: diagnostico.id,
+                        })
+                      }
+                      disabled={!podeEditar}
+                    >
+                      {diagnostico.diagnosticoCatalogoId
+                        ? diagnostico.descricao
+                        : 'Selecionar diagnóstico cadastrado'}
+                    </button>
+                  </div>
+
                   <div className="os-field os-grow">
-                    <label>Diagnóstico {codigoDiagnostico}</label>
+                    <label>Descrição do diagnóstico</label>
+
                     <input
                       value={diagnostico.descricao}
-                      onChange={(e) =>
+                      disabled={!podeEditar}
+                      onChange={(event) =>
                         atualizarDiagnostico(
                           diagnostico.id,
                           'descricao',
-                          e.target.value
+                          event.target.value
                         )
                       }
-                      placeholder="Ex: Carro trepidando"
+                      placeholder="Ex: Carro falhando, barulho no motor..."
                     />
                   </div>
 
-                  <button
-                    type="button"
-                    className="os-small-btn os-blue"
-                    onClick={() =>
-                      adicionarServicoAoDiagnostico(diagnostico.id)
-                    }
-                  >
-                    + Serviço
-                  </button>
+                  {podeEditar && (
+                    <>
+                      <button
+                        type="button"
+                        className="os-small-btn os-blue"
+                        onClick={() =>
+                          adicionarServicoAoDiagnostico(diagnostico.id)
+                        }
+                      >
+                        + Serviço
+                      </button>
 
-                  <button
-                    type="button"
-                    className="os-icon-btn"
-                    onClick={() => removerDiagnostico(diagnostico.id)}
-                  >
-                    ×
-                  </button>
+                      <button
+                        type="button"
+                        className="os-icon-btn"
+                        onClick={() => removerDiagnostico(diagnostico.id)}
+                      >
+                        ×
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 {diagnostico.servicos.length === 0 && (
@@ -712,38 +2024,64 @@ function OrdemServico() {
 
                         <div>
                           <strong>Serviço {servicoIndex + 1}</strong>
-                          <small>Código interno: {codigoServicoCompleto}</small>
+                          <small>{codigoServicoCompleto}</small>
                         </div>
                       </div>
 
                       <div className="os-service-header">
                         <div className="os-form-grid os-grid-service">
                           <div className="os-field os-col-2">
-                            <label>Descrição do serviço</label>
+                            <label>Serviço</label>
+
+                            <button
+                              type="button"
+                              className="os-select-modal-btn"
+                              onClick={() =>
+                                abrirModalCatalogo({
+                                  tipo: 'servico',
+                                  diagnosticoId: diagnostico.id,
+                                  servicoId: servico.id,
+                                  origem: 'diagnostico',
+                                })
+                              }
+                              disabled={!podeEditar}
+                            >
+                              {servico.servicoCatalogoId
+                                ? servico.descricao
+                                : 'Selecionar serviço cadastrado'}
+                            </button>
+                          </div>
+
+                          <div className="os-field os-col-2">
+                            <label>Descrição complementar</label>
+
                             <input
                               value={servico.descricao}
-                              onChange={(e) =>
+                              disabled={!podeEditar}
+                              onChange={(event) =>
                                 atualizarServicoDiagnostico(
                                   diagnostico.id,
                                   servico.id,
                                   'descricao',
-                                  e.target.value
+                                  event.target.value
                                 )
                               }
-                              placeholder="Ex: Troca da embreagem"
+                              placeholder="Detalhe específico deste serviço"
                             />
                           </div>
 
                           <div className="os-field">
                             <label>Responsável</label>
+
                             <input
                               value={servico.responsavel}
-                              onChange={(e) =>
+                              disabled={!podeEditar}
+                              onChange={(event) =>
                                 atualizarServicoDiagnostico(
                                   diagnostico.id,
                                   servico.id,
                                   'responsavel',
-                                  e.target.value
+                                  event.target.value
                                 )
                               }
                               placeholder="Técnico"
@@ -752,35 +2090,35 @@ function OrdemServico() {
 
                           <div className="os-field">
                             <label>Tipo</label>
-                            <select
+
+                            <input
                               value={servico.tipo}
-                              onChange={(e) =>
+                              disabled={!podeEditar}
+                              onChange={(event) =>
                                 atualizarServicoDiagnostico(
                                   diagnostico.id,
                                   servico.id,
                                   'tipo',
-                                  e.target.value
+                                  event.target.value
                                 )
                               }
-                            >
-                              <option value="">Selecione</option>
-                              <option value="mao_de_obra">Mão de obra</option>
-                              <option value="reparo">Reparo</option>
-                              <option value="troca_peca">Troca de peça</option>
-                            </select>
+                              placeholder="Mão de obra, troca..."
+                            />
                           </div>
 
                           <div className="os-field">
                             <label>Preço</label>
+
                             <input
                               type="number"
                               value={servico.precoVenda}
-                              onChange={(e) =>
+                              disabled={!podeEditar}
+                              onChange={(event) =>
                                 atualizarServicoDiagnostico(
                                   diagnostico.id,
                                   servico.id,
                                   'precoVenda',
-                                  e.target.value
+                                  event.target.value
                                 )
                               }
                               placeholder="0,00"
@@ -789,15 +2127,17 @@ function OrdemServico() {
 
                           <div className="os-field">
                             <label>Desconto</label>
+
                             <input
                               type="number"
                               value={servico.desconto}
-                              onChange={(e) =>
+                              disabled={!podeEditar}
+                              onChange={(event) =>
                                 atualizarServicoDiagnostico(
                                   diagnostico.id,
                                   servico.id,
                                   'desconto',
-                                  e.target.value
+                                  event.target.value
                                 )
                               }
                               placeholder="0,00"
@@ -805,170 +2145,77 @@ function OrdemServico() {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          className="os-icon-btn"
-                          onClick={() =>
-                            removerServicoDiagnostico(
-                              diagnostico.id,
-                              servico.id
-                            )
-                          }
-                        >
-                          ×
-                        </button>
+                        {podeEditar && (
+                          <button
+                            type="button"
+                            className="os-icon-btn"
+                            onClick={() =>
+                              removerServicoDiagnostico(
+                                diagnostico.id,
+                                servico.id
+                              )
+                            }
+                          >
+                            ×
+                          </button>
+                        )}
                       </div>
 
                       <div className="os-piece-area">
-                        <button
-                          type="button"
-                          className="os-small-btn os-outline"
-                          onClick={() =>
-                            adicionarPecaDiagnostico(
-                              diagnostico.id,
-                              servico.id
-                            )
-                          }
-                        >
-                          + Adicionar peça
-                        </button>
+                        {podeEditar && (
+                          <button
+                            type="button"
+                            className="os-small-btn os-outline"
+                            onClick={() =>
+                              adicionarPecaDiagnostico(
+                                diagnostico.id,
+                                servico.id
+                              )
+                            }
+                          >
+                            + Adicionar peça
+                          </button>
+                        )}
 
                         {servico.pecas.map((peca, pecaIndex) => {
                           const codigoPecaCompleto = `${codigoServicoCompleto}.${
                             pecaIndex + 1
                           }`;
 
-                          return (
-                            <div className="os-piece-row" key={peca.id}>
-                              <div className="os-piece-title-row">
-                                <div className="os-code os-code-piece">
-                                  {pecaIndex + 1}
-                                </div>
-
-                                <div>
-                                  <strong>Peça {pecaIndex + 1}</strong>
-                                  <small>
-                                    Código interno: {codigoPecaCompleto}
-                                  </small>
-                                </div>
-                              </div>
-
-                              <div className="os-form-grid os-grid-piece">
-                                <div className="os-field os-col-2">
-                                  <label>Descrição da peça</label>
-                                  <input
-                                    value={peca.descricao}
-                                    onChange={(e) =>
-                                      atualizarPecaDiagnostico(
-                                        diagnostico.id,
-                                        servico.id,
-                                        peca.id,
-                                        'descricao',
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Ex: Pastilha de freio"
-                                  />
-                                </div>
-
-                                <div className="os-field">
-                                  <label>Fornecedor</label>
-                                  <input
-                                    value={peca.fornecedor}
-                                    onChange={(e) =>
-                                      atualizarPecaDiagnostico(
-                                        diagnostico.id,
-                                        servico.id,
-                                        peca.id,
-                                        'fornecedor',
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Fornecedor"
-                                  />
-                                </div>
-
-                                <div className="os-field">
-                                  <label>Qtd.</label>
-                                  <input
-                                    type="number"
-                                    value={peca.quantidade}
-                                    onChange={(e) =>
-                                      atualizarPecaDiagnostico(
-                                        diagnostico.id,
-                                        servico.id,
-                                        peca.id,
-                                        'quantidade',
-                                        e.target.value
-                                      )
-                                    }
-                                  />
-                                </div>
-
-                                <div className="os-field">
-                                  <label>Custo</label>
-                                  <input
-                                    type="number"
-                                    value={peca.custoUnitario}
-                                    onChange={(e) =>
-                                      atualizarPecaDiagnostico(
-                                        diagnostico.id,
-                                        servico.id,
-                                        peca.id,
-                                        'custoUnitario',
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="0,00"
-                                  />
-                                </div>
-
-                                <div className="os-field">
-                                  <label>Desconto</label>
-                                  <input
-                                    type="number"
-                                    value={peca.desconto}
-                                    onChange={(e) =>
-                                      atualizarPecaDiagnostico(
-                                        diagnostico.id,
-                                        servico.id,
-                                        peca.id,
-                                        'desconto',
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="0,00"
-                                  />
-                                </div>
-
-                                <div className="os-field">
-                                  <label>Total</label>
-                                  <input
-                                    readOnly
-                                    value={formatarMoeda(
-                                      Number(peca.quantidade || 0) *
-                                        Number(peca.custoUnitario || 0) -
-                                        Number(peca.desconto || 0)
-                                    )}
-                                  />
-                                </div>
-                              </div>
-
-                              <button
-                                type="button"
-                                className="os-icon-btn"
-                                onClick={() =>
-                                  removerPecaDiagnostico(
-                                    diagnostico.id,
-                                    servico.id,
-                                    peca.id
-                                  )
-                                }
-                              >
-                                ×
-                              </button>
-                            </div>
-                          );
+                          return renderPeca({
+                            peca,
+                            pecaIndex,
+                            codigoPecaCompleto,
+                            onAbrirCatalogo: () =>
+                              abrirModalCatalogo({
+                                tipo: 'peca',
+                                diagnosticoId: diagnostico.id,
+                                servicoId: servico.id,
+                                pecaId: peca.id,
+                                origem: 'diagnostico',
+                              }),
+                            onAplicarFornecedor: (fornecedorId) =>
+                              aplicarFornecedorPecaDiagnostico(
+                                diagnostico.id,
+                                servico.id,
+                                peca.id,
+                                fornecedorId
+                              ),
+                            onAtualizar: (campo, valor) =>
+                              atualizarPecaDiagnostico(
+                                diagnostico.id,
+                                servico.id,
+                                peca.id,
+                                campo,
+                                valor
+                              ),
+                            onRemover: () =>
+                              removerPecaDiagnostico(
+                                diagnostico.id,
+                                servico.id,
+                                peca.id
+                              ),
+                          });
                         })}
                       </div>
                     </article>
@@ -997,36 +2244,61 @@ function OrdemServico() {
 
                       <div>
                         <strong>Serviço {servicoIndex + 1}</strong>
-                        <small>Código interno: {codigoServicoCompleto}</small>
+                        <small>{codigoServicoCompleto}</small>
                       </div>
                     </div>
 
                     <div className="os-service-header">
                       <div className="os-form-grid os-grid-service">
                         <div className="os-field os-col-2">
-                          <label>Descrição do serviço</label>
+                          <label>Serviço</label>
+
+                          <button
+                            type="button"
+                            className="os-select-modal-btn"
+                            onClick={() =>
+                              abrirModalCatalogo({
+                                tipo: 'servico',
+                                servicoId: servico.id,
+                                origem: 'sem-diagnostico',
+                              })
+                            }
+                            disabled={!podeEditar}
+                          >
+                            {servico.servicoCatalogoId
+                              ? servico.descricao
+                              : 'Selecionar serviço cadastrado'}
+                          </button>
+                        </div>
+
+                        <div className="os-field os-col-2">
+                          <label>Descrição complementar</label>
+
                           <input
                             value={servico.descricao}
-                            onChange={(e) =>
+                            disabled={!podeEditar}
+                            onChange={(event) =>
                               atualizarServicoSemDiagnostico(
                                 servico.id,
                                 'descricao',
-                                e.target.value
+                                event.target.value
                               )
                             }
-                            placeholder="Serviço sem diagnóstico"
+                            placeholder="Detalhe específico deste serviço"
                           />
                         </div>
 
                         <div className="os-field">
                           <label>Responsável</label>
+
                           <input
                             value={servico.responsavel}
-                            onChange={(e) =>
+                            disabled={!podeEditar}
+                            onChange={(event) =>
                               atualizarServicoSemDiagnostico(
                                 servico.id,
                                 'responsavel',
-                                e.target.value
+                                event.target.value
                               )
                             }
                             placeholder="Técnico"
@@ -1035,33 +2307,33 @@ function OrdemServico() {
 
                         <div className="os-field">
                           <label>Tipo</label>
-                          <select
+
+                          <input
                             value={servico.tipo}
-                            onChange={(e) =>
+                            disabled={!podeEditar}
+                            onChange={(event) =>
                               atualizarServicoSemDiagnostico(
                                 servico.id,
                                 'tipo',
-                                e.target.value
+                                event.target.value
                               )
                             }
-                          >
-                            <option value="">Selecione</option>
-                            <option value="mao_de_obra">Mão de obra</option>
-                            <option value="reparo">Reparo</option>
-                            <option value="troca_peca">Troca de peça</option>
-                          </select>
+                            placeholder="Mão de obra, troca..."
+                          />
                         </div>
 
                         <div className="os-field">
                           <label>Preço</label>
+
                           <input
                             type="number"
                             value={servico.precoVenda}
-                            onChange={(e) =>
+                            disabled={!podeEditar}
+                            onChange={(event) =>
                               atualizarServicoSemDiagnostico(
                                 servico.id,
                                 'precoVenda',
-                                e.target.value
+                                event.target.value
                               )
                             }
                             placeholder="0,00"
@@ -1070,14 +2342,16 @@ function OrdemServico() {
 
                         <div className="os-field">
                           <label>Desconto</label>
+
                           <input
                             type="number"
                             value={servico.desconto}
-                            onChange={(e) =>
+                            disabled={!podeEditar}
+                            onChange={(event) =>
                               atualizarServicoSemDiagnostico(
                                 servico.id,
                                 'desconto',
-                                e.target.value
+                                event.target.value
                               )
                             }
                             placeholder="0,00"
@@ -1085,138 +2359,97 @@ function OrdemServico() {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        className="os-icon-btn"
-                        onClick={() =>
-                          removerServicoSemDiagnostico(servico.id)
-                        }
-                      >
-                        ×
-                      </button>
+                      {podeEditar && (
+                        <button
+                          type="button"
+                          className="os-icon-btn"
+                          onClick={() =>
+                            removerServicoSemDiagnostico(servico.id)
+                          }
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
 
                     <div className="os-piece-area">
-                      <button
-                        type="button"
-                        className="os-small-btn os-outline"
-                        onClick={() => adicionarPecaSemDiagnostico(servico.id)}
-                      >
-                        + Adicionar peça
-                      </button>
+                      {podeEditar && (
+                        <button
+                          type="button"
+                          className="os-small-btn os-outline"
+                          onClick={() => adicionarPecaSemDiagnostico(servico.id)}
+                        >
+                          + Adicionar peça
+                        </button>
+                      )}
 
                       {servico.pecas.map((peca, pecaIndex) => {
                         const codigoPecaCompleto = `${codigoServicoCompleto}.${
                           pecaIndex + 1
                         }`;
 
-                        return (
-                          <div className="os-piece-row" key={peca.id}>
-                            <div className="os-piece-title-row">
-                              <div className="os-code os-code-piece">
-                                {pecaIndex + 1}
-                              </div>
-
-                              <div>
-                                <strong>Peça {pecaIndex + 1}</strong>
-                                <small>
-                                  Código interno: {codigoPecaCompleto}
-                                </small>
-                              </div>
-                            </div>
-
-                            <div className="os-form-grid os-grid-piece">
-                              <div className="os-field os-col-2">
-                                <label>Descrição da peça</label>
-                                <input
-                                  value={peca.descricao}
-                                  onChange={(e) =>
-                                    atualizarPecaSemDiagnostico(
-                                      servico.id,
-                                      peca.id,
-                                      'descricao',
-                                      e.target.value
-                                    )
-                                  }
-                                  placeholder="Peça"
-                                />
-                              </div>
-
-                              <div className="os-field">
-                                <label>Fornecedor</label>
-                                <input
-                                  value={peca.fornecedor}
-                                  onChange={(e) =>
-                                    atualizarPecaSemDiagnostico(
-                                      servico.id,
-                                      peca.id,
-                                      'fornecedor',
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </div>
-
-                              <div className="os-field">
-                                <label>Qtd.</label>
-                                <input
-                                  type="number"
-                                  value={peca.quantidade}
-                                  onChange={(e) =>
-                                    atualizarPecaSemDiagnostico(
-                                      servico.id,
-                                      peca.id,
-                                      'quantidade',
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </div>
-
-                              <div className="os-field">
-                                <label>Custo</label>
-                                <input
-                                  type="number"
-                                  value={peca.custoUnitario}
-                                  onChange={(e) =>
-                                    atualizarPecaSemDiagnostico(
-                                      servico.id,
-                                      peca.id,
-                                      'custoUnitario',
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </div>
-
-                              <div className="os-field">
-                                <label>Total</label>
-                                <input
-                                  readOnly
-                                  value={formatarMoeda(
-                                    Number(peca.quantidade || 0) *
-                                      Number(peca.custoUnitario || 0)
-                                  )}
-                                />
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              className="os-icon-btn"
-                              onClick={() =>
-                                removerPecaSemDiagnostico(servico.id, peca.id)
-                              }
-                            >
-                              ×
-                            </button>
-                          </div>
-                        );
+                        return renderPeca({
+                          peca,
+                          pecaIndex,
+                          codigoPecaCompleto,
+                          onAbrirCatalogo: () =>
+                            abrirModalCatalogo({
+                              tipo: 'peca',
+                              servicoId: servico.id,
+                              pecaId: peca.id,
+                              origem: 'servico-sem-diagnostico',
+                            }),
+                          onAplicarFornecedor: (fornecedorId) =>
+                            aplicarFornecedorPecaSemDiagnostico(
+                              servico.id,
+                              peca.id,
+                              fornecedorId
+                            ),
+                          onAtualizar: (campo, valor) =>
+                            atualizarPecaSemDiagnostico(
+                              servico.id,
+                              peca.id,
+                              campo,
+                              valor
+                            ),
+                          onRemover: () =>
+                            removerPecaSemDiagnostico(servico.id, peca.id),
+                        });
                       })}
                     </div>
                   </article>
                 );
               })}
+            </article>
+          )}
+
+          {ordem.pecasAvulsas.length > 0 && (
+            <article className="os-diagnostic-card">
+              <div className="os-diagnostic-header">
+                <div className="os-code os-code-free">P</div>
+                <strong>Peças avulsas</strong>
+              </div>
+
+              <div className="os-piece-area">
+                {ordem.pecasAvulsas.map((peca, pecaIndex) =>
+                  renderPeca({
+                    peca,
+                    pecaIndex,
+                    codigoPecaCompleto: `P.${pecaIndex + 1}`,
+                    onAbrirCatalogo: () =>
+                      abrirModalCatalogo({
+                        tipo: 'peca',
+                        pecaId: peca.id,
+                        origem: 'avulsa',
+                      }),
+                    onAplicarFornecedor: (fornecedorId) =>
+                      aplicarFornecedorPecaAvulsa(peca.id, fornecedorId),
+                    onAtualizar: (campo, valor) =>
+                      atualizarPecaAvulsa(peca.id, campo, valor),
+                    onRemover: () => removerPecaAvulsa(peca.id),
+                  })
+                )}
+              </div>
             </article>
           )}
         </section>
@@ -1251,6 +2484,279 @@ function OrdemServico() {
           </button>
         </section>
 
+        <section className="os-final-actions">
+          <button
+            type="button"
+            className="os-action os-action-red"
+            onClick={voltarPagina}
+          >
+            Voltar
+          </button>
+
+          {estaVisualizando && (
+            <button
+              type="button"
+              className="os-action os-action-dark"
+              onClick={editarOrdemAtual}
+            >
+              Editar OS
+            </button>
+          )}
+
+          {podeEditar && (
+            <button
+              type="button"
+              className="os-action os-action-dark"
+              onClick={salvarOrdemServico}
+              disabled={salvando}
+            >
+              {salvando ? 'Salvando...' : 'Salvar'}
+            </button>
+          )}
+        </section>
+
+        {modalBuscarOSAberto && (
+          <div className="os-modal-overlay">
+            <div className="os-modal os-catalog-modal">
+              <div className="os-modal-header">
+                <h2>Buscar ordem de serviço</h2>
+
+                <button
+                  type="button"
+                  className="os-modal-close-btn"
+                  onClick={fecharModalBuscarOS}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="os-form-grid os-grid-4">
+                <div className="os-field os-col-2">
+                  <label>Código, cliente, placa ou veículo</label>
+
+                  <input
+                    value={filtrosBuscaOS.termo}
+                    onChange={(event) =>
+                      atualizarFiltroBuscaOS('termo', event.target.value)
+                    }
+                    placeholder="Ex: OS-0001, João, ABC1D23"
+                  />
+                </div>
+
+                <div className="os-field">
+                  <label>Status</label>
+
+                  <select
+                    value={filtrosBuscaOS.status}
+                    onChange={(event) =>
+                      atualizarFiltroBuscaOS('status', event.target.value)
+                    }
+                  >
+                    <option value="">Todos</option>
+                    <option value="ABERTA">Aberta</option>
+                    <option value="EM_ANDAMENTO">Em andamento</option>
+                    <option value="AGUARDANDO_PECA">Aguardando peça</option>
+                    <option value="FINALIZADA">Finalizada</option>
+                    <option value="CANCELADA">Cancelada</option>
+                  </select>
+                </div>
+
+                <div className="os-field">
+                  <label>Data inicial</label>
+
+                  <input
+                    type="date"
+                    value={filtrosBuscaOS.dataInicio}
+                    onChange={(event) =>
+                      atualizarFiltroBuscaOS('dataInicio', event.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="os-field">
+                  <label>Data final</label>
+
+                  <input
+                    type="date"
+                    value={filtrosBuscaOS.dataFim}
+                    onChange={(event) =>
+                      atualizarFiltroBuscaOS('dataFim', event.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="os-field">
+                  <label>&nbsp;</label>
+
+                  <button
+                    type="button"
+                    className="os-small-btn os-blue"
+                    onClick={buscarOrdensAntigas}
+                    disabled={buscandoOrdens}
+                  >
+                    {buscandoOrdens ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
+
+                <div className="os-field">
+                  <label>&nbsp;</label>
+
+                  <button
+                    type="button"
+                    className="os-small-btn os-outline"
+                    onClick={limparFiltrosBuscaOS}
+                  >
+                    Limpar
+                  </button>
+                </div>
+              </div>
+
+              <div className="os-catalog-table-wrap">
+                <table className="os-catalog-table">
+                  <thead>
+                    <tr>
+                      <th>OS</th>
+                      <th>Cliente</th>
+                      <th>Veículo</th>
+                      <th>Data</th>
+                      <th>Status</th>
+                      <th>Total</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {ordensEncontradas.length === 0 && (
+                      <tr>
+                        <td colSpan="7">Nenhuma OS encontrada.</td>
+                      </tr>
+                    )}
+
+                    {ordensEncontradas.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.codigo}</td>
+                        <td>{item.clienteNome || '-'}</td>
+
+                        <td>
+                          {item.veiculo?.placa || '-'} |{' '}
+                          {item.veiculo?.fabricante || '-'}{' '}
+                          {item.veiculo?.modelo || '-'}
+                        </td>
+
+                        <td>{formatarData(item.dataEmissao)}</td>
+                        <td>{item.status}</td>
+                        <td>{formatarMoeda(item.totalGeral)}</td>
+
+                        <td>
+                          <button
+                            type="button"
+                            className="os-small-btn os-blue"
+                            onClick={() => abrirOrdemExistente(item.id)}
+                            disabled={carregandoOrdem}
+                          >
+                            Abrir
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {modalCatalogo.aberto && (
+          <div className="os-modal-overlay">
+            <div className="os-modal os-catalog-modal">
+              <div className="os-modal-header os-catalog-header">
+                <div>
+                  <h2>{obterTituloModalCatalogo()}</h2>
+
+                  <span>
+                    Selecione um cadastro existente ou cadastre um novo em outra
+                    aba.
+                  </span>
+                </div>
+
+                <div className="os-catalog-header-actions">
+                  <button
+                    type="button"
+                    className="os-small-btn os-blue"
+                    onClick={abrirCadastroCatalogoNovaAba}
+                  >
+                    {obterTextoBotaoCadastroCatalogo()}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="os-small-btn os-outline"
+                    onClick={atualizarListaCatalogoModal}
+                    disabled={carregandoCatalogos}
+                  >
+                    {carregandoCatalogos ? 'Atualizando...' : 'Atualizar lista'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="os-modal-close-btn"
+                    onClick={fecharModalCatalogo}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              {obterItensModalCatalogo().length === 0 ? (
+                <div className="os-catalog-empty">
+                  <p>{obterTextoVazioModalCatalogo()}</p>
+
+                  <button
+                    type="button"
+                    className="os-small-btn os-blue"
+                    onClick={abrirCadastroCatalogoNovaAba}
+                  >
+                    {obterTextoBotaoCadastroCatalogo()}
+                  </button>
+                </div>
+              ) : (
+                <div className="os-catalog-table-wrap">
+                  <table className="os-catalog-table">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Nome</th>
+                        <th>Detalhes</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {obterItensModalCatalogo().map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.codigo || '-'}</td>
+                          <td>{item.nome || '-'}</td>
+                          <td>{obterDetalheCatalogo(item)}</td>
+
+                          <td>
+                            <button
+                              type="button"
+                              className="os-small-btn os-blue"
+                              onClick={() => selecionarItemCatalogo(item)}
+                            >
+                              Selecionar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {modalCotacaoAberto && (
           <div className="os-modal-overlay">
             <div className="os-modal">
@@ -1259,6 +2765,7 @@ function OrdemServico() {
 
                 <button
                   type="button"
+                  className="os-modal-close-btn"
                   onClick={() => setModalCotacaoAberto(false)}
                 >
                   ×
@@ -1267,6 +2774,7 @@ function OrdemServico() {
 
               <div className="os-modal-section">
                 <h3>Veículo</h3>
+
                 <p>
                   {ordem.veiculo.marca || '-'} {ordem.veiculo.modelo || '-'} |{' '}
                   Ano: {ordem.veiculo.ano || '-'} | Motor:{' '}
@@ -1290,13 +2798,14 @@ function OrdemServico() {
               <div className="os-modal-section">
                 <h3>Fornecedores</h3>
 
-                {fornecedores.map((fornecedor) => (
+                {catalogos.fornecedores.map((fornecedor) => (
                   <label className="os-provider" key={fornecedor.id}>
                     <input
                       type="checkbox"
-                      checked={fornecedor.selecionado}
-                      onChange={() => alternarFornecedor(fornecedor.id)}
+                      checked={fornecedoresCotacao.includes(fornecedor.id)}
+                      onChange={() => alternarFornecedorCotacao(fornecedor.id)}
                     />
+
                     {fornecedor.nome}
                   </label>
                 ))}

@@ -1,0 +1,338 @@
+.diagnosticos-page {
+  width: 100%;
+  min-height: calc(100vh - 68px);
+  background: #edf2f7;
+  padding: 30px 48px 60px;
+  color: #07142b;
+}
+
+.diagnosticos-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 26px;
+}
+
+.diagnosticos-top h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #07142b;
+}
+
+.diagnosticos-top p {
+  margin: 6px 0 0;
+  color: #455875;
+  font-size: 15px;
+}
+
+.diagnosticos-top small {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.diagnosticos-card {
+  background: #fff;
+  border: 1px solid #d9e1ec;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.diagnosticos-card-title {
+  margin-bottom: 20px;
+}
+
+.diagnosticos-card-title h2,
+.diagnosticos-list-header h2 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 800;
+  color: #07142b;
+}
+
+.diagnosticos-card-title span,
+.diagnosticos-list-header span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.diagnosticos-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 16px;
+  align-items: end;
+}
+
+.diagnosticos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.diagnosticos-field label {
+  color: #12213a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.diagnosticos-field input,
+.diagnosticos-field textarea,
+.diagnosticos-search input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.diagnosticos-field input,
+.diagnosticos-search input {
+  height: 42px;
+}
+
+.diagnosticos-field textarea {
+  min-height: 90px;
+  padding-top: 12px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.diagnosticos-field input::placeholder,
+.diagnosticos-field textarea::placeholder,
+.diagnosticos-search input::placeholder {
+  color: #b8c4d6;
+}
+
+.diagnosticos-field input:focus,
+.diagnosticos-field textarea:focus,
+.diagnosticos-search input:focus {
+  border-color: #14a8e8;
+  box-shadow: 0 0 0 3px rgba(20, 168, 232, 0.14);
+}
+
+.diagnosticos-col-2 {
+  grid-column: span 1;
+}
+
+.diagnosticos-col-full {
+  grid-column: 1 / -1;
+}
+
+.diagnosticos-check {
+  height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  color: #12213a;
+  background: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.diagnosticos-check input {
+  width: 16px;
+  height: 16px;
+}
+
+.diagnosticos-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.diagnosticos-btn {
+  height: 42px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0 22px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.diagnosticos-btn:hover {
+  transform: translateY(-1px);
+}
+
+.diagnosticos-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.diagnosticos-btn-primary {
+  background: #07142b;
+  color: #fff;
+}
+
+.diagnosticos-btn-light {
+  background: #fff;
+  color: #07142b;
+  border: 1px solid #07142b;
+}
+
+.diagnosticos-list-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.diagnosticos-search {
+  width: min(420px, 100%);
+}
+
+.diagnosticos-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.diagnosticos-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.diagnosticos-table th,
+.diagnosticos-table td {
+  padding: 13px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  font-size: 14px;
+}
+
+.diagnosticos-table th {
+  color: #07142b;
+  font-weight: 900;
+  background: #f8fafc;
+}
+
+.diagnosticos-table td {
+  color: #334155;
+  vertical-align: middle;
+}
+
+.diagnosticos-table tr:hover td {
+  background: #f8fafc;
+}
+
+.diagnosticos-empty {
+  text-align: center !important;
+  color: #64748b !important;
+  font-weight: 700;
+  padding: 24px !important;
+}
+
+.diagnosticos-status {
+  display: inline-flex;
+  min-width: 72px;
+  height: 28px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.diagnosticos-status.ativo {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.diagnosticos-status.inativo {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.diagnosticos-table-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.diagnosticos-mini-btn {
+  height: 32px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #07142b;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.diagnosticos-mini-btn:hover {
+  border-color: #14a8e8;
+  background: #eef8ff;
+}
+
+.diagnosticos-mini-btn.danger {
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.diagnosticos-mini-btn.danger:hover {
+  background: #fee2e2;
+}
+
+@media (max-width: 1000px) {
+  .diagnosticos-page {
+    padding: 24px;
+  }
+
+  .diagnosticos-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .diagnosticos-col-full {
+    grid-column: 1 / -1;
+  }
+
+  .diagnosticos-list-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .diagnosticos-search {
+    width: 100%;
+  }
+}
+.diagnosticos-field input[readonly],
+.diagnosticos-field input:read-only {
+  background: #f8fafc;
+  color: #334155;
+  cursor: not-allowed;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .diagnosticos-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .diagnosticos-col-full {
+    grid-column: span 1;
+  }
+
+  .diagnosticos-actions {
+    flex-direction: column;
+  }
+
+  .diagnosticos-btn {
+    width: 100%;
+  }
+}

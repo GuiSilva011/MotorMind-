@@ -1,0 +1,373 @@
+import { useEffect, useMemo, useState } from 'react';
+import Layout from '../components/Layout';
+import api from '../services/api';
+import '../styles/diagnosticos.css';
+
+function gerarCodigo(prefixo) {
+  const data = new Date();
+
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  const aleatorio = String(Math.floor(Math.random() * 9000) + 1000);
+
+  return `${prefixo}-${ano}${mes}${dia}-${aleatorio}`;
+}
+
+function criarDiagnosticoInicial() {
+  return {
+    codigo: gerarCodigo('DIAG'),
+    nome: '',
+    descricao: '',
+    ativo: true,
+  };
+}
+
+function Diagnosticos() {
+  const [diagnosticos, setDiagnosticos] = useState([]);
+  const [form, setForm] = useState(criarDiagnosticoInicial());
+  const [editandoId, setEditandoId] = useState(null);
+  const [busca, setBusca] = useState('');
+  const [carregando, setCarregando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    carregarDiagnosticos();
+  }, []);
+
+  async function carregarDiagnosticos() {
+    try {
+      setCarregando(true);
+
+      const response = await api.get('/diagnosticos');
+
+      setDiagnosticos(response.data || []);
+    } catch (error) {
+      console.error('Erro ao carregar diagnósticos:', error);
+      alert('Erro ao carregar diagnósticos.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  function atualizarCampo(campo, valor) {
+    setForm((prev) => ({
+      ...prev,
+      [campo]: valor,
+    }));
+  }
+
+  function limparFormulario() {
+  setForm(criarDiagnosticoInicial());
+  setEditandoId(null);
+  }
+
+  function editarDiagnostico(diagnostico) {
+    setEditandoId(diagnostico.id);
+
+    setForm({
+      codigo: diagnostico.codigo || '',
+      nome: diagnostico.nome || '',
+      descricao: diagnostico.descricao || '',
+      ativo: Boolean(diagnostico.ativo),
+    });
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }
+
+  async function salvarDiagnostico(event) {
+    event.preventDefault();
+
+    try {
+      if (!form.codigo.trim()) {
+        alert('Informe o código do diagnóstico.');
+        return;
+      }
+
+      if (!form.nome.trim()) {
+        alert('Informe o nome do diagnóstico.');
+        return;
+      }
+
+      setSalvando(true);
+
+      const payload = {
+        codigo: form.codigo.trim().toUpperCase(),
+        nome: form.nome.trim(),
+        descricao: form.descricao?.trim() || null,
+        ativo: Boolean(form.ativo),
+      };
+
+      if (editandoId) {
+        await api.put(`/diagnosticos/${editandoId}`, payload);
+        alert('Diagnóstico atualizado com sucesso!');
+      } else {
+        await api.post('/diagnosticos', payload);
+        alert('Diagnóstico cadastrado com sucesso!');
+      }
+
+      limparFormulario();
+      await carregarDiagnosticos();
+    } catch (error) {
+      console.error('Erro ao salvar diagnóstico:', error);
+
+      alert(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao salvar diagnóstico.'
+      );
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function excluirDiagnostico(id) {
+    const confirmar = window.confirm(
+      'Deseja realmente excluir este diagnóstico?'
+    );
+
+    if (!confirmar) return;
+
+    try {
+      await api.delete(`/diagnosticos/${id}`);
+
+      alert('Diagnóstico excluído com sucesso!');
+      await carregarDiagnosticos();
+    } catch (error) {
+      console.error('Erro ao excluir diagnóstico:', error);
+
+      alert(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao excluir diagnóstico.'
+      );
+    }
+  }
+
+  async function alternarStatus(diagnostico) {
+    try {
+      const payload = {
+        codigo: diagnostico.codigo,
+        nome: diagnostico.nome,
+        descricao: diagnostico.descricao,
+        ativo: !diagnostico.ativo,
+      };
+
+      await api.put(`/diagnosticos/${diagnostico.id}`, payload);
+
+      await carregarDiagnosticos();
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+      alert('Erro ao alterar status do diagnóstico.');
+    }
+  }
+
+  const diagnosticosFiltrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+
+    if (!termo) return diagnosticos;
+
+    return diagnosticos.filter((diagnostico) => {
+      const codigo = diagnostico.codigo?.toLowerCase() || '';
+      const nome = diagnostico.nome?.toLowerCase() || '';
+      const descricao = diagnostico.descricao?.toLowerCase() || '';
+
+      return (
+        codigo.includes(termo) ||
+        nome.includes(termo) ||
+        descricao.includes(termo)
+      );
+    });
+  }, [diagnosticos, busca]);
+
+  return (
+    <Layout>
+      <main className="diagnosticos-page">
+        <section className="diagnosticos-top">
+          <div>
+            <h1>Cadastro de Diagnósticos</h1>
+            <p>Cadastre os diagnósticos usados nas ordens de serviço.</p>
+
+            {carregando && <small>Carregando diagnósticos...</small>}
+          </div>
+        </section>
+
+        <section className="diagnosticos-card">
+          <div className="diagnosticos-card-title">
+            <h2>{editandoId ? 'Editar diagnóstico' : 'Novo diagnóstico'}</h2>
+            <span>
+              O diagnóstico cadastrado será usado como modelo dentro da OS.
+            </span>
+          </div>
+
+          <form onSubmit={salvarDiagnostico}>
+            <div className="diagnosticos-form-grid">
+              <div className="diagnosticos-field">
+                <label>Código</label>
+                <input
+                value={form.codigo}
+                readOnly
+                 placeholder="Código automático"
+                />
+              </div>
+              <div className="diagnosticos-field diagnosticos-col-2">
+                <label>Nome</label>
+                <input
+                  value={form.nome}
+                  onChange={(event) =>
+                    atualizarCampo('nome', event.target.value)
+                  }
+                  placeholder="Ex: Carro falhando"
+                />
+              </div>
+
+              <label className="diagnosticos-check">
+                <input
+                  type="checkbox"
+                  checked={form.ativo}
+                  onChange={(event) =>
+                    atualizarCampo('ativo', event.target.checked)
+                  }
+                />
+                Diagnóstico ativo
+              </label>
+
+              <div className="diagnosticos-field diagnosticos-col-full">
+                <label>Descrição</label>
+                <textarea
+                  value={form.descricao}
+                  onChange={(event) =>
+                    atualizarCampo('descricao', event.target.value)
+                  }
+                  placeholder="Descreva quando este diagnóstico deve ser usado..."
+                />
+              </div>
+            </div>
+
+            <div className="diagnosticos-actions">
+              <button
+                type="button"
+                className="diagnosticos-btn diagnosticos-btn-light"
+                onClick={limparFormulario}
+              >
+                Limpar
+              </button>
+
+              <button
+                type="submit"
+                className="diagnosticos-btn diagnosticos-btn-primary"
+                disabled={salvando}
+              >
+                {salvando
+                  ? 'Salvando...'
+                  : editandoId
+                  ? 'Salvar alterações'
+                  : 'Cadastrar diagnóstico'}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section className="diagnosticos-card">
+          <div className="diagnosticos-list-header">
+            <div>
+              <h2>Diagnósticos cadastrados</h2>
+              <span>
+                {diagnosticosFiltrados.length} diagnóstico(s) encontrado(s)
+              </span>
+            </div>
+
+            <div className="diagnosticos-search">
+              <input
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Buscar por código, nome ou descrição"
+              />
+            </div>
+          </div>
+
+          <div className="diagnosticos-table-wrap">
+            <table className="diagnosticos-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nome</th>
+                  <th>Descrição</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {diagnosticosFiltrados.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="diagnosticos-empty">
+                      Nenhum diagnóstico encontrado.
+                    </td>
+                  </tr>
+                )}
+
+                {diagnosticosFiltrados.map((diagnostico) => (
+                  <tr key={diagnostico.id}>
+                    <td>
+                      <strong>{diagnostico.codigo}</strong>
+                    </td>
+
+                    <td>{diagnostico.nome}</td>
+
+                    <td>{diagnostico.descricao || '-'}</td>
+
+                    <td>
+                      <span
+                        className={
+                          diagnostico.ativo
+                            ? 'diagnosticos-status ativo'
+                            : 'diagnosticos-status inativo'
+                        }
+                      >
+                        {diagnostico.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+
+                    <td>
+                      <div className="diagnosticos-table-actions">
+                        <button
+                          type="button"
+                          className="diagnosticos-mini-btn"
+                          onClick={() => editarDiagnostico(diagnostico)}
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          type="button"
+                          className="diagnosticos-mini-btn"
+                          onClick={() => alternarStatus(diagnostico)}
+                        >
+                          {diagnostico.ativo ? 'Inativar' : 'Ativar'}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="diagnosticos-mini-btn danger"
+                          onClick={() => excluirDiagnostico(diagnostico.id)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </Layout>
+  );
+}
+
+export default Diagnosticos;

@@ -3,15 +3,32 @@ import { NavLink, useLocation } from 'react-router-dom';
 
 function Sidebar() {
   const location = useLocation();
+
   const [openAgendamento, setOpenAgendamento] = useState(false);
+  const [openOrdemServico, setOpenOrdemServico] = useState(false);
 
   useEffect(() => {
     if (location.pathname.startsWith('/agendamentos')) {
       setOpenAgendamento(true);
     }
+
+    if (
+      location.pathname.startsWith('/ordemServico') ||
+      location.pathname.startsWith('/diagnosticos') ||
+      location.pathname.startsWith('/servicos') ||
+      location.pathname.startsWith('/pecas')
+    ) {
+      setOpenOrdemServico(true);
+    }
   }, [location.pathname]);
 
   const agendamentoAtivo = location.pathname.startsWith('/agendamentos');
+
+  const ordemServicoAtivo =
+    location.pathname.startsWith('/ordemServico') ||
+    location.pathname.startsWith('/diagnosticos') ||
+    location.pathname.startsWith('/servicos') ||
+    location.pathname.startsWith('/pecas');
 
   return (
     <aside className="sidebar">
@@ -47,7 +64,11 @@ function Sidebar() {
 
           <button
             type="button"
-            className={agendamentoAtivo || openAgendamento ? 'menu-item active' : 'menu-item'}
+            className={
+              agendamentoAtivo || openAgendamento
+                ? 'menu-item active'
+                : 'menu-item'
+            }
             onClick={() => setOpenAgendamento(!openAgendamento)}
           >
             <img
@@ -89,19 +110,83 @@ function Sidebar() {
               </NavLink>
             </div>
           )}
-        <NavLink
-           to="/ordemServico"
-  className={({ isActive }) =>
-    isActive ? 'menu-item active' : 'menu-item'
-          }
-        >
-        <img
-          src="/icons/ordemservico.svg"
-          alt="Ordem de serviço"
-          className="menu-icon"
-        />
-        ORDEM DE SERVIÇO
-        </NavLink>
+
+          <button
+            type="button"
+            className={
+              ordemServicoAtivo || openOrdemServico
+                ? 'menu-item active'
+                : 'menu-item'
+            }
+            onClick={() => setOpenOrdemServico(!openOrdemServico)}
+          >
+            <img
+              src="/icons/ordemservico.svg"
+              alt="Ordem de serviço"
+              className="menu-icon"
+            />
+            ORDEM DE SERVIÇO
+          </button>
+
+          {openOrdemServico && (
+            <div className="submenu">
+              <NavLink
+                to="/ordemServico"
+                className={({ isActive }) =>
+                  isActive ? 'submenu-item active' : 'submenu-item'
+                }
+              >
+                <img
+                  src="/icons/ordemservico.svg"
+                  alt="Gerenciar OS"
+                  className="submenu-icon"
+                />
+                GERENCIAR OS
+              </NavLink>
+
+              <NavLink
+                to="/diagnosticos/cadastro"
+                className={({ isActive }) =>
+                  isActive ? 'submenu-item active' : 'submenu-item'
+                }
+              >
+                <img
+                  src="/icons/diagnostico.svg"
+                  alt="Diagnósticos"
+                  className="submenu-icon"
+                />
+                DIAGNÓSTICOS
+              </NavLink>
+
+              <NavLink
+                to="/servicos/cadastro"
+                className={({ isActive }) =>
+                  isActive ? 'submenu-item active' : 'submenu-item'
+                }
+              >
+                <img
+                  src="/icons/servicos.svg"
+                  alt="Serviços"
+                  className="submenu-icon"
+                />
+                SERVIÇOS
+              </NavLink>
+
+              <NavLink
+                to="/pecas/cadastro"
+                className={({ isActive }) =>
+                  isActive ? 'submenu-item active' : 'submenu-item'
+                }
+              >
+                <img
+                  src="/icons/pecas.svg"
+                  alt="Peças"
+                  className="submenu-icon"
+                />
+                PEÇAS
+              </NavLink>
+            </div>
+          )}
         </nav>
       </div>
 

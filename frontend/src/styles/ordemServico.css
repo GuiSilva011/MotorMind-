@@ -1,3 +1,7 @@
+/* =========================================================
+   ORDEM DE SERVIÇO - BASE
+========================================================= */
+
 .os-page {
   width: 100%;
   min-height: calc(100vh - 68px);
@@ -6,10 +10,15 @@
   color: #07142b;
 }
 
+/* =========================================================
+   TOPO DA PÁGINA
+========================================================= */
+
 .os-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 18px;
   margin-bottom: 26px;
 }
 
@@ -26,10 +35,23 @@
   font-size: 15px;
 }
 
+.os-top small {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-weight: 700;
+}
+
 .os-top-actions {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
+
+/* =========================================================
+   BOTÕES
+========================================================= */
 
 .os-action,
 .os-small-btn,
@@ -49,6 +71,15 @@
   transform: translateY(-1px);
 }
 
+.os-action:disabled,
+.os-small-btn:disabled,
+.os-icon-btn:disabled,
+.os-quote-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .os-action {
   height: 44px;
   min-width: 130px;
@@ -65,6 +96,43 @@
   background: #050505;
 }
 
+.os-small-btn {
+  height: 38px;
+  border-radius: 9px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.os-blue {
+  background: #14a8e8;
+  color: #fff;
+}
+
+.os-dark {
+  background: #07142b;
+  color: #fff;
+}
+
+.os-outline {
+  background: #fff;
+  color: #07142b;
+  border: 1px solid #07142b;
+}
+
+.os-icon-btn {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* =========================================================
+   PAINÉIS
+========================================================= */
+
 .os-panel,
 .os-service-panel,
 .os-summary-card {
@@ -74,11 +142,7 @@
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 
-.os-panel {
-  padding: 24px;
-  margin-bottom: 24px;
-}
-
+.os-panel,
 .os-service-panel {
   padding: 24px;
   margin-bottom: 24px;
@@ -122,6 +186,10 @@
   flex-wrap: wrap;
 }
 
+/* =========================================================
+   GRID / FORMULÁRIOS
+========================================================= */
+
 .os-form-grid {
   display: grid;
   gap: 16px;
@@ -129,18 +197,6 @@
 
 .os-grid-4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.os-grid-service {
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  flex: 1;
-  align-items: end;
-}
-
-.os-grid-piece {
-  grid-template-columns: 2fr 1.2fr 0.6fr 0.8fr 0.8fr 0.9fr;
-  flex: 1;
-  align-items: end;
 }
 
 .os-col-2 {
@@ -163,7 +219,7 @@
   grid-column: 1 / -1;
   height: 1px;
   background: #e2e8f0;
-  margin: 8px 0 2px;
+  margin: 18px 0 6px;
 }
 
 .os-field {
@@ -201,6 +257,49 @@
   box-shadow: 0 0 0 3px rgba(20, 168, 232, 0.14);
 }
 
+.os-field input[readonly],
+.os-field input:read-only {
+  background: #f8fafc;
+  color: #334155;
+  cursor: default;
+}
+
+.os-select-modal-btn:disabled,
+.os-field input:disabled,
+.os-field select:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   BOTÃO DE SELEÇÃO POR MODAL
+========================================================= */
+
+.os-select-modal-btn {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0 12px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.15s ease;
+}
+
+.os-select-modal-btn:hover:not(:disabled) {
+  border-color: #14a8e8;
+  background: #eef8ff;
+}
+
+/* =========================================================
+   CHECKBOX
+========================================================= */
+
 .os-check {
   height: 42px;
   margin-top: 21px;
@@ -211,6 +310,7 @@
   gap: 9px;
   padding: 0 12px;
   color: #12213a;
+  background: #f8fafc;
   font-size: 14px;
   font-weight: 700;
 }
@@ -220,28 +320,95 @@
   height: 16px;
 }
 
-.os-small-btn {
-  height: 38px;
+/* =========================================================
+   BUSCA DE CLIENTE / VEÍCULO
+========================================================= */
+
+.os-search-line {
+  display: flex;
+  gap: 8px;
+}
+
+.os-search-line input {
+  flex: 1;
+}
+
+.os-search-line button {
+  height: 42px;
+  border: 0;
   border-radius: 9px;
-  padding: 0 14px;
+  padding: 0 16px;
+  background: #14a8e8;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.os-search-line button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(0.96);
+}
+
+.os-search-line button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.os-search-results {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.os-search-result-item {
+  width: 100%;
+  border: 1px solid #d9e1ec;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: 0.15s ease;
+}
+
+.os-search-result-item strong {
+  color: #07142b;
+  font-size: 14px;
+}
+
+.os-search-result-item span {
+  color: #64748b;
   font-size: 13px;
 }
 
-.os-blue {
-  background: #14a8e8;
-  color: #fff;
+.os-search-result-item:hover {
+  border-color: #14a8e8;
+  background: #eef8ff;
 }
 
-.os-dark {
-  background: #07142b;
-  color: #fff;
+.os-not-found {
+  margin-top: 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #64748b;
+  font-weight: 700;
 }
 
-.os-outline {
-  background: #fff;
-  color: #07142b;
-  border: 1px solid #07142b;
-}
+/* =========================================================
+   ESTADOS VAZIOS
+========================================================= */
 
 .os-empty,
 .os-inner-empty {
@@ -260,23 +427,9 @@
   font-size: 13px;
 }
 
-.os-diagnostic-card {
-  border: 1px solid #d5dce8;
-  border-radius: 14px;
-  padding: 18px;
-  background: #f8fafc;
-  margin-top: 18px;
-}
-
-.os-no-diagnostic {
-  background: #fff8ed;
-}
-
-.os-diagnostic-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+/* =========================================================
+   CÓDIGOS VISUAIS
+========================================================= */
 
 .os-code {
   min-width: 48px;
@@ -306,29 +459,57 @@
   background: #ff6b00;
 }
 
-.os-icon-btn {
-  min-width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: #fee2e2;
-  color: #dc2626;
-  font-size: 22px;
-  line-height: 1;
+/* =========================================================
+   DIAGNÓSTICO - CARD PAI
+========================================================= */
+
+.os-diagnostic-card {
+  border: 1px solid #d5dce8;
+  border-radius: 16px;
+  padding: 20px;
+  background: #f8fafc;
+  margin-top: 18px;
 }
 
+.os-no-diagnostic {
+  background: #fff8ed;
+}
+
+.os-diagnostic-header {
+  display: grid;
+  grid-template-columns: 48px minmax(220px, 280px) 1fr auto auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.os-diagnostic-header .os-code {
+  align-self: center;
+}
+
+.os-diagnostic-header .os-small-btn,
+.os-diagnostic-header .os-icon-btn {
+  align-self: end;
+}
+
+/* =========================================================
+   SERVIÇOS - CARD FILHO
+========================================================= */
+
 .os-service-card {
-  margin-top: 16px;
-  padding: 16px;
+  margin-top: 18px;
+  padding: 18px;
   background: #fff;
   border: 1px solid #d9e1ec;
-  border-radius: 13px;
+  border-radius: 14px;
 }
 
 .os-service-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .os-service-title-row strong,
@@ -348,34 +529,78 @@
 }
 
 .os-service-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: start;
 }
 
+.os-service-header > .os-icon-btn {
+  margin-top: 22px;
+}
+
+.os-grid-service {
+  grid-template-columns: 2fr 2fr 1fr 1fr;
+  gap: 16px;
+  flex: initial;
+  align-items: end;
+}
+
+.os-grid-service .os-field:nth-child(1),
+.os-grid-service .os-field:nth-child(2) {
+  grid-column: span 2;
+}
+
+/* =========================================================
+   PEÇAS - CARD NETO
+========================================================= */
+
 .os-piece-area {
-  margin-top: 14px;
-  padding-left: 60px;
+  margin-top: 18px;
+  padding-left: 0;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
 }
 
 .os-piece-row {
   position: relative;
-  margin-top: 12px;
-  padding: 14px;
+  margin-top: 14px;
+  padding: 16px;
   background: #f8fafc;
   border: 1px solid #d9e1ec;
-  border-radius: 12px;
+  border-radius: 14px;
   display: grid;
-  grid-template-columns: 150px 1fr 34px;
-  gap: 12px;
-  align-items: end;
+  grid-template-columns: 130px 1fr auto;
+  gap: 16px;
+  align-items: start;
 }
 
 .os-piece-title-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-top: 22px;
 }
+
+.os-grid-piece {
+  grid-template-columns: 2fr 2fr 1.4fr 0.7fr 1fr 1fr 1fr;
+  gap: 14px;
+  flex: initial;
+  align-items: end;
+}
+
+.os-grid-piece .os-field:nth-child(1),
+.os-grid-piece .os-field:nth-child(2) {
+  grid-column: span 2;
+}
+
+.os-piece-row > .os-icon-btn {
+  margin-top: 22px;
+}
+
+/* =========================================================
+   PAGAMENTO / RESUMO
+========================================================= */
 
 .os-bottom {
   display: flex;
@@ -440,6 +665,21 @@
   transform: none;
 }
 
+/* =========================================================
+   AÇÕES FINAIS
+========================================================= */
+
+.os-final-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin: 28px 0 20px;
+}
+
+/* =========================================================
+   MODAL - BASE
+========================================================= */
+
 .os-modal-overlay {
   position: fixed;
   inset: 0;
@@ -465,6 +705,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 18px;
   margin-bottom: 18px;
 }
 
@@ -474,15 +715,32 @@
   color: #07142b;
 }
 
+/* Importante: evita que todo botão dentro do header vire botão quadrado */
 .os-modal-header button {
-  width: 36px;
-  height: 36px;
+  width: auto;
+  height: auto;
+}
+
+/* Botão específico de fechar modal */
+.os-modal-close-btn {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 9px;
   background: #fee2e2;
   color: #dc2626;
   font-size: 22px;
   cursor: pointer;
+  font-weight: 900;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.os-modal-close-btn:hover {
+  filter: brightness(0.97);
 }
 
 .os-modal-section {
@@ -530,17 +788,155 @@
   margin-top: 22px;
 }
 
+/* =========================================================
+   MODAL DE CATÁLOGO
+   Diagnóstico / Serviço / Peça
+========================================================= */
+
+.os-catalog-modal {
+  width: min(920px, calc(100vw - 48px));
+  max-width: 920px;
+  overflow: hidden;
+}
+
+.os-catalog-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.os-catalog-header > div:first-child {
+  width: 100%;
+}
+
+.os-catalog-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+  color: #07142b;
+}
+
+.os-catalog-header span {
+  display: block;
+  margin-top: 4px;
+  color: #455875;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.os-catalog-header-actions {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.os-catalog-header-actions .os-small-btn {
+  width: auto;
+  min-width: 170px;
+  height: 38px;
+  white-space: nowrap;
+}
+
+.os-catalog-header-actions .os-modal-close-btn {
+  flex: 0 0 38px;
+}
+
+/* =========================================================
+   TABELA DO MODAL DE CATÁLOGO
+========================================================= */
+
+.os-catalog-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+}
+
+.os-catalog-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+}
+
+.os-catalog-table th,
+.os-catalog-table td {
+  padding: 13px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.os-catalog-table th {
+  color: #07142b;
+  font-weight: 900;
+  background: #f8fafc;
+}
+
+.os-catalog-table td {
+  color: #334155;
+}
+
+.os-catalog-table tr:hover td {
+  background: #f8fafc;
+}
+
+.os-catalog-table td:last-child,
+.os-catalog-table th:last-child {
+  width: 140px;
+  text-align: right;
+}
+
+.os-catalog-table td[colspan] {
+  text-align: center;
+  color: #64748b;
+  font-weight: 700;
+  padding: 24px;
+}
+
+/* =========================================================
+   MODAL DE CATÁLOGO - VAZIO
+========================================================= */
+
+.os-catalog-empty {
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 28px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.os-catalog-empty p {
+  margin: 0 0 18px;
+  color: #64748b;
+  font-weight: 800;
+}
+
+/* =========================================================
+   RESPONSIVO
+========================================================= */
+
 @media (max-width: 1300px) {
   .os-grid-service {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .os-grid-piece {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .os-grid-service .os-field,
+  .os-grid-piece .os-field {
+    grid-column: span 1 !important;
   }
 
   .os-piece-row {
-    grid-template-columns: 150px 1fr 34px;
+    grid-template-columns: 120px 1fr auto;
   }
 }
 
@@ -560,8 +956,23 @@
     grid-column: span 2;
   }
 
-  .os-piece-area {
-    padding-left: 0;
+  .os-diagnostic-header {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .os-diagnostic-header .os-field,
+  .os-diagnostic-header .os-small-btn,
+  .os-diagnostic-header .os-icon-btn {
+    grid-column: span 2;
+  }
+
+  .os-service-header {
+    grid-template-columns: 1fr;
+  }
+
+  .os-service-header > .os-icon-btn {
+    width: 100%;
+    margin-top: 0;
   }
 
   .os-piece-row {
@@ -569,8 +980,13 @@
     align-items: stretch;
   }
 
-  .os-piece-row .os-icon-btn {
+  .os-piece-title-row {
+    padding-top: 0;
+  }
+
+  .os-piece-row > .os-icon-btn {
     width: 100%;
+    margin-top: 0;
   }
 }
 
@@ -604,10 +1020,14 @@
     grid-column: span 1;
   }
 
-  .os-diagnostic-header,
-  .os-service-header {
-    flex-direction: column;
-    align-items: stretch;
+  .os-diagnostic-header {
+    grid-template-columns: 1fr;
+  }
+
+  .os-diagnostic-header .os-field,
+  .os-diagnostic-header .os-small-btn,
+  .os-diagnostic-header .os-icon-btn {
+    grid-column: span 1;
   }
 
   .os-code {
@@ -617,4 +1037,81 @@
   .os-summary-card {
     width: 100%;
   }
+
+  .os-not-found {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .os-search-line {
+    flex-direction: column;
+  }
+
+  .os-final-actions {
+    flex-direction: column;
+  }
+
+  .os-catalog-modal {
+    width: calc(100vw - 24px);
+  }
+
+  .os-catalog-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .os-catalog-header-actions .os-small-btn,
+  .os-catalog-header-actions .os-modal-close-btn {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   TOASTS PERSONALIZADOS DA OS
+========================================================= */
+
+.os-toast-draft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.os-toast-draft strong {
+  color: #07142b;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.os-toast-draft span {
+  color: #455875;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.os-toast-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.os-toast-actions button {
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #14a8e8;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.os-toast-actions button.secondary {
+  background: #fff;
+  color: #07142b;
+  border: 1px solid #cbd5e1;
+}
+
+.os-toast-actions button:hover {
+  filter: brightness(0.96);
 }
