@@ -84,3 +84,182 @@ enum StatusAgendamento {
   CONCLUIDO
   CANCELADO
 }
+
+model DiagnosticoCatalogo {
+  id          Int      @id @default(autoincrement())
+  codigo      String   @unique @db.VarChar(20)
+  nome        String   @db.VarChar(80)
+  descricao   String?  @db.VarChar(255)
+  ativo       Boolean  @default(true)
+  ordensDiagnosticos OrdemDiagnostico[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ServicoCatalogo {
+  id           Int      @id @default(autoincrement())
+  codigo       String   @unique @db.VarChar(20)
+  nome         String   @db.VarChar(80)
+  categoria    String?  @db.VarChar(50)
+  valorPadrao  Decimal? @db.Decimal(10, 2)
+  ativo        Boolean  @default(true)
+  ordensServicos OrdemServicoItem[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model PecaCatalogo {
+  id          Int      @id @default(autoincrement())
+  codigo      String   @unique @db.VarChar(20)
+  nome        String   @db.VarChar(80)
+  marca       String?  @db.VarChar(50)
+  aplicacao   String?  @db.VarChar(120)
+  unidade     String?  @default("UN") @db.VarChar(10)
+  ativo       Boolean  @default(true)
+  ordensPecas OrdemPecaItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model OrdemPecaItem {
+  id                 Int      @id @default(autoincrement())
+
+  ordemServicoId      Int
+  ordemDiagnosticoId  Int?
+  ordemServicoItemId  Int?
+
+  pecaCatalogoId      Int?
+
+  codigoPeca          String?  @db.VarChar(20)
+  nomePeca            String   @db.VarChar(80)
+
+  fornecedorId        Int?
+  fornecedorNome      String?  @db.VarChar(80)
+
+  quantidade          Int      @default(1)
+  custoUnitario       Decimal? @db.Decimal(10, 2)
+  desconto            Decimal? @db.Decimal(10, 2)
+  valorTotal          Decimal? @db.Decimal(10, 2)
+
+  codigoVisual        String?  @db.VarChar(10)
+  codigoHierarquia    String?  @db.VarChar(20)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  ordemServico        OrdemServico       @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  ordemDiagnostico    OrdemDiagnostico?  @relation(fields: [ordemDiagnosticoId], references: [id], onDelete: Cascade)
+  ordemServicoItem    OrdemServicoItem?  @relation(fields: [ordemServicoItemId], references: [id], onDelete: Cascade)
+  pecaCatalogo        PecaCatalogo?      @relation(fields: [pecaCatalogoId], references: [id])
+}
+
+model Fornecedor {
+  id              Int      @id @default(autoincrement())
+  codigo          String   @unique @db.VarChar(20)
+
+  nome            String   @db.VarChar(50)
+  cnpj            String   @unique @db.VarChar(18)
+  email           String?  @db.VarChar(70)
+  telefone        String?  @db.VarChar(11)
+  celular         String?  @db.VarChar(14)
+  inscricao       String?  @db.VarChar(20)
+
+  cep             String?  @db.VarChar(9)
+  endereco        String?  @db.VarChar(100)
+  numero          String?  @db.VarChar(10)
+  uf              String?  @db.VarChar(2)
+  bairro          String?  @db.VarChar(50)
+  cidade          String?  @db.VarChar(50)
+  complemento     String?  @db.VarChar(20)
+
+  fornecePecas    Boolean  @default(true)
+  forneceServicos Boolean  @default(false)
+  observacoes     String?  @db.VarChar(255)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model OrdemServico {
+  id             Int         @id @default(autoincrement())
+  codigo         String      @unique @db.VarChar(20)
+  status         StatusOrdem @default(ABERTA)
+
+  veiculoId      Int
+  operadorId     Int?
+  tecnicoId      Int?
+
+  observacoes    String?     @db.VarChar(255)
+  dataEmissao    DateTime    @default(now())
+  dataFechamento DateTime?
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  diagnosticos   OrdemDiagnostico[]
+  servicos       OrdemServicoItem[]
+  pecas          OrdemPecaItem[]
+}
+
+model OrdemDiagnostico {
+  id                   Int      @id @default(autoincrement())
+
+  ordemServicoId        Int
+  diagnosticoCatalogoId Int?
+
+  codigoVisual          String? @db.VarChar(10)
+  codigoHierarquia      String? @db.VarChar(20)
+
+  nomeDiagnostico       String  @db.VarChar(80)
+  descricao             String? @db.VarChar(255)
+  observacoes           String? @db.VarChar(255)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  ordemServico          OrdemServico         @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  diagnosticoCatalogo   DiagnosticoCatalogo? @relation(fields: [diagnosticoCatalogoId], references: [id])
+
+  servicos              OrdemServicoItem[]
+  pecas                 OrdemPecaItem[]
+}
+
+model OrdemServicoItem {
+  id                 Int      @id @default(autoincrement())
+
+  ordemServicoId      Int
+  ordemDiagnosticoId  Int?
+  servicoCatalogoId   Int?
+
+  codigoVisual        String? @db.VarChar(10)
+  codigoHierarquia    String? @db.VarChar(20)
+
+  nomeServico         String  @db.VarChar(80)
+  descricao           String? @db.VarChar(255)
+  responsavel         String? @db.VarChar(80)
+  tipo                String? @db.VarChar(50)
+
+  precoVenda          Decimal? @db.Decimal(10, 2)
+  desconto            Decimal? @db.Decimal(10, 2)
+  valorTotal          Decimal? @db.Decimal(10, 2)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  ordemServico        OrdemServico       @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  ordemDiagnostico    OrdemDiagnostico?  @relation(fields: [ordemDiagnosticoId], references: [id], onDelete: Cascade)
+  servicoCatalogo     ServicoCatalogo?   @relation(fields: [servicoCatalogoId], references: [id])
+
+  pecas               OrdemPecaItem[]
+}
+
+enum StatusOrdem {
+  ABERTA
+  EM_ANDAMENTO
+  AGUARDANDO_PECA
+  FINALIZADA
+  CANCELADA
+}
