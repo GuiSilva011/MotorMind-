@@ -89,15 +89,19 @@ function Sidebar() {
               </NavLink>
             </div>
           )}
-
-          <button type="button" className="menu-item">
-            <img
-              src="/icons/ordemservico.svg"
-              alt="Ordem de serviço"
-              className="menu-icon"
-            />
-            ORDEM DE SERVIÇO
-          </button>
+        <NavLink
+           to="/ordemServico"
+  className={({ isActive }) =>
+    isActive ? 'menu-item active' : 'menu-item'
+          }
+        >
+        <img
+          src="/icons/ordemservico.svg"
+          alt="Ordem de serviço"
+          className="menu-icon"
+        />
+        ORDEM DE SERVIÇO
+        </NavLink>
         </nav>
       </div>
 

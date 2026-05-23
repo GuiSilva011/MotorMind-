@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import CadastroCliente from './pages/cadastroCliente';
 import VisualizarClientes from './pages/visualizarClientes';
 import Agendamentos from './pages/agendamentos';
+import OrdemServico from './pages/ordemServico';
 import CalendarioAgendamentos from './pages/calendarioAgendamentos'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -18,6 +19,7 @@ function App() {
           path="/agendamentos/calendario"
           element={<CalendarioAgendamentos />}
         />
+        <Route path="/ordemServico" element={<OrdemServico />} />
       </Routes>
 
       <ToastContainer
