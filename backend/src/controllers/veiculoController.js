@@ -87,3 +87,57 @@ export async function deletarVeiculo(req, res) {
     res.status(500).json({ erro: 'Erro ao deletar Veiculo' });
   }
 }
+
+export async function buscarVeiculosParaOS(req, res) {
+  try {
+    const { termo } = req.query
+
+    if (!termo) {
+      return res.status(400).json({ erro: 'Termo de busca é obrigatório' })
+    }
+
+    const veiculos = await prisma.veiculo.findMany({
+      where: {
+        OR: [
+          {
+            placa: {
+              contains: termo,
+              mode: 'insensitive'
+            }
+          },
+          {
+            modelo: {
+              contains: termo,
+              mode: 'insensitive'
+            }
+          },
+          {
+            fabricante: {
+              contains: termo,
+              mode: 'insensitive'
+            }
+          },
+          {
+            cliente: {
+              nome: {
+                contains: termo,
+                mode: 'insensitive'
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        cliente: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    return res.json(veiculos)
+  } catch (error) {
+    console.error('Erro ao buscar veículos para OS:', error)
+    return res.status(500).json({ erro: 'Erro ao buscar veículos para OS' })
+  }
+}

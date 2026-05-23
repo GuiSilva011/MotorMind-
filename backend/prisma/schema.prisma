@@ -54,6 +54,7 @@ model Veiculo {
   clienteId    Int
   cliente      Cliente       @relation(fields: [clienteId], references: [id])
   agendamentos Agendamento[]
+  ordensServico OrdemServico[]
 }
 
 model Agendamento {
@@ -189,6 +190,8 @@ model OrdemServico {
   status         StatusOrdem @default(ABERTA)
 
   veiculoId      Int
+  veiculo        Veiculo     @relation(fields: [veiculoId], references: [id])
+  
   operadorId     Int?
   tecnicoId      Int?
 
