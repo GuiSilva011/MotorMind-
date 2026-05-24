@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import Layout from '../../components/Layout';
-import "../../styles/operadorStyles/layout.css";
+import '../../styles/operadorStyles/layout.css';
 import '../../styles/operadorStyles/cadastroClientes.css';
-
-
 
 const formClienteCadastro = {
   nome: '',
@@ -19,8 +17,16 @@ const formClienteCadastro = {
   uf: '',
   numero: '',
   complemento: '',
-  celular: ''
+  celular: '',
 };
+
+const opcoesCambio = [
+  'Manual',
+  'Automático Convencional',
+  'CVT',
+  'Automatizado',
+  'Dupla Embreagem',
+];
 
 const veiculoInicial = {
   placa: '',
@@ -32,7 +38,8 @@ const veiculoInicial = {
   motor: '',
   km: '',
   cor: '',
-  ar: ''
+  ar: '',
+  Cambio: '',
 };
 
 function formatDateInput(value) {
@@ -96,7 +103,7 @@ function CadastroCliente() {
       modelo: capitalizeWords,
       fabricante: capitalizeWords,
       motor: (v) => v.toUpperCase(),
-      cor: capitalizeWords
+      cor: capitalizeWords,
     };
 
     return map[name] ? map[name](value) : value;
@@ -109,7 +116,7 @@ function CadastroCliente() {
 
     setNovoVeiculo((prevState) => ({
       ...prevState,
-      [name]: formatVeiculoField(name, value)
+      [name]: formatVeiculoField(name, value),
     }));
   }
 
@@ -133,8 +140,10 @@ function CadastroCliente() {
 
     setNovoVeiculo({
       ...veiculoSelecionado,
-      ar: formatBooleanToSelect(veiculoSelecionado.ar)
+      ar: formatBooleanToSelect(veiculoSelecionado.ar),
+      Cambio: veiculoSelecionado.Cambio || veiculoSelecionado.cambio || '',
     });
+
     setEditandoIndex(index);
     setModalOpen(true);
     setMensagem('');
@@ -152,7 +161,7 @@ function CadastroCliente() {
 
       try {
         const { data } = await api.get('/clientes/buscar-por-nome', {
-          params: { nome: nomeBusca }
+          params: { nome: nomeBusca },
         });
 
         setClienteEmEdicaoId(data.id);
@@ -169,7 +178,7 @@ function CadastroCliente() {
           uf: data.uf || '',
           numero: data.numero || '',
           complemento: data.complemento || '',
-          celular: data.celular ? maskPhone(String(data.celular)) : ''
+          celular: data.celular ? maskPhone(String(data.celular)) : '',
         });
 
         setVeiculos(
@@ -185,7 +194,8 @@ function CadastroCliente() {
             motor: veiculo.motor || '',
             km: veiculo.km || '',
             cor: veiculo.cor || '',
-            ar: veiculo.ar
+            ar: veiculo.ar,
+            Cambio: veiculo.Cambio || veiculo.cambio || '',
           }))
         );
       } catch (error) {
@@ -218,10 +228,11 @@ function CadastroCliente() {
       motor: novoVeiculo.motor || null,
       km: novoVeiculo.km || null,
       cor: novoVeiculo.cor || null,
+      Cambio: novoVeiculo.Cambio || null,
       ar:
         novoVeiculo.ar === ''
           ? null
-          : novoVeiculo.ar === 'true'
+          : novoVeiculo.ar === 'true',
     };
 
     if (editandoIndex !== null) {
@@ -288,7 +299,7 @@ function CadastroCliente() {
       celular: maskPhone,
       cep: maskCEP,
       uf: maskUF,
-      numero: maskNumero
+      numero: maskNumero,
     };
 
     return maskMap[name] ? maskMap[name](value) : value;
@@ -301,7 +312,7 @@ function CadastroCliente() {
 
     setFormData((prevState) => ({
       ...prevState,
-      [name]: applyMask(name, value)
+      [name]: applyMask(name, value),
     }));
   }
 
@@ -314,12 +325,12 @@ function CadastroCliente() {
     setEditandoIndex(null);
 
     if (isVisualizacao) {
-      navigate('/clientes/consultar', { replace: true });
+      navigate('/operador/clientes/consultar', { replace: true });
       return;
     }
 
     if (nomeBusca) {
-      navigate('/clientes/cadastro', { replace: true });
+      navigate('/operador/clientes/cadastro', { replace: true });
     }
   }
 
@@ -337,15 +348,15 @@ function CadastroCliente() {
 
     try {
       await api.delete(`/clientes/${clienteEmEdicaoId}`);
-      navigate('/clientes/consultar', {
+      navigate('/operador/clientes/consultar', {
         replace: true,
         state: {
           refresh: true,
           toast: {
             type: 'success',
-            text: 'Cliente excluído com sucesso.'
-          }
-        }
+            text: 'Cliente excluído com sucesso.',
+          },
+        },
       });
     } catch (error) {
       console.error(error);
@@ -367,20 +378,20 @@ function CadastroCliente() {
         celular: formData.celular.replace(/\D/g, '') || null,
         cep: formData.cep.replace(/\D/g, '') || null,
         dataNascimento: formData.dataNascimento || null,
-        veiculos
+        veiculos,
       };
 
       if (clienteEmEdicaoId) {
         await api.put(`/clientes/${clienteEmEdicaoId}`, payload);
-        navigate('/clientes/consultar', {
+        navigate('/operador/clientes/consultar', {
           replace: true,
           state: {
             refresh: true,
             toast: {
               type: 'success',
-              text: 'Cliente atualizado com sucesso.'
-            }
-          }
+              text: 'Cliente atualizado com sucesso.',
+            },
+          },
         });
         return;
       }
@@ -402,19 +413,26 @@ function CadastroCliente() {
     <Layout>
       <main className="cadastro-content">
         <div className="cadastro-header">
-          <h1>{isVisualizacao ? 'Visualizar Cliente' : nomeBusca ? 'Editar Cliente' : 'Cadastro de Clientes'}</h1>
+          <h1>
+            {isVisualizacao
+              ? 'Visualizar Cliente'
+              : nomeBusca
+              ? 'Editar Cliente'
+              : 'Cadastro de Clientes'}
+          </h1>
+
           <p>
             {isVisualizacao
               ? 'Confira os dados do cliente e dos veículos cadastrados.'
               : nomeBusca
-                ? 'Atualize os dados do cliente e dos veículos cadastrados.'
-                : 'Preencha os dados do cliente'}
+              ? 'Atualize os dados do cliente e dos veículos cadastrados.'
+              : 'Preencha os dados do cliente'}
           </p>
         </div>
 
         {isVisualizacao && (
           <div className="view-mode-banner">
-            Modo visualizacao: para alterar dados, clique em "Editar".
+            Modo visualização: para alterar dados, clique em "Editar".
           </div>
         )}
 
@@ -645,6 +663,7 @@ function CadastroCliente() {
                 <span>Chassi</span>
                 <span>Fabricante / Modelo</span>
                 <span>Motor</span>
+                <span>Câmbio</span>
                 <span>Km</span>
                 <span>Ano Fab.</span>
                 <span>Ano Modelo</span>
@@ -675,6 +694,7 @@ function CadastroCliente() {
                       {veiculo.fabricante || '-'} / {veiculo.modelo || '-'}
                     </span>
                     <span>{veiculo.motor || '-'}</span>
+                    <span>{veiculo.Cambio || veiculo.cambio || '-'}</span>
                     <span>{veiculo.km || '-'}</span>
                     <span>{veiculo.ano_fabricacao || '-'}</span>
                     <span>{veiculo.ano_modelo || '-'}</span>
@@ -683,8 +703,8 @@ function CadastroCliente() {
                       {veiculo.ar === null
                         ? '-'
                         : veiculo.ar
-                          ? 'Sim'
-                          : 'Não'}
+                        ? 'Sim'
+                        : 'Não'}
                     </span>
 
                     <div className="veiculo-acoes">
@@ -848,10 +868,28 @@ function CadastroCliente() {
               </div>
 
               <div className="field-group">
+                <label htmlFor="Cambio">Câmbio</label>
+                <select
+                  id="Cambio"
+                  name="Cambio"
+                  value={novoVeiculo.Cambio || ''}
+                  onChange={handleVeiculoChange}
+                  disabled={isVisualizacao}
+                >
+                  <option value="">Selecione o câmbio</option>
+                  {opcoesCambio.map((opcao) => (
+                    <option key={opcao} value={opcao}>
+                      {opcao}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field-group">
                 <label htmlFor="km">Quilometragem</label>
                 <input
                   id="km"
-                  name="km"               
+                  name="km"
                   value={novoVeiculo.km || ''}
                   onChange={handleVeiculoChange}
                   readOnly={isVisualizacao}

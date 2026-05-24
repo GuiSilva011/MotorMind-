@@ -23,6 +23,7 @@ const ordemInicial = {
     modelo: '',
     ano: '',
     motor: '',
+    cambio: '',
     cor: '',
     km: '',
     chassi: '',
@@ -298,6 +299,7 @@ function OrdemServico() {
         modelo: obterModeloVeiculo(veiculo),
         ano: montarAnoVeiculo(veiculo),
         motor: veiculo.motor || '',
+        cambio: veiculo.cambio || veiculo.Cambio || '',
         cor: veiculo.cor || '',
         km: obterKmVeiculo(veiculo),
         chassi: veiculo.chassi || '',
@@ -434,6 +436,7 @@ function OrdemServico() {
         modelo: veiculo.modelo || '',
         ano: montarAnoVeiculo(veiculo),
         motor: veiculo.motor || '',
+        cambio: veiculo.cambio || veiculo.Cambio || '',
         cor: veiculo.cor || '',
         km: veiculo.km || '',
         chassi: veiculo.chassi || '',
@@ -1491,6 +1494,7 @@ function OrdemServico() {
         modelo: veiculo.modelo || '',
         ano: montarAnoVeiculo(veiculo),
         motor: veiculo.motor || '',
+        cambio: veiculo.cambio || veiculo.Cambio || '',
         cor: veiculo.cor || '',
         km: veiculo.km || '',
         chassi: veiculo.chassi || '',
@@ -1846,6 +1850,7 @@ Gostaria de solicitar uma cotação de peças para a seguinte ordem de serviço:
 Veículo: ${montarNomeVeiculoCotacao() || '-'}
 Placa: ${ordem.veiculo.placa || '-'}
 Motor: ${ordem.veiculo.motor || '-'}
+Câmbio: ${ordem.veiculo.cambio || '-'}
 Chassi: ${ordem.veiculo.chassi || '-'}
 
 Peças necessárias:
@@ -2154,7 +2159,7 @@ Pode me enviar os valores e disponibilidade, por favor?`;
 
                   <span>
                     {veiculo.placa || '-'} | {veiculo.fabricante || '-'}{' '}
-                    {veiculo.modelo || '-'} | {montarAnoVeiculo(veiculo) || '-'}
+                    {veiculo.modelo || '-'} | {montarAnoVeiculo(veiculo) || '-'} | Câmbio: {veiculo.cambio || '-'}
                   </span>
                 </button>
               ))}
@@ -2218,6 +2223,11 @@ Pode me enviar os valores e disponibilidade, por favor?`;
             <div className="os-field">
               <label>Motor</label>
               <input value={ordem.veiculo.motor} readOnly />
+            </div>
+
+            <div className="os-field">
+              <label>Câmbio</label>
+              <input value={ordem.veiculo.cambio || '-'} readOnly />
             </div>
 
             <div className="os-field">
