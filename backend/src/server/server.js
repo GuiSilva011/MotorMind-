@@ -10,6 +10,7 @@ import fornecedoresRoutes from '../routes/fornecedoresRoutes.js';
 import ordemServicoRoutes from '../routes/ordemServicoRoutes.js';
 import authRoutes from '../routes/authRoutes.js';
 import checklistRoutes from '../routes/checklistRoutes.js';
+import funcionarioRoutes from '../routes/funcionarioRoutes.js';
 
 const app = express();
 const port = 3000;
@@ -36,3 +37,4 @@ app.use('/ordens-servico', ordemServicoRoutes);
 app.use('/auth', authRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/checklists', checklistRoutes);
+app.use('/funcionarios', funcionarioRoutes);

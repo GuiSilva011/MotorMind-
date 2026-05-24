@@ -14,6 +14,9 @@ model Usuario {
   Senha     String
   Role      Role
   CreatedAt DateTime @default(now())
+  UpdatedAt DateTime @updatedAt
+
+  funcionario Funcionario?
 }
 
 model Cliente {
@@ -92,7 +95,6 @@ model DiagnosticoCatalogo {
   codigo      String   @unique @db.VarChar(20)
   nome        String   @db.VarChar(80)
   descricao   String?  @db.VarChar(255)
-  ativo       Boolean  @default(true)
   ordensDiagnosticos OrdemDiagnostico[]
 
   createdAt   DateTime @default(now())
@@ -105,7 +107,6 @@ model ServicoCatalogo {
   nome         String   @db.VarChar(80)
   categoria    String?  @db.VarChar(50)
   valorPadrao  Decimal? @db.Decimal(10, 2)
-  ativo        Boolean  @default(true)
   ordensServicos OrdemServicoItem[]
 
   createdAt    DateTime @default(now())
@@ -118,14 +119,14 @@ model PecaCatalogo {
   nome        String   @db.VarChar(80)
   marca       String?  @db.VarChar(50)
   aplicacao   String?  @db.VarChar(120)
+  grupo       String?  @db.VarChar(50)
   unidade     String?  @default("UN") @db.VarChar(10)
-  ativo       Boolean  @default(true)
+
   ordensPecas OrdemPecaItem[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
-
 model OrdemPecaItem {
   id                 Int      @id @default(autoincrement())
 
@@ -159,30 +160,30 @@ model OrdemPecaItem {
 }
 
 model Fornecedor {
-  id              Int      @id @default(autoincrement())
-  codigo          String   @unique @db.VarChar(20)
+  id     Int    @id @default(autoincrement())
+  codigo String @unique @db.VarChar(20)
 
-  nome            String   @db.VarChar(50)
-  cnpj            String   @unique @db.VarChar(18)
-  email           String?  @db.VarChar(70)
-  telefone        String?  @db.VarChar(11)
-  celular         String?  @db.VarChar(14)
-  inscricao       String?  @db.VarChar(20)
+  nome      String  @db.VarChar(100)
+  cnpj      String  @unique @db.VarChar(18)
+  email     String? @db.VarChar(100)
+  telefone  String? @db.VarChar(20)
+  celular   String? @db.VarChar(20)
+  inscricao String? @db.VarChar(30)
 
-  cep             String?  @db.VarChar(9)
-  endereco        String?  @db.VarChar(100)
-  numero          String?  @db.VarChar(10)
-  uf              String?  @db.VarChar(2)
-  bairro          String?  @db.VarChar(50)
-  cidade          String?  @db.VarChar(50)
-  complemento     String?  @db.VarChar(20)
+  cep         String? @db.VarChar(9)
+  endereco    String? @db.VarChar(120)
+  numero      String? @db.VarChar(10)
+  uf          String? @db.VarChar(2)
+  bairro      String? @db.VarChar(60)
+  cidade      String? @db.VarChar(60)
+  complemento String? @db.VarChar(80)
 
-  fornecePecas    Boolean  @default(true)
-  forneceServicos Boolean  @default(false)
-  observacoes     String?  @db.VarChar(255)
+  fornecePecas    Boolean @default(true)
+  forneceServicos Boolean @default(false)
+  observacoes      String? @db.VarChar(255)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrdemServico {
@@ -286,4 +287,30 @@ model Checklist {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Funcionario {
+  id Int @id @default(autoincrement())
+
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  Cpf            String?   @unique
+  Rg             String?
+  DataNascimento DateTime?
+  Celular        String?
+  Ctps           String?
+
+  Cep         String?
+  Endereco    String?
+  Numero      String?
+  Uf          String?
+  Bairro      String?
+  Cidade      String?
+  Complemento String?
+
+  DataAdmissao DateTime?
+
+  CreatedAt DateTime @default(now())
+  UpdatedAt DateTime @updatedAt
 }
