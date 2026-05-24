@@ -22,9 +22,9 @@ app.get('/', (req, res) => {
   res.send('Backend Rodando');
 })
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`)
+})
 
 app.use('/clientes', clienteRoutes);
 app.use('/veiculos', veiculoRoutes);
