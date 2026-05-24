@@ -1,0 +1,378 @@
+.painel-tecnico-page {
+  width: 100%;
+  min-height: calc(100vh - 68px);
+  background: #edf2f7;
+  padding: 30px 48px 60px;
+  color: #07142b;
+}
+
+.painel-tecnico-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.painel-tecnico-top h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 900;
+  color: #07142b;
+}
+
+.painel-tecnico-top p {
+  margin: 6px 0 0;
+  color: #455875;
+  font-size: 15px;
+  max-width: 760px;
+}
+
+.painel-tecnico-top small {
+  display: block;
+  margin-top: 8px;
+  color: #14a8e8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.painel-tecnico-resumo {
+  min-width: 190px;
+  background: #fff;
+  border: 1px solid #d9e1ec;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  padding: 16px;
+}
+
+.painel-tecnico-resumo span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.painel-tecnico-resumo strong {
+  display: block;
+  margin-top: 6px;
+  color: #07142b;
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.painel-tecnico-card {
+  background: #fff;
+  border: 1px solid #d9e1ec;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  padding: 24px;
+}
+
+.painel-tecnico-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.painel-tecnico-card-header h2 {
+  margin: 0;
+  color: #07142b;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.painel-tecnico-card-header span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.painel-tecnico-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px 130px;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 22px;
+}
+
+.painel-tecnico-search,
+.painel-tecnico-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.painel-tecnico-search label,
+.painel-tecnico-filter label {
+  color: #12213a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.painel-tecnico-search input,
+.painel-tecnico-filter select {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.painel-tecnico-search input::placeholder {
+  color: #b8c4d6;
+}
+
+.painel-tecnico-search input:focus,
+.painel-tecnico-filter select:focus {
+  border-color: #14a8e8;
+  box-shadow: 0 0 0 3px rgba(20, 168, 232, 0.14);
+}
+
+.painel-tecnico-refresh {
+  height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: #07142b;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.painel-tecnico-refresh:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.painel-tecnico-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.painel-tecnico-empty {
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 28px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.painel-tecnico-veiculo {
+  border: 1px solid #d9e1ec;
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 220px;
+  gap: 18px;
+  align-items: center;
+  transition: 0.16s ease;
+}
+
+.painel-tecnico-veiculo:hover {
+  border-color: #14a8e8;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.painel-tecnico-veiculo-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #d9e1ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.painel-tecnico-veiculo-icon img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.painel-tecnico-veiculo-info {
+  min-width: 0;
+}
+
+.painel-tecnico-veiculo-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.painel-tecnico-veiculo-title h3 {
+  margin: 0;
+  color: #07142b;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.painel-tecnico-veiculo-title span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.painel-tecnico-veiculo-title > strong {
+  min-width: 110px;
+  height: 34px;
+  border-radius: 9px;
+  background: #07142b;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+}
+
+.painel-tecnico-veiculo-dados {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.painel-tecnico-veiculo-dados div {
+  min-width: 0;
+}
+
+.painel-tecnico-veiculo-dados span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.painel-tecnico-veiculo-dados strong {
+  display: block;
+  margin-top: 3px;
+  color: #12213a;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.painel-tecnico-veiculo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.painel-tecnico-btn {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.painel-tecnico-btn-blue {
+  border: 0;
+  background: #14a8e8;
+  color: #fff;
+}
+
+.painel-tecnico-btn-outline {
+  background: #fff;
+  color: #07142b;
+  border: 1px solid #07142b;
+}
+
+.painel-tecnico-btn-dark {
+  border: 0;
+  background: #07142b;
+  color: #fff;
+}
+
+.painel-tecnico-btn:hover {
+  filter: brightness(0.96);
+}
+
+@media (max-width: 1200px) {
+  .painel-tecnico-veiculo {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .painel-tecnico-veiculo-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+
+  .painel-tecnico-veiculo-dados {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .painel-tecnico-page {
+    padding: 24px;
+  }
+
+  .painel-tecnico-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .painel-tecnico-resumo {
+    width: 100%;
+  }
+
+  .painel-tecnico-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .painel-tecnico-veiculo {
+    grid-template-columns: 1fr;
+  }
+
+  .painel-tecnico-veiculo-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .painel-tecnico-veiculo-title {
+    flex-direction: column;
+  }
+
+  .painel-tecnico-veiculo-title > strong {
+    width: fit-content;
+  }
+
+  .painel-tecnico-veiculo-dados {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .painel-tecnico-veiculo-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .painel-tecnico-veiculo-dados {
+    grid-template-columns: 1fr;
+  }
+}

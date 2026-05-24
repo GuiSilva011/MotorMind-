@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import Layout from '../components/Layout';
-import api from '../services/api';
-import '../styles/pecas.css';
+import Layout from '../../components/Layout';
+import api from '../../services/api';
+import '../../styles/operadorStyles/pecas.css';
 
 function gerarCodigo(prefixo) {
   const data = new Date();

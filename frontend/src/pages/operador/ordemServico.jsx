@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import Layout from '../components/Layout';
-import api from '../services/api';
-import '../styles/ordemServico.css';
+import Layout from '../../components/Layout';
+import api from '../../services/api';
+import '../../styles/operadorStyles/ordemServico.css';
 
 const OS_RASCUNHO_KEY = 'motormind_ordem_servico_rascunho';
 const OS_RASCUNHO_TOAST_ID = 'motormind_ordem_servico_rascunho_toast';

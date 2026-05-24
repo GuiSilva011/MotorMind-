@@ -1,0 +1,414 @@
+.checklist-page {
+  width: 100%;
+  min-height: calc(100vh - 68px);
+  background: #edf2f7;
+  padding: 30px 48px 60px;
+  color: #07142b;
+}
+
+.checklist-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.checklist-top h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 900;
+  color: #07142b;
+}
+
+.checklist-top p {
+  margin: 6px 0 0;
+  color: #455875;
+  font-size: 15px;
+  max-width: 760px;
+}
+
+.checklist-vehicle-card {
+  background: #fff;
+  border: 1px solid #d9e1ec;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  padding: 18px;
+  margin-bottom: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px 220px 150px;
+  gap: 14px;
+  align-items: end;
+}
+
+.checklist-vehicle-card span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.checklist-vehicle-card strong {
+  display: block;
+  margin-top: 4px;
+  color: #07142b;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.checklist-vehicle-main strong {
+  font-size: 18px;
+}
+
+.checklist-vehicle-card button {
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: #14a8e8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checklist-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 22px;
+  align-items: start;
+}
+
+.checklist-content {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.checklist-section,
+.checklist-photos {
+  background: #fff;
+  border: 1px solid #d9e1ec;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  padding: 22px;
+}
+
+.checklist-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.checklist-section-header h2,
+.checklist-photos-header h2 {
+  margin: 0;
+  color: #07142b;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.checklist-section-header p,
+.checklist-photos-header p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.checklist-section-header > span {
+  min-width: 74px;
+  height: 34px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.checklist-items-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.checklist-item {
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #12213a;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.14s ease;
+}
+
+.checklist-item:hover {
+  border-color: #14a8e8;
+  background: #eef8ff;
+}
+
+.checklist-item-checked {
+  border-color: #14a8e8;
+  background: #e0f2fe;
+}
+
+.checklist-item input {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.checklist-item span {
+  line-height: 1.25;
+}
+
+.checklist-observacoes {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.checklist-observacoes label {
+  color: #12213a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.checklist-observacoes textarea {
+  width: 100%;
+  min-height: 92px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: 12px;
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+}
+
+.checklist-observacoes textarea:focus {
+  border-color: #14a8e8;
+  box-shadow: 0 0 0 3px rgba(20, 168, 232, 0.14);
+}
+
+.checklist-photos {
+  position: sticky;
+  top: 86px;
+}
+
+.checklist-photos-header {
+  margin-bottom: 16px;
+}
+
+.checklist-photo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.checklist-photo-card {
+  border: 1px solid #d9e1ec;
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.checklist-photo-preview {
+  width: 100%;
+  height: 125px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.checklist-photo-empty {
+  text-align: center;
+  padding: 12px;
+}
+
+.checklist-photo-empty strong {
+  display: block;
+  color: #07142b;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.checklist-photo-empty span {
+  display: block;
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.checklist-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.checklist-photo-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.checklist-photo-btn,
+.checklist-photo-remove {
+  flex: 1;
+  height: 34px;
+  border-radius: 9px;
+  border: 0;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checklist-photo-btn {
+  background: #14a8e8;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checklist-photo-btn input {
+  display: none;
+}
+
+.checklist-photo-remove {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.checklist-actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.checklist-btn {
+  height: 42px;
+  min-width: 170px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checklist-btn-red {
+  background: #f31717;
+}
+
+.checklist-btn-dark {
+  background: #07142b;
+}
+
+.checklist-btn:hover,
+.checklist-vehicle-card button:hover,
+.checklist-photo-btn:hover,
+.checklist-photo-remove:hover {
+  filter: brightness(0.96);
+}
+
+.tecnico-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.tecnico-voltar-painel {
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 22px;
+  background: #07142b;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tecnico-voltar-painel:hover {
+  filter: brightness(0.96);
+}
+
+@media (max-width: 1250px) {
+  .checklist-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist-photos {
+    position: static;
+  }
+
+  .checklist-photo-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1050px) {
+  .checklist-vehicle-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .checklist-items-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .checklist-page {
+    padding: 24px;
+  }
+
+  .checklist-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tecnico-page-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .tecnico-voltar-painel {
+    width: 100%;
+  }
+
+  .checklist-vehicle-card,
+  .checklist-items-grid,
+  .checklist-photo-list {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist-actions {
+    flex-direction: column;
+  }
+
+  .checklist-btn {
+    width: 100%;
+  }
+}

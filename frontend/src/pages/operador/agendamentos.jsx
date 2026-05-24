@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
-import Layout from '../components/Layout';
-import '../styles/agendamento.css';
-import "../styles/layout.css";
+import api from '../../services/api';
+import Layout from '../../components/Layout';
+import '../../styles/operadorStyles/agendamento.css';
+import "../../styles/operadorStyles/layout.css";
 
 
 

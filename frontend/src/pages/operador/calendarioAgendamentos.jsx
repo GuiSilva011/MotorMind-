@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
-import Layout from '../components/Layout';
-import "../styles/layout.css";
+import api from '../../services/api';
+import Layout from '../../components/Layout';
+import "../../styles/operadorStyles/layout.css";
 
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
