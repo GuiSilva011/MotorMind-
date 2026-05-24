@@ -1,30 +1,64 @@
-import prisma from '../config/prisma.js'
+import prisma from '../config/prisma.js';
 
 export async function criarVeiculo(req, res) {
   try {
-    const { clienteId, placa,modelo,chassi,fabricante, ano_modelo, ano_fabricacao, motor, km, cor,ar } = req.body;
+    const {
+      clienteId,
+      placa,
+      modelo,
+      chassi,
+      fabricante,
+      ano_modelo,
+      ano_fabricacao,
+      motor,
+      km,
+      cor,
+      ar,
+      cambio,
+      Cambio,
+    } = req.body;
+
     console.log(req.body);
+
+    if (!clienteId) {
+      return res.status(400).json({ erro: 'Cliente é obrigatório' });
+    }
+
+    if (!placa) {
+      return res.status(400).json({ erro: 'Placa é obrigatória' });
+    }
 
     const veiculo = await prisma.veiculo.create({
       data: {
         clienteId: Number(clienteId),
-        placa,
-        modelo: modelo || null,
-        chassi: chassi || null,
-        fabricante: fabricante || null,
+        placa: placa.trim().toUpperCase(),
+        modelo: modelo?.trim() || null,
+        chassi: chassi?.trim() || null,
+        fabricante: fabricante?.trim() || null,
         ano_modelo: ano_modelo ? Number(ano_modelo) : null,
         ano_fabricacao: ano_fabricacao ? Number(ano_fabricacao) : null,
-        motor: motor || null,
+        motor: motor?.trim() || null,
         km: km || null,
-        cor: cor || null,
-        ar: ar !== undefined ? ar : null
-      }
+        cor: cor?.trim() || null,
+        ar: ar !== undefined ? ar : null,
+        Cambio: Cambio?.trim() || cambio?.trim() || null,
+      },
+      include: {
+        cliente: true,
+      },
     });
 
-    res.status(201).json(veiculo);
+    return res.status(201).json(veiculo);
   } catch (error) {
     console.log(error);
-    res.status(500).json({erro : "Falha ao cadastrar veiculo"});
+
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        erro: 'Já existe um veículo cadastrado com esta placa.',
+      });
+    }
+
+    return res.status(500).json({ erro: 'Falha ao cadastrar veículo' });
   }
 }
 
@@ -32,44 +66,102 @@ export async function listarVeiculo(req, res) {
   try {
     const veiculo = await prisma.veiculo.findMany({
       include: {
-        cliente: true
-      }
+        cliente: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
-    res.json(veiculo);
+    return res.json(veiculo);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ erro: 'Erro ao exibir veiculo' });
+    return res.status(500).json({ erro: 'Erro ao exibir veículo' });
   }
 }
 
 export async function editarVeiculo(req, res) {
   try {
     const { id } = req.params;
-    const { clienteId, placa,modelo,chassi,fabricante, ano_modelo, ano_fabricacao, motor, km, cor,ar} = req.body;
+
+    const {
+      clienteId,
+      placa,
+      modelo,
+      chassi,
+      fabricante,
+      ano_modelo,
+      ano_fabricacao,
+      motor,
+      km,
+      cor,
+      ar,
+      cambio,
+      Cambio,
+    } = req.body;
+
     console.log(req.body);
 
-    const veiculo = await prisma.veiculo.update({
-      where: { id: Number(id) },
-      data: {
-        clienteId: Number(clienteId),
-        placa,
-        modelo: modelo || null,
-        chassi: chassi || null,
-        fabricante: fabricante || null,
-        ano_modelo: ano_modelo ? Number(ano_modelo) : null,
-        ano_fabricacao: ano_fabricacao ? Number(ano_fabricacao) : null,
-        motor: motor || null,
-        km: km || null,
-        cor: cor || null,
-        ar: ar !== undefined ? ar : null
-      }
+    const veiculoExistente = await prisma.veiculo.findUnique({
+      where: {
+        id: Number(id),
+      },
     });
 
-    res.json(veiculo);
+    if (!veiculoExistente) {
+      return res.status(404).json({ erro: 'Veículo não encontrado' });
+    }
+
+    const veiculo = await prisma.veiculo.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        clienteId: clienteId ? Number(clienteId) : veiculoExistente.clienteId,
+        placa: placa?.trim().toUpperCase() || veiculoExistente.placa,
+        modelo: modelo !== undefined ? modelo?.trim() || null : veiculoExistente.modelo,
+        chassi: chassi !== undefined ? chassi?.trim() || null : veiculoExistente.chassi,
+        fabricante:
+          fabricante !== undefined
+            ? fabricante?.trim() || null
+            : veiculoExistente.fabricante,
+        ano_modelo:
+          ano_modelo !== undefined && ano_modelo !== ''
+            ? Number(ano_modelo)
+            : ano_modelo === ''
+            ? null
+            : veiculoExistente.ano_modelo,
+        ano_fabricacao:
+          ano_fabricacao !== undefined && ano_fabricacao !== ''
+            ? Number(ano_fabricacao)
+            : ano_fabricacao === ''
+            ? null
+            : veiculoExistente.ano_fabricacao,
+        motor: motor !== undefined ? motor?.trim() || null : veiculoExistente.motor,
+        km: km !== undefined ? km || null : veiculoExistente.km,
+        cor: cor !== undefined ? cor?.trim() || null : veiculoExistente.cor,
+        ar: ar !== undefined ? ar : veiculoExistente.ar,
+        Cambio:
+          Cambio !== undefined || cambio !== undefined
+            ? Cambio?.trim() || cambio?.trim() || null
+            : veiculoExistente.Cambio,
+      },
+      include: {
+        cliente: true,
+      },
+    });
+
+    return res.json(veiculo);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ erro: 'Erro ao atualizar o veiculo' });
+
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        erro: 'Já existe outro veículo cadastrado com esta placa.',
+      });
+    }
+
+    return res.status(500).json({ erro: 'Erro ao atualizar o veículo' });
   }
 }
 
@@ -77,23 +169,35 @@ export async function deletarVeiculo(req, res) {
   try {
     const { id } = req.params;
 
-    await prisma.veiculo.delete({
-      where: { id: Number(id) }
+    const veiculo = await prisma.veiculo.findUnique({
+      where: {
+        id: Number(id),
+      },
     });
 
-    res.json({ mensagem: 'Veiculo deletado com sucesso' });
+    if (!veiculo) {
+      return res.status(404).json({ erro: 'Veículo não encontrado' });
+    }
+
+    await prisma.veiculo.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    return res.json({ mensagem: 'Veículo deletado com sucesso' });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ erro: 'Erro ao deletar Veiculo' });
+    return res.status(500).json({ erro: 'Erro ao deletar veículo' });
   }
 }
 
 export async function buscarVeiculosParaOS(req, res) {
   try {
-    const { termo } = req.query
+    const { termo } = req.query;
 
     if (!termo) {
-      return res.status(400).json({ erro: 'Termo de busca é obrigatório' })
+      return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
     }
 
     const veiculos = await prisma.veiculo.findMany({
@@ -102,42 +206,48 @@ export async function buscarVeiculosParaOS(req, res) {
           {
             placa: {
               contains: termo,
-              mode: 'insensitive'
-            }
+              mode: 'insensitive',
+            },
           },
           {
             modelo: {
               contains: termo,
-              mode: 'insensitive'
-            }
+              mode: 'insensitive',
+            },
           },
           {
             fabricante: {
               contains: termo,
-              mode: 'insensitive'
-            }
+              mode: 'insensitive',
+            },
+          },
+          {
+            cambio: {
+              contains: termo,
+              mode: 'insensitive',
+            },
           },
           {
             cliente: {
               nome: {
                 contains: termo,
-                mode: 'insensitive'
-              }
-            }
-          }
-        ]
+                mode: 'insensitive',
+              },
+            },
+          },
+        ],
       },
       include: {
-        cliente: true
+        cliente: true,
       },
       orderBy: {
-        createdAt: 'desc'
-      }
-    })
+        createdAt: 'desc',
+      },
+    });
 
-    return res.json(veiculos)
+    return res.json(veiculos);
   } catch (error) {
-    console.error('Erro ao buscar veículos para OS:', error)
-    return res.status(500).json({ erro: 'Erro ao buscar veículos para OS' })
+    console.error('Erro ao buscar veículos para OS:', error);
+    return res.status(500).json({ erro: 'Erro ao buscar veículos para OS' });
   }
 }

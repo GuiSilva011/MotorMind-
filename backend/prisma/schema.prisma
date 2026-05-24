@@ -47,6 +47,7 @@ model Veiculo {
   fabricante     String?
   ano_modelo     Int?
   ano_fabricacao Int?
+  cambio         String?
   motor          String?
   km             String?
   cor            String?
