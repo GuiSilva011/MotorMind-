@@ -1,0 +1,9 @@
+import express from 'express';
+import {login,listarUsuariosTeste,} from '../controllers/authController.js';
+
+const router = express.Router();
+
+router.post('/login', login);
+router.get('/usuarios-teste', listarUsuariosTeste);
+
+export default router;

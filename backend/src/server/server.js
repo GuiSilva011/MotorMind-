@@ -8,6 +8,8 @@ import servicosRoutes from '../routes/servicoRoutes.js';
 import diagnosticoRoutes from '../routes/diagnosticoRoutes.js'
 import fornecedoresRoutes from '../routes/fornecedoresRoutes.js';
 import ordemServicoRoutes from '../routes/ordemServicoRoutes.js';
+import authRoutes from '../routes/authRoutes.js';
+import checklistRoutes from '../routes/checklistRoutes.js';
 
 const app = express();
 const port = 3000;
@@ -30,4 +32,7 @@ app.use('/pecas', pecasRoutes);
 app.use('/servicos', servicosRoutes);
 app.use('/diagnosticos', diagnosticoRoutes);
 app.use('/fornecedores', fornecedoresRoutes);
-app.use('/ordens-servico', ordemServicoRoutes)
+app.use('/ordens-servico', ordemServicoRoutes);
+app.use('/auth', authRoutes);
+app.use('/uploads', express.static('uploads'));
+app.use('/checklists', checklistRoutes);

@@ -55,6 +55,7 @@ model Veiculo {
   cliente      Cliente       @relation(fields: [clienteId], references: [id])
   agendamentos Agendamento[]
   ordensServico OrdemServico[]
+  checklists Checklist[]
 }
 
 model Agendamento {
@@ -265,4 +266,24 @@ enum StatusOrdem {
   AGUARDANDO_PECA
   FINALIZADA
   CANCELADA
+}
+
+model Checklist {
+  id Int @id @default(autoincrement())
+
+  veiculoId Int
+  veiculo   Veiculo @relation(fields: [veiculoId], references: [id])
+
+  itensEntrada           Json?
+  itensDiagnostico       Json?
+  observacoesEntrada     String? @db.VarChar(1000)
+  observacoesDiagnostico String? @db.VarChar(1000)
+
+  fotoFrente   String?
+  fotoTraseira String?
+  fotoEsquerda String?
+  fotoDireita  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
