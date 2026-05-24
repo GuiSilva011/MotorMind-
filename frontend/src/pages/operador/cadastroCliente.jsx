@@ -469,7 +469,6 @@ function CadastroCliente() {
                   id="cpf"
                   type="text"
                   name="cpf"
-                  placeholder="000.000.000-00"
                   value={formData.cpf}
                   onChange={handleChange}
                   maxLength={14}
@@ -483,7 +482,6 @@ function CadastroCliente() {
                   id="celular"
                   type="text"
                   name="celular"
-                  placeholder="(00) 00000-0000"
                   value={formData.celular}
                   onChange={handleChange}
                   maxLength={15}
@@ -497,7 +495,6 @@ function CadastroCliente() {
                   id="email"
                   type="email"
                   name="email"
-                  placeholder="exemplo@email.com"
                   value={formData.email}
                   onChange={handleChange}
                   readOnly={isVisualizacao}
@@ -525,7 +522,6 @@ function CadastroCliente() {
                     id="cep"
                     type="text"
                     name="cep"
-                    placeholder="00000-000"
                     value={formData.cep}
                     onChange={handleChange}
                     maxLength={9}
@@ -546,7 +542,6 @@ function CadastroCliente() {
                   id="endereco"
                   type="text"
                   name="endereco"
-                  placeholder="Rua / Avenida"
                   value={formData.endereco}
                   onChange={handleChange}
                   readOnly={isVisualizacao}
@@ -559,7 +554,6 @@ function CadastroCliente() {
                   id="numero"
                   type="text"
                   name="numero"
-                  placeholder="123"
                   value={formData.numero}
                   onChange={handleChange}
                   maxLength={6}
@@ -575,7 +569,6 @@ function CadastroCliente() {
                   id="bairro"
                   type="text"
                   name="bairro"
-                  placeholder="Bairro"
                   value={formData.bairro}
                   onChange={handleChange}
                   readOnly={isVisualizacao}
@@ -588,7 +581,6 @@ function CadastroCliente() {
                   id="cidade"
                   type="text"
                   name="cidade"
-                  placeholder="Cidade"
                   value={formData.cidade}
                   onChange={handleChange}
                   readOnly={isVisualizacao}
@@ -601,7 +593,6 @@ function CadastroCliente() {
                   id="uf"
                   type="text"
                   name="uf"
-                  placeholder="UF"
                   value={formData.uf}
                   onChange={handleChange}
                   maxLength={2}
@@ -737,7 +728,7 @@ function CadastroCliente() {
                   className="btn-edit-cliente"
                   onClick={() =>
                     navigate(
-                      `/clientes/cadastro?nome=${encodeURIComponent(
+                      `/operador/clientes/cadastro?nome=${encodeURIComponent(
                         nomeBusca || ''
                       )}`
                     )
@@ -791,7 +782,6 @@ function CadastroCliente() {
                 <input
                   id="chassi"
                   name="chassi"
-                  placeholder="Chassi"
                   value={novoVeiculo.chassi || ''}
                   onChange={handleVeiculoChange}
                   maxLength={17}
@@ -804,7 +794,6 @@ function CadastroCliente() {
                 <input
                   id="fabricante"
                   name="fabricante"
-                  placeholder="Ex.: Fiat"
                   value={novoVeiculo.fabricante || ''}
                   onChange={handleVeiculoChange}
                   readOnly={isVisualizacao}
@@ -816,7 +805,6 @@ function CadastroCliente() {
                 <input
                   id="modelo"
                   name="modelo"
-                  placeholder="Ex.: Uno"
                   value={novoVeiculo.modelo || ''}
                   onChange={handleVeiculoChange}
                   readOnly={isVisualizacao}
@@ -828,7 +816,6 @@ function CadastroCliente() {
                 <input
                   id="ano_fabricacao"
                   name="ano_fabricacao"
-                  placeholder="2020"
                   value={novoVeiculo.ano_fabricacao || ''}
                   onChange={handleVeiculoChange}
                   maxLength={4}
@@ -841,7 +828,6 @@ function CadastroCliente() {
                 <input
                   id="ano_modelo"
                   name="ano_modelo"
-                  placeholder="2021"
                   value={novoVeiculo.ano_modelo || ''}
                   onChange={handleVeiculoChange}
                   maxLength={4}
@@ -865,8 +851,7 @@ function CadastroCliente() {
                 <label htmlFor="km">Quilometragem</label>
                 <input
                   id="km"
-                  name="km"
-                  placeholder="Ex.: 120000"
+                  name="km"               
                   value={novoVeiculo.km || ''}
                   onChange={handleVeiculoChange}
                   readOnly={isVisualizacao}
@@ -878,7 +863,6 @@ function CadastroCliente() {
                 <input
                   id="cor"
                   name="cor"
-                  placeholder="Ex.: Prata"
                   value={novoVeiculo.cor || ''}
                   onChange={handleVeiculoChange}
                   readOnly={isVisualizacao}

@@ -20,7 +20,6 @@ function criarServicoInicial() {
     nome: '',
     categoria: '',
     valorPadrao: '',
-    ativo: true,
   };
 }
 
@@ -42,7 +41,7 @@ function Servicos() {
 
       const response = await api.get('/servicos');
 
-      setServicos(response.data || []);
+      setServicos(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Erro ao carregar serviços:', error);
       alert('Erro ao carregar serviços.');
@@ -59,8 +58,8 @@ function Servicos() {
   }
 
   function limparFormulario() {
-  setForm(criarServicoInicial());
-  setEditandoId(null);
+    setForm(criarServicoInicial());
+    setEditandoId(null);
   }
 
   function editarServico(servico) {
@@ -71,7 +70,6 @@ function Servicos() {
       nome: servico.nome || '',
       categoria: servico.categoria || '',
       valorPadrao: servico.valorPadrao || '',
-      ativo: Boolean(servico.ativo),
     });
 
     window.scrollTo({
@@ -101,7 +99,6 @@ function Servicos() {
         nome: form.nome.trim(),
         categoria: form.categoria?.trim() || null,
         valorPadrao: form.valorPadrao ? Number(form.valorPadrao) : null,
-        ativo: Boolean(form.ativo),
       };
 
       if (editandoId) {
@@ -145,25 +142,6 @@ function Servicos() {
           error.response?.data?.detalhe ||
           'Erro ao excluir serviço.'
       );
-    }
-  }
-
-  async function alternarStatus(servico) {
-    try {
-      const payload = {
-        codigo: servico.codigo,
-        nome: servico.nome,
-        categoria: servico.categoria,
-        valorPadrao: servico.valorPadrao,
-        ativo: !servico.ativo,
-      };
-
-      await api.put(`/servicos/${servico.id}`, payload);
-
-      await carregarServicos();
-    } catch (error) {
-      console.error('Erro ao alterar status:', error);
-      alert('Erro ao alterar status do serviço.');
     }
   }
 
@@ -221,9 +199,9 @@ function Servicos() {
               <div className="servicos-field">
                 <label>Código</label>
                 <input
-                    value={form.codigo}
-                    readOnly
-                    placeholder="Código automático"
+                  value={form.codigo}
+                  readOnly
+                  placeholder="Código automático"
                 />
               </div>
 
@@ -261,17 +239,6 @@ function Servicos() {
                   placeholder="0,00"
                 />
               </div>
-
-              <label className="servicos-check">
-                <input
-                  type="checkbox"
-                  checked={form.ativo}
-                  onChange={(event) =>
-                    atualizarCampo('ativo', event.target.checked)
-                  }
-                />
-                Serviço ativo
-              </label>
             </div>
 
             <div className="servicos-actions">
@@ -322,7 +289,6 @@ function Servicos() {
                   <th>Nome</th>
                   <th>Categoria</th>
                   <th>Valor padrão</th>
-                  <th>Status</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -330,7 +296,7 @@ function Servicos() {
               <tbody>
                 {servicosFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="servicos-empty">
+                    <td colSpan="5" className="servicos-empty">
                       Nenhum serviço encontrado.
                     </td>
                   </tr>
@@ -349,18 +315,6 @@ function Servicos() {
                     <td>{formatarMoeda(servico.valorPadrao)}</td>
 
                     <td>
-                      <span
-                        className={
-                          servico.ativo
-                            ? 'servicos-status ativo'
-                            : 'servicos-status inativo'
-                        }
-                      >
-                        {servico.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-
-                    <td>
                       <div className="servicos-table-actions">
                         <button
                           type="button"
@@ -368,14 +322,6 @@ function Servicos() {
                           onClick={() => editarServico(servico)}
                         >
                           Editar
-                        </button>
-
-                        <button
-                          type="button"
-                          className="servicos-mini-btn"
-                          onClick={() => alternarStatus(servico)}
-                        >
-                          {servico.ativo ? 'Inativar' : 'Ativar'}
                         </button>
 
                         <button

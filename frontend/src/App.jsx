@@ -10,7 +10,6 @@ import CadastroCliente from './pages/operador/cadastroCliente';
 import VisualizarClientes from './pages/operador/visualizarClientes';
 import Agendamentos from './pages/operador/agendamentos';
 import CalendarioAgendamentos from './pages/operador/calendarioAgendamentos';
-
 import OrdemServico from './pages/operador/ordemServico';
 import Diagnosticos from './pages/operador/diagnosticos';
 import Servicos from './pages/operador/servicos';
@@ -21,6 +20,12 @@ import VisualizarVeiculosTecnico from './pages/tecnico/visualizarVeiculos';
 import ChecklistTecnico from './pages/tecnico/checklist';
 import HistoricoVeicular from './pages/tecnico/historicoVeicular';
 import ChecklistsVeiculo from './pages/tecnico/checklistsVeiculo';
+
+import CadastrarFornecedor from './pages/admin/cadastrarFornecedores';
+import VisualizarFornecedor from './pages/admin/visualizarFornecedores';
+import CadastrarFuncionarios from './pages/admin/cadastrarFuncionarios';
+import VisualizarFuncionarios from './pages/admin/visualizarFuncionarios';
+import Relatorios from './pages/admin/relatorios';
 
 function App() {
   return (
@@ -33,7 +38,7 @@ function App() {
         <Route
           path="/operador/clientes/cadastro"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}>
+            <ProtectedRoute allowedRoles={[ 'OPERADOR']}>
               <CadastroCliente />
             </ProtectedRoute>
           }
@@ -42,7 +47,7 @@ function App() {
         <Route
           path="/operador/clientes/consultar"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}>
+            <ProtectedRoute allowedRoles={[ 'OPERADOR']}>
               <VisualizarClientes />
             </ProtectedRoute>
           }
@@ -51,7 +56,7 @@ function App() {
         <Route
           path="/operador/agendamentos"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}>
+            <ProtectedRoute allowedRoles={[ 'OPERADOR']}>
               <Agendamentos />
             </ProtectedRoute>
           }
@@ -60,7 +65,7 @@ function App() {
         <Route
           path="/operador/agendamentos/calendario"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}>
+            <ProtectedRoute allowedRoles={[ 'OPERADOR']}>
               <CalendarioAgendamentos />
             </ProtectedRoute>
           }
@@ -69,7 +74,7 @@ function App() {
         <Route
           path="/operador/ordem-servico"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}>
+            <ProtectedRoute allowedRoles={[ 'OPERADOR']}>
               <OrdemServico />
             </ProtectedRoute>
           }
@@ -78,7 +83,7 @@ function App() {
         <Route
           path="/operador/diagnosticos"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}>
+            <ProtectedRoute allowedRoles={['OPERADOR']}>
               <Diagnosticos />
             </ProtectedRoute>
           }
@@ -87,7 +92,7 @@ function App() {
         <Route
           path="/operador/servicos"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}>
+            <ProtectedRoute allowedRoles={['OPERADOR']}>
               <Servicos />
             </ProtectedRoute>
           }
@@ -96,7 +101,7 @@ function App() {
         <Route
           path="/operador/pecas"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}>
+            <ProtectedRoute allowedRoles={[ 'OPERADOR']}>
               <Pecas />
             </ProtectedRoute>
           }
@@ -105,7 +110,7 @@ function App() {
         <Route
           path="/tecnico/painel"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'TECNICO']}>
+            <ProtectedRoute allowedRoles={[ 'TECNICO']}>
               <PainelTecnico />
             </ProtectedRoute>
           }
@@ -114,7 +119,7 @@ function App() {
       <Route
           path="/tecnico/veiculos"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'TECNICO']}>
+            <ProtectedRoute allowedRoles={[ 'TECNICO']}>
               <VisualizarVeiculosTecnico />
             </ProtectedRoute>
           }
@@ -123,7 +128,7 @@ function App() {
       <Route
           path="/tecnico/checklist"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'TECNICO']}>
+            <ProtectedRoute allowedRoles={[ 'TECNICO']}>
               <ChecklistTecnico />
             </ProtectedRoute>
         }
@@ -132,7 +137,7 @@ function App() {
       <Route
         path="/tecnico/historico-veicular"
         element={
-        <ProtectedRoute allowedRoles={['ADMIN', 'TECNICO']}>
+        <ProtectedRoute allowedRoles={[ 'TECNICO']}>
           <HistoricoVeicular />
         </ProtectedRoute>
         } 
@@ -141,11 +146,56 @@ function App() {
       <Route
         path="/tecnico/checklists"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'TECNICO']}>
+          <ProtectedRoute allowedRoles={[ 'TECNICO']}>
             <ChecklistsVeiculo />
           </ProtectedRoute>
        }
       />
+
+      <Route
+  path="/admin/fornecedores/cadastrar"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <CadastrarFornecedor />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/fornecedores"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <VisualizarFornecedor />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/funcionarios/cadastrar"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <CadastrarFuncionarios />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/funcionarios"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <VisualizarFuncionarios />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/relatorios"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <Relatorios />
+    </ProtectedRoute>
+  }
+/>
 
         <Route path="/clientes/cadastro" element={<Navigate to="/operador/clientes/cadastro" replace />} />
         <Route path="/clientes/consultar" element={<Navigate to="/operador/clientes/consultar" replace />} />

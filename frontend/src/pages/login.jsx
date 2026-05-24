@@ -6,7 +6,7 @@ import '../styles/login.css';
 
 const usuariosTeste = [
   {
-    perfil: 'Administrador',
+    perfil: 'Admin',
     email: 'admin@motormind.com',
     senha: 'admin123',
   },
@@ -47,17 +47,9 @@ function Login() {
   }
 
   function obterRotaInicialPorRole(role) {
-    if (role === 'TECNICO') {
-      return '/tecnico/painel';
-    }
-
-    if (role === 'ADMIN') {
-      return '/operador/ordem-servico';
-    }
-
-    if (role === 'OPERADOR') {
-      return '/operador/ordem-servico';
-    }
+    if (role === 'TECNICO') return '/tecnico/painel';
+    if (role === 'ADMIN') return '/admin/relatorios';
+    if (role === 'OPERADOR') return '/operador/agendamentos/calendario';
 
     return '/login';
   }
@@ -111,61 +103,80 @@ function Login() {
   return (
     <main className="login-page">
       <section className="login-card">
-        <div className="login-brand">
-          <h1>
-            Motor<span>Mind</span>
-          </h1>
+        <aside className="login-brand-panel">
+          <div className="login-brand-content">
+            <div className="login-logo">
+              Motor<span>Mind</span>
+            </div>
 
-          <p>Sistema de gestão para oficina automotiva</p>
-        </div>
-
-        <form className="login-form" onSubmit={entrar}>
-          <div className="login-title">
-            <h2>Acessar sistema</h2>
-            <span>Entre com um usuário pré-cadastrado.</span>
+            <div>
+              <h1>Controle inteligente para oficinas.</h1>
+              <p>
+                Organize clientes, veículos, checklists, agendamentos e ordens
+                de serviço em um só sistema.
+              </p>
+            </div>
           </div>
 
-          <div className="login-field">
-            <label>Email</label>
-            <input
-              type="email"
-              value={form.Email}
-              onChange={(event) => atualizarCampo('Email', event.target.value)}
-              placeholder="Digite seu email"
-            />
+          <div className="login-brand-footer">
+            <span>Gestão automotiva</span>
+            <strong>MotorMind</strong>
           </div>
+        </aside>
 
-          <div className="login-field">
-            <label>Senha</label>
-            <input
-              type="password"
-              value={form.Senha}
-              onChange={(event) => atualizarCampo('Senha', event.target.value)}
-              placeholder="Digite sua senha"
-            />
+        <section className="login-form-panel">
+          <form className="login-form" onSubmit={entrar}>
+            <div className="login-title">
+              <span>Acesso ao sistema</span>
+              <h2>Entrar</h2>
+              <p>Informe suas credenciais para acessar o painel.</p>
+            </div>
+
+            <div className="login-field">
+              <label>Email</label>
+              <input
+                type="email"
+                value={form.Email}
+                onChange={(event) => atualizarCampo('Email', event.target.value)}
+                placeholder="seuemail@motormind.com"
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="login-field">
+              <label>Senha</label>
+              <input
+                type="password"
+                value={form.Senha}
+                onChange={(event) => atualizarCampo('Senha', event.target.value)}
+                placeholder="Digite sua senha"
+                autoComplete="current-password"
+              />
+            </div>
+
+            <button type="submit" className="login-btn" disabled={carregando}>
+              {carregando ? 'Entrando...' : 'Acessar sistema'}
+            </button>
+          </form>
+
+          <div className="login-test-users">
+            <div className="login-test-header">
+              <span>Usuários de teste</span>
+            </div>
+
+            <div className="login-users-list">
+              {usuariosTeste.map((usuario) => (
+                <button
+                  key={usuario.email}
+                  type="button"
+                  onClick={() => preencherUsuario(usuario.email, usuario.senha)}
+                >
+                  {usuario.perfil}
+                </button>
+              ))}
+            </div>
           </div>
-
-          <button type="submit" className="login-btn" disabled={carregando}>
-            {carregando ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
-
-        <div className="login-test-users">
-          <strong>Usuários de teste</strong>
-
-          <div className="login-users-list">
-            {usuariosTeste.map((usuario) => (
-              <button
-                key={usuario.email}
-                type="button"
-                onClick={() => preencherUsuario(usuario.email, usuario.senha)}
-              >
-                <span>{usuario.perfil}</span>
-                <small>{usuario.email}</small>
-              </button>
-            ))}
-          </div>
-        </div>
+        </section>
       </section>
     </main>
   );

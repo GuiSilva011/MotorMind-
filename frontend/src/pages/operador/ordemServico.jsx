@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
 import api from '../../services/api';
@@ -11,6 +11,7 @@ const OS_RASCUNHO_TOAST_ID = 'motormind_ordem_servico_rascunho_toast';
 const ordemInicial = {
   id: null,
   codigo: '',
+  status: 'ABERTA',
   cliente: {
     id: '',
     nome: '',
@@ -42,7 +43,12 @@ const filtrosBuscaOSInicial = {
 
 function OrdemServico() {
   const navigate = useNavigate();
+  const location = useLocation();
   const iniciouTelaRef = useRef(false);
+
+  const agendamentoOrigem = location.state?.agendamento || null;
+  const clienteOrigem = location.state?.cliente || agendamentoOrigem?.cliente || null;
+  const veiculoOrigem = location.state?.veiculo || agendamentoOrigem?.veiculo || null;
 
   const [ordem, setOrdem] = useState(ordemInicial);
   const [modoTela, setModoTela] = useState('nova');
@@ -53,6 +59,7 @@ function OrdemServico() {
     servicos: [],
     pecas: [],
     fornecedores: [],
+    tecnicos: [],
   });
 
   const [busca, setBusca] = useState('');
@@ -75,6 +82,8 @@ function OrdemServico() {
     pecaId: null,
     origem: '',
   });
+
+  const [buscaCatalogo, setBuscaCatalogo] = useState('');
 
   const [modalBuscarOSAberto, setModalBuscarOSAberto] = useState(false);
   const [filtrosBuscaOS, setFiltrosBuscaOS] = useState(filtrosBuscaOSInicial);
@@ -120,6 +129,16 @@ function OrdemServico() {
   async function iniciarTelaOrdemServico() {
   try {
     await carregarCatalogos();
+
+    if (agendamentoOrigem && clienteOrigem && veiculoOrigem) {
+      await prepararOrdemAPartirDoAgendamento({
+        agendamento: agendamentoOrigem,
+        cliente: clienteOrigem,
+        veiculo: veiculoOrigem,
+      });
+
+      return;
+    }
 
     const rascunho = localStorage.getItem(OS_RASCUNHO_KEY);
 
@@ -223,6 +242,96 @@ function OrdemServico() {
     }
   }
 
+
+  async function buscarProximoCodigoOrdem() {
+    try {
+      setCarregandoCodigo(true);
+
+      const response = await api.get('/ordens-servico/proximo-codigo');
+
+      return response.data?.codigo || '';
+    } catch (error) {
+      console.error('Erro ao carregar próximo código da OS:', error);
+      toast.error('Erro ao gerar o próximo código da ordem de serviço.');
+      return '';
+    } finally {
+      setCarregandoCodigo(false);
+    }
+  }
+
+  function obterFabricanteVeiculo(veiculo) {
+    return veiculo.fabricante || veiculo.marca || veiculo.modeloMarca || '';
+  }
+
+  function obterModeloVeiculo(veiculo) {
+    return veiculo.modelo || veiculo.nomeModelo || '';
+  }
+
+  function obterKmVeiculo(veiculo) {
+    return veiculo.km || veiculo.quilometragem || veiculo.kilometragem || '';
+  }
+
+  async function prepararOrdemAPartirDoAgendamento({
+    agendamento,
+    cliente,
+    veiculo,
+  }) {
+    localStorage.removeItem(OS_RASCUNHO_KEY);
+    toast.dismiss(OS_RASCUNHO_TOAST_ID);
+
+    const codigo = await buscarProximoCodigoOrdem();
+    const descricaoAgendamento = agendamento.servico || '';
+    const tipoServico = agendamento.tipo_servico || agendamento.tipoServico || '';
+
+    const novaOrdem = {
+      ...ordemInicial,
+      codigo,
+      status: 'ABERTA',
+      cliente: {
+        id: cliente.id || '',
+        nome: cliente.nome || cliente.Nome || '',
+      },
+      veiculo: {
+        id: veiculo.id || agendamento.veiculoId || '',
+        placa: veiculo.placa || '',
+        marca: obterFabricanteVeiculo(veiculo),
+        modelo: obterModeloVeiculo(veiculo),
+        ano: montarAnoVeiculo(veiculo),
+        motor: veiculo.motor || '',
+        cor: veiculo.cor || '',
+        km: obterKmVeiculo(veiculo),
+        chassi: veiculo.chassi || '',
+        possuiAr: Boolean(veiculo.ar || veiculo.possuiAr),
+      },
+      observacoes: descricaoAgendamento || tipoServico || '',
+      servicosSemDiagnostico:
+        descricaoAgendamento || tipoServico
+          ? [
+              {
+                ...criarServico(),
+                descricao: descricaoAgendamento || tipoServico,
+                responsavel: agendamento.mecanico || '',
+                tipo: tipoServico || '',
+              },
+            ]
+          : [],
+      agendamentoId: agendamento.id || null,
+    };
+
+    setOrdem(novaOrdem);
+    setModoTela('nova');
+    setBusca(
+      `${cliente.nome || cliente.Nome || ''}${veiculo.placa ? ` - ${veiculo.placa}` : ''}`
+    );
+    setResultadosBusca([]);
+    setClienteNaoEncontrado(false);
+    setFornecedoresCotacao([]);
+    setRascunhoCarregado(true);
+
+    window.history.replaceState({}, document.title, window.location.pathname);
+    toast.success('Nova ordem de serviço iniciada a partir do agendamento.');
+  }
+
   async function carregarCatalogos() {
     try {
       setCarregandoCatalogos(true);
@@ -232,18 +341,33 @@ function OrdemServico() {
         servicosResponse,
         pecasResponse,
         fornecedoresResponse,
+        funcionariosResponse,
       ] = await Promise.all([
         api.get('/diagnosticos'),
         api.get('/servicos'),
         api.get('/pecas'),
         api.get('/fornecedores'),
+        api.get('/funcionarios'),
       ]);
+
+      const fornecedoresPecas = Array.isArray(fornecedoresResponse.data)
+        ? fornecedoresResponse.data.filter(
+            (fornecedor) => fornecedor.fornecePecas === true
+          )
+        : [];
+
+      const tecnicos = Array.isArray(funcionariosResponse.data)
+        ? funcionariosResponse.data.filter(
+            (funcionario) => funcionario.usuario?.Role === 'TECNICO'
+          )
+        : [];
 
       setCatalogos({
         diagnosticos: diagnosticosResponse.data || [],
         servicos: servicosResponse.data || [],
         pecas: pecasResponse.data || [],
-        fornecedores: fornecedoresResponse.data || [],
+        fornecedores: fornecedoresPecas,
+        tecnicos,
       });
     } catch (error) {
       console.error('Erro ao carregar catálogos:', error);
@@ -952,6 +1076,8 @@ function OrdemServico() {
   }) {
     if (!podeEditar) return;
 
+    setBuscaCatalogo('');
+
     setModalCatalogo({
       aberto: true,
       tipo,
@@ -963,6 +1089,8 @@ function OrdemServico() {
   }
 
   function fecharModalCatalogo() {
+    setBuscaCatalogo('');
+
     setModalCatalogo({
       aberto: false,
       tipo: '',
@@ -973,12 +1101,57 @@ function OrdemServico() {
     });
   }
 
-  function obterItensModalCatalogo() {
+  function obterItensBaseModalCatalogo() {
     if (modalCatalogo.tipo === 'diagnostico') return catalogos.diagnosticos;
     if (modalCatalogo.tipo === 'servico') return catalogos.servicos;
     if (modalCatalogo.tipo === 'peca') return catalogos.pecas;
 
     return [];
+  }
+
+  function obterItensModalCatalogo() {
+    const itens = obterItensBaseModalCatalogo();
+    const termo = buscaCatalogo.trim().toLowerCase();
+
+    if (!termo) return itens;
+
+    return itens.filter((item) => {
+      const codigo = String(item.codigo || '').toLowerCase();
+      const nome = String(item.nome || '').toLowerCase();
+      const descricao = String(item.descricao || '').toLowerCase();
+      const categoria = String(item.categoria || '').toLowerCase();
+      const marca = String(item.marca || '').toLowerCase();
+      const aplicacao = String(item.aplicacao || '').toLowerCase();
+      const grupo = String(item.grupo || '').toLowerCase();
+
+      return (
+        codigo.includes(termo) ||
+        nome.includes(termo) ||
+        descricao.includes(termo) ||
+        categoria.includes(termo) ||
+        marca.includes(termo) ||
+        aplicacao.includes(termo) ||
+        grupo.includes(termo)
+      );
+    });
+  }
+
+  function obterGrupoPeca(peca) {
+    return peca.grupo?.trim() || 'Sem grupo';
+  }
+
+  function agruparPecasPorGrupo(pecas) {
+    return pecas.reduce((grupos, peca) => {
+      const grupo = obterGrupoPeca(peca);
+
+      if (!grupos[grupo]) {
+        grupos[grupo] = [];
+      }
+
+      grupos[grupo].push(peca);
+
+      return grupos;
+    }, {});
   }
 
   function obterTituloModalCatalogo() {
@@ -991,15 +1164,15 @@ function OrdemServico() {
 
   function obterTextoVazioModalCatalogo() {
     if (modalCatalogo.tipo === 'diagnostico') {
-      return 'Nenhum diagnóstico cadastrado.';
+      return 'Nenhum diagnóstico encontrado.';
     }
 
     if (modalCatalogo.tipo === 'servico') {
-      return 'Nenhum serviço cadastrado.';
+      return 'Nenhum serviço encontrado.';
     }
 
     if (modalCatalogo.tipo === 'peca') {
-      return 'Nenhuma peça cadastrada.';
+      return 'Nenhuma peça encontrada.';
     }
 
     return 'Nenhum cadastro encontrado.';
@@ -1109,11 +1282,94 @@ function OrdemServico() {
     }
 
     if (modalCatalogo.tipo === 'peca') {
-      const detalhe = [item.marca, item.aplicacao].filter(Boolean).join(' - ');
+      const detalhe = [item.grupo, item.marca, item.aplicacao]
+        .filter(Boolean)
+        .join(' | ');
+
       return detalhe || '-';
     }
 
     return '-';
+  }
+
+  function renderTabelaCatalogo(itens) {
+    return (
+      <div className="os-catalog-table-wrap">
+        <table className="os-catalog-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nome</th>
+              <th>Detalhes</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {itens.map((item) => (
+              <tr key={item.id}>
+                <td>{item.codigo || '-'}</td>
+                <td>{item.nome || '-'}</td>
+                <td>{obterDetalheCatalogo(item)}</td>
+
+                <td>
+                  <button
+                    type="button"
+                    className="os-small-btn os-blue"
+                    onClick={() => selecionarItemCatalogo(item)}
+                  >
+                    Selecionar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  function renderConteudoModalCatalogo() {
+    const itens = obterItensModalCatalogo();
+
+    if (itens.length === 0) {
+      return (
+        <div className="os-catalog-empty">
+          <p>{obterTextoVazioModalCatalogo()}</p>
+
+          <button
+            type="button"
+            className="os-small-btn os-blue"
+            onClick={abrirCadastroCatalogoNovaAba}
+          >
+            {obterTextoBotaoCadastroCatalogo()}
+          </button>
+        </div>
+      );
+    }
+
+    if (modalCatalogo.tipo !== 'peca') {
+      return renderTabelaCatalogo(itens);
+    }
+
+    const grupos = agruparPecasPorGrupo(itens);
+
+    return (
+      <div className="os-catalog-groups">
+        {Object.entries(grupos)
+          .sort(([grupoA], [grupoB]) => grupoA.localeCompare(grupoB))
+          .map(([grupo, pecas]) => (
+            <section className="os-catalog-group" key={grupo}>
+              <div className="os-catalog-group-title">
+                <strong>{grupo}</strong>
+                <span>{pecas.length} peça(s)</span>
+              </div>
+
+              {renderTabelaCatalogo(pecas)}
+            </section>
+          ))}
+      </div>
+    );
   }
 
   function abrirModalBuscarOS() {
@@ -1223,6 +1479,7 @@ function OrdemServico() {
     setOrdem({
       id: os.id || null,
       codigo: os.codigo || '',
+      status: os.status || 'ABERTA',
       cliente: {
         id: cliente.id || '',
         nome: cliente.nome || '',
@@ -1414,6 +1671,7 @@ function OrdemServico() {
   function montarPayloadOrdemServico() {
     return {
       codigo: ordem.codigo,
+      status: ordem.status || 'ABERTA',
       veiculoId: Number(ordem.veiculo.id),
       operadorId: 1,
       tecnicoId: 1,
@@ -1539,6 +1797,65 @@ function OrdemServico() {
     );
   }
 
+  function obterPecasValidasParaCotacao() {
+    return pecasParaCotacao.filter((peca) => {
+      const descricao = String(peca.descricao || '').trim();
+      const quantidade = Number(peca.quantidade || 0);
+
+      return descricao && quantidade > 0;
+    });
+  }
+
+  function normalizarTelefoneWhatsApp(telefone) {
+    if (!telefone) return '';
+
+    const apenasNumeros = String(telefone).replace(/\D/g, '');
+
+    if (!apenasNumeros) return '';
+
+    if (apenasNumeros.startsWith('55')) {
+      return apenasNumeros;
+    }
+
+    return `55${apenasNumeros}`;
+  }
+
+  function montarNomeVeiculoCotacao() {
+    return [ordem.veiculo.marca, ordem.veiculo.modelo, ordem.veiculo.ano]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  function montarMensagemCotacao(fornecedor) {
+    const pecasValidas = obterPecasValidasParaCotacao();
+
+    const linhasPecas = pecasValidas
+      .map((peca) => {
+        const nome = String(peca.descricao || 'Peça não informada').trim();
+        const quantidade = Number(peca.quantidade || 1);
+
+        return `${nome} - Quantidade: ${quantidade}`;
+      })
+      .join('\n');
+
+    return `Olá, ${fornecedor.nome || 'fornecedor'}!
+
+Gostaria de solicitar uma cotação de peças para a seguinte ordem de serviço:
+
+
+Veículo: ${montarNomeVeiculoCotacao() || '-'}
+Placa: ${ordem.veiculo.placa || '-'}
+Motor: ${ordem.veiculo.motor || '-'}
+Chassi: ${ordem.veiculo.chassi || '-'}
+
+Peças necessárias:
+
+${linhasPecas}
+ 
+
+Pode me enviar os valores e disponibilidade, por favor?`;
+  }
+
   function enviarCotacao() {
     const fornecedoresSelecionados = catalogos.fornecedores.filter(
       (fornecedor) => fornecedoresCotacao.includes(fornecedor.id)
@@ -1549,17 +1866,50 @@ function OrdemServico() {
       return;
     }
 
-    const payload = {
-      ordemServicoCodigo: ordem.codigo,
-      veiculo: ordem.veiculo,
-      pecas: pecasParaCotacao,
-      fornecedores: fornecedoresSelecionados,
-    };
+    const pecasValidas = obterPecasValidasParaCotacao();
 
-    console.log('Cotação:', payload);
+    if (pecasValidas.length === 0) {
+      toast.warning('Adicione pelo menos uma peça válida para cotação.');
+      return;
+    }
 
-    setModalCotacaoAberto(false);
-    toast.success('Cotação pronta para envio.');
+    let fornecedoresSemTelefone = 0;
+    let fornecedoresComEnvio = 0;
+
+    fornecedoresSelecionados.forEach((fornecedor, index) => {
+      const telefone =
+        fornecedor.celular || fornecedor.telefone || fornecedor.whatsapp || '';
+
+      const telefoneWhatsApp = normalizarTelefoneWhatsApp(telefone);
+
+      if (!telefoneWhatsApp) {
+        fornecedoresSemTelefone += 1;
+        toast.warning(
+          `Fornecedor ${fornecedor.nome || 'sem nome'} não possui telefone/celular cadastrado.`
+        );
+        return;
+      }
+
+      fornecedoresComEnvio += 1;
+
+      const mensagem = montarMensagemCotacao(fornecedor);
+      const url = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(
+        mensagem
+      )}`;
+
+      setTimeout(() => {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }, index * 450);
+    });
+
+    if (fornecedoresComEnvio > 0) {
+      setModalCotacaoAberto(false);
+      toast.success('Cotação aberta no WhatsApp dos fornecedores selecionados.');
+    }
+
+    if (fornecedoresComEnvio === 0 && fornecedoresSemTelefone > 0) {
+      toast.error('Nenhuma cotação foi enviada. Cadastre telefone/celular nos fornecedores selecionados.');
+    }
   }
 
   function renderPeca({
@@ -1770,6 +2120,24 @@ function OrdemServico() {
             <div className="os-field">
               <label>Código da OS</label>
               <input value={ordem.codigo} readOnly placeholder="Automático" />
+            </div>
+
+            <div className="os-field">
+              <label>Status da OS</label>
+
+              <select
+                value={ordem.status || 'ABERTA'}
+                disabled={!podeEditar}
+                onChange={(event) =>
+                  atualizarCampoOrdem('status', event.target.value)
+                }
+              >
+                <option value="ABERTA">Aberta</option>
+                <option value="EM_ANDAMENTO">Em andamento</option>
+                <option value="AGUARDANDO_PECA">Aguardando peça</option>
+                <option value="FINALIZADA">Finalizada</option>
+                <option value="CANCELADA">Cancelada</option>
+              </select>
             </div>
           </div>
 
@@ -2073,7 +2441,7 @@ function OrdemServico() {
                           <div className="os-field">
                             <label>Responsável</label>
 
-                            <input
+                            <select
                               value={servico.responsavel}
                               disabled={!podeEditar}
                               onChange={(event) =>
@@ -2084,8 +2452,18 @@ function OrdemServico() {
                                   event.target.value
                                 )
                               }
-                              placeholder="Técnico"
-                            />
+                            >
+                              <option value="">Selecione um técnico</option>
+
+                              {catalogos.tecnicos.map((tecnico) => (
+                                <option
+                                  key={tecnico.id}
+                                  value={tecnico.usuario?.Nome || ''}
+                                >
+                                  {tecnico.usuario?.Nome || 'Técnico sem nome'}
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
                           <div className="os-field">
@@ -2226,12 +2604,7 @@ function OrdemServico() {
           })}
 
           {ordem.servicosSemDiagnostico.length > 0 && (
-            <article className="os-diagnostic-card os-no-diagnostic">
-              <div className="os-diagnostic-header">
-                <div className="os-code os-code-free">S</div>
-                <strong>Serviços sem diagnóstico</strong>
-              </div>
-
+            <div className="os-free-items">
               {ordem.servicosSemDiagnostico.map((servico, servicoIndex) => {
                 const codigoServicoCompleto = `S.${servicoIndex + 1}`;
 
@@ -2291,7 +2664,7 @@ function OrdemServico() {
                         <div className="os-field">
                           <label>Responsável</label>
 
-                          <input
+                          <select
                             value={servico.responsavel}
                             disabled={!podeEditar}
                             onChange={(event) =>
@@ -2301,8 +2674,18 @@ function OrdemServico() {
                                 event.target.value
                               )
                             }
-                            placeholder="Técnico"
-                          />
+                          >
+                            <option value="">Selecione um técnico</option>
+
+                            {catalogos.tecnicos.map((tecnico) => (
+                              <option
+                                key={tecnico.id}
+                                value={tecnico.usuario?.Nome || ''}
+                              >
+                                {tecnico.usuario?.Nome || 'Técnico sem nome'}
+                              </option>
+                            ))}
+                          </select>
                         </div>
 
                         <div className="os-field">
@@ -2420,17 +2803,12 @@ function OrdemServico() {
                   </article>
                 );
               })}
-            </article>
+            </div>
           )}
 
           {ordem.pecasAvulsas.length > 0 && (
-            <article className="os-diagnostic-card">
-              <div className="os-diagnostic-header">
-                <div className="os-code os-code-free">P</div>
-                <strong>Peças avulsas</strong>
-              </div>
-
-              <div className="os-piece-area">
+            <div className="os-free-items">
+              <div className="os-piece-area os-piece-area-loose">
                 {ordem.pecasAvulsas.map((peca, pecaIndex) =>
                   renderPeca({
                     peca,
@@ -2450,7 +2828,7 @@ function OrdemServico() {
                   })
                 )}
               </div>
-            </article>
+            </div>
           )}
         </section>
 
@@ -2707,52 +3085,15 @@ function OrdemServico() {
                 </div>
               </div>
 
-              {obterItensModalCatalogo().length === 0 ? (
-                <div className="os-catalog-empty">
-                  <p>{obterTextoVazioModalCatalogo()}</p>
+              <div className="os-catalog-search">
+                <input
+                  value={buscaCatalogo}
+                  onChange={(event) => setBuscaCatalogo(event.target.value)}
+                  placeholder={`Pesquisar ${obterTituloModalCatalogo().toLowerCase()} por código, nome, grupo ou descrição...`}
+                />
+              </div>
 
-                  <button
-                    type="button"
-                    className="os-small-btn os-blue"
-                    onClick={abrirCadastroCatalogoNovaAba}
-                  >
-                    {obterTextoBotaoCadastroCatalogo()}
-                  </button>
-                </div>
-              ) : (
-                <div className="os-catalog-table-wrap">
-                  <table className="os-catalog-table">
-                    <thead>
-                      <tr>
-                        <th>Código</th>
-                        <th>Nome</th>
-                        <th>Detalhes</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {obterItensModalCatalogo().map((item) => (
-                        <tr key={item.id}>
-                          <td>{item.codigo || '-'}</td>
-                          <td>{item.nome || '-'}</td>
-                          <td>{obterDetalheCatalogo(item)}</td>
-
-                          <td>
-                            <button
-                              type="button"
-                              className="os-small-btn os-blue"
-                              onClick={() => selecionarItemCatalogo(item)}
-                            >
-                              Selecionar
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              {renderConteudoModalCatalogo()}
             </div>
           </div>
         )}
@@ -2787,10 +3128,10 @@ function OrdemServico() {
               <div className="os-modal-section">
                 <h3>Peças da cotação</h3>
 
-                {pecasParaCotacao.map((peca) => (
+                {obterPecasValidasParaCotacao().map((peca) => (
                   <div className="os-modal-piece" key={peca.id}>
-                    <strong>{peca.codigoPeca}</strong>
-                    <span>{peca.descricao || 'Peça sem descrição'}</span>
+                    <strong>{peca.descricao || 'Peça sem descrição'}</strong>
+                    <span>Quantidade: {Number(peca.quantidade || 1)}</span>
                   </div>
                 ))}
               </div>
@@ -2806,7 +3147,15 @@ function OrdemServico() {
                       onChange={() => alternarFornecedorCotacao(fornecedor.id)}
                     />
 
-                    {fornecedor.nome}
+                    <div>
+                      <strong>{fornecedor.nome}</strong>
+                      <span>
+                        {fornecedor.celular ||
+                          fornecedor.telefone ||
+                          fornecedor.whatsapp ||
+                          'Sem telefone cadastrado'}
+                      </span>
+                    </div>
                   </label>
                 ))}
               </div>

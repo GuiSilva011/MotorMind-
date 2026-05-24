@@ -19,7 +19,6 @@ function criarDiagnosticoInicial() {
     codigo: gerarCodigo('DIAG'),
     nome: '',
     descricao: '',
-    ativo: true,
   };
 }
 
@@ -41,7 +40,7 @@ function Diagnosticos() {
 
       const response = await api.get('/diagnosticos');
 
-      setDiagnosticos(response.data || []);
+      setDiagnosticos(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Erro ao carregar diagnósticos:', error);
       alert('Erro ao carregar diagnósticos.');
@@ -58,8 +57,8 @@ function Diagnosticos() {
   }
 
   function limparFormulario() {
-  setForm(criarDiagnosticoInicial());
-  setEditandoId(null);
+    setForm(criarDiagnosticoInicial());
+    setEditandoId(null);
   }
 
   function editarDiagnostico(diagnostico) {
@@ -69,7 +68,6 @@ function Diagnosticos() {
       codigo: diagnostico.codigo || '',
       nome: diagnostico.nome || '',
       descricao: diagnostico.descricao || '',
-      ativo: Boolean(diagnostico.ativo),
     });
 
     window.scrollTo({
@@ -98,7 +96,6 @@ function Diagnosticos() {
         codigo: form.codigo.trim().toUpperCase(),
         nome: form.nome.trim(),
         descricao: form.descricao?.trim() || null,
-        ativo: Boolean(form.ativo),
       };
 
       if (editandoId) {
@@ -147,24 +144,6 @@ function Diagnosticos() {
     }
   }
 
-  async function alternarStatus(diagnostico) {
-    try {
-      const payload = {
-        codigo: diagnostico.codigo,
-        nome: diagnostico.nome,
-        descricao: diagnostico.descricao,
-        ativo: !diagnostico.ativo,
-      };
-
-      await api.put(`/diagnosticos/${diagnostico.id}`, payload);
-
-      await carregarDiagnosticos();
-    } catch (error) {
-      console.error('Erro ao alterar status:', error);
-      alert('Erro ao alterar status do diagnóstico.');
-    }
-  }
-
   const diagnosticosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
@@ -208,11 +187,12 @@ function Diagnosticos() {
               <div className="diagnosticos-field">
                 <label>Código</label>
                 <input
-                value={form.codigo}
-                readOnly
-                 placeholder="Código automático"
+                  value={form.codigo}
+                  readOnly
+                  placeholder="Código automático"
                 />
               </div>
+
               <div className="diagnosticos-field diagnosticos-col-2">
                 <label>Nome</label>
                 <input
@@ -223,17 +203,6 @@ function Diagnosticos() {
                   placeholder="Ex: Carro falhando"
                 />
               </div>
-
-              <label className="diagnosticos-check">
-                <input
-                  type="checkbox"
-                  checked={form.ativo}
-                  onChange={(event) =>
-                    atualizarCampo('ativo', event.target.checked)
-                  }
-                />
-                Diagnóstico ativo
-              </label>
 
               <div className="diagnosticos-field diagnosticos-col-full">
                 <label>Descrição</label>
@@ -296,7 +265,6 @@ function Diagnosticos() {
                   <th>Código</th>
                   <th>Nome</th>
                   <th>Descrição</th>
-                  <th>Status</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -304,7 +272,7 @@ function Diagnosticos() {
               <tbody>
                 {diagnosticosFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="diagnosticos-empty">
+                    <td colSpan="4" className="diagnosticos-empty">
                       Nenhum diagnóstico encontrado.
                     </td>
                   </tr>
@@ -321,18 +289,6 @@ function Diagnosticos() {
                     <td>{diagnostico.descricao || '-'}</td>
 
                     <td>
-                      <span
-                        className={
-                          diagnostico.ativo
-                            ? 'diagnosticos-status ativo'
-                            : 'diagnosticos-status inativo'
-                        }
-                      >
-                        {diagnostico.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-
-                    <td>
                       <div className="diagnosticos-table-actions">
                         <button
                           type="button"
@@ -340,14 +296,6 @@ function Diagnosticos() {
                           onClick={() => editarDiagnostico(diagnostico)}
                         >
                           Editar
-                        </button>
-
-                        <button
-                          type="button"
-                          className="diagnosticos-mini-btn"
-                          onClick={() => alternarStatus(diagnostico)}
-                        >
-                          {diagnostico.ativo ? 'Inativar' : 'Ativar'}
                         </button>
 
                         <button

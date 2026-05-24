@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
@@ -16,6 +16,7 @@ const itensEntrada = [
   'Vazamento de óleo do motor',
   'Esforço/altura pedal da embreagem',
   'Inspeção visual das correias do motor',
+
   'Barulho anormal do motor',
   'Step',
   'Triângulo',
@@ -26,6 +27,7 @@ const itensEntrada = [
   'Reservatório para frio',
   'Vazamento de água',
   'Macaco',
+
   'Teste de bateria',
   'Revisão das luzes',
   'Ar quente/ventilação interior',
@@ -47,6 +49,7 @@ const itensDiagnostico = [
   'Axiais',
   'Sistema de escapamento',
   'Balanceamento',
+
   'Disco/pastilhas dianteiras',
   'Sapatas/tambores traseiros',
   'Cabos de ignição',
@@ -57,6 +60,7 @@ const itensDiagnostico = [
   'Coifas câmbio',
   'Cambagem/caster',
   'Disco/pastilhas traseiras',
+
   'Cilindros das rodas traseiras',
   'Bobinas de ignição',
   'Coxins câmbio',
@@ -73,17 +77,49 @@ const fotosIniciais = {
   direita: null,
 };
 
+function criarEstadoItens(lista) {
+  return lista.reduce((acc, item) => {
+    acc[item] = null;
+    return acc;
+  }, {});
+}
+
+function converterItensParaEnvio(itens) {
+  return Object.entries(itens).map(([nome, valor]) => ({
+    nome,
+    valor,
+  }));
+}
+
 function Checklist() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const veiculoSelecionado = location.state?.veiculo || null;
 
-  const [entrada, setEntrada] = useState([]);
-  const [diagnostico, setDiagnostico] = useState([]);
+  const [entrada, setEntrada] = useState(() => criarEstadoItens(itensEntrada));
+  const [diagnostico, setDiagnostico] = useState(() =>
+    criarEstadoItens(itensDiagnostico)
+  );
+
   const [observacoesEntrada, setObservacoesEntrada] = useState('');
   const [observacoesDiagnostico, setObservacoesDiagnostico] = useState('');
   const [fotos, setFotos] = useState(fotosIniciais);
+
+  const totais = useMemo(() => {
+    const entradaPreenchidos = Object.values(entrada).filter(
+      (valor) => valor !== null
+    ).length;
+
+    const diagnosticoPreenchidos = Object.values(diagnostico).filter(
+      (valor) => valor !== null
+    ).length;
+
+    return {
+      entradaPreenchidos,
+      diagnosticoPreenchidos,
+    };
+  }, [entrada, diagnostico]);
 
   function montarNomeVeiculo() {
     if (!veiculoSelecionado) return 'Nenhum veículo selecionado';
@@ -94,22 +130,26 @@ function Checklist() {
     return `${fabricante} ${modelo}`.trim() || 'Veículo sem descrição';
   }
 
+  function obterProximoValor(valorAtual) {
+    if (valorAtual === null) return true;
+    if (valorAtual === true) return false;
+    return null;
+  }
+
   function alternarItem(tipo, item) {
     if (tipo === 'entrada') {
-      setEntrada((prev) =>
-        prev.includes(item)
-          ? prev.filter((valor) => valor !== item)
-          : [...prev, item]
-      );
+      setEntrada((prev) => ({
+        ...prev,
+        [item]: obterProximoValor(prev[item]),
+      }));
 
       return;
     }
 
-    setDiagnostico((prev) =>
-      prev.includes(item)
-        ? prev.filter((valor) => valor !== item)
-        : [...prev, item]
-    );
+    setDiagnostico((prev) => ({
+      ...prev,
+      [item]: obterProximoValor(prev[item]),
+    }));
   }
 
   function alterarFoto(campo, arquivo) {
@@ -134,91 +174,134 @@ function Checklist() {
   }
 
   async function salvarChecklist() {
-  try {
-    if (!veiculoSelecionado?.id) {
-      toast.warning('Selecione um veículo antes de salvar a checklist.');
-      return;
+    try {
+      if (!veiculoSelecionado?.id) {
+        toast.warning('Selecione um veículo antes de salvar a checklist.');
+        return;
+      }
+
+      const formData = new FormData();
+
+      formData.append('veiculoId', String(veiculoSelecionado.id));
+      formData.append(
+        'itensEntrada',
+        JSON.stringify(converterItensParaEnvio(entrada))
+      );
+      formData.append(
+        'itensDiagnostico',
+        JSON.stringify(converterItensParaEnvio(diagnostico))
+      );
+      formData.append('observacoesEntrada', observacoesEntrada || '');
+      formData.append('observacoesDiagnostico', observacoesDiagnostico || '');
+
+      if (fotos.frente?.arquivo) {
+        formData.append('fotoFrente', fotos.frente.arquivo);
+      }
+
+      if (fotos.traseira?.arquivo) {
+        formData.append('fotoTraseira', fotos.traseira.arquivo);
+      }
+
+      if (fotos.esquerda?.arquivo) {
+        formData.append('fotoEsquerda', fotos.esquerda.arquivo);
+      }
+
+      if (fotos.direita?.arquivo) {
+        formData.append('fotoDireita', fotos.direita.arquivo);
+      }
+
+      await api.post('/checklists', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Checklist salva com sucesso!');
+
+      navigate('/tecnico/checklists', {
+        state: {
+          veiculo: veiculoSelecionado,
+        },
+      });
+    } catch (error) {
+      console.error('Erro ao salvar checklist:', error);
+
+      toast.error(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao salvar checklist.'
+      );
     }
-
-    const formData = new FormData();
-
-    formData.append('veiculoId', String(veiculoSelecionado.id));
-    formData.append('itensEntrada', JSON.stringify(entrada));
-    formData.append('itensDiagnostico', JSON.stringify(diagnostico));
-    formData.append('observacoesEntrada', observacoesEntrada || '');
-    formData.append('observacoesDiagnostico', observacoesDiagnostico || '');
-
-    if (fotos.frente?.arquivo) {
-      formData.append('fotoFrente', fotos.frente.arquivo);
-    }
-
-    if (fotos.traseira?.arquivo) {
-      formData.append('fotoTraseira', fotos.traseira.arquivo);
-    }
-
-    if (fotos.esquerda?.arquivo) {
-      formData.append('fotoEsquerda', fotos.esquerda.arquivo);
-    }
-
-    if (fotos.direita?.arquivo) {
-      formData.append('fotoDireita', fotos.direita.arquivo);
-    }
-
-    await api.post('/checklists', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    toast.success('Checklist salva com sucesso!');
-
-    navigate('/tecnico/checklists', {
-      state: {
-        veiculo: veiculoSelecionado,
-      },
-    });
-  } catch (error) {
-    console.error('Erro ao salvar checklist:', error);
-
-    toast.error(
-      error.response?.data?.erro ||
-        error.response?.data?.detalhe ||
-        'Erro ao salvar checklist.'
-    );
   }
-}
 
   function cancelarChecklist() {
-    setEntrada([]);
-    setDiagnostico([]);
-    setObservacoesEntrada('');
-    setObservacoesDiagnostico('');
-    setFotos(fotosIniciais);
+  const confirmar = window.confirm(
+    'Deseja cancelar esta checklist? As informações preenchidas serão perdidas.'
+  );
+
+  if (!confirmar) return;
+
+  Object.values(fotos).forEach((foto) => {
+    if (foto?.preview) {
+      URL.revokeObjectURL(foto.preview);
+    }
+  });
+
+  setEntrada(criarEstadoItens(itensEntrada));
+  setDiagnostico(criarEstadoItens(itensDiagnostico));
+  setObservacoesEntrada('');
+  setObservacoesDiagnostico('');
+  setFotos({
+    frente: null,
+    traseira: null,
+    esquerda: null,
+    direita: null,
+  });
+
+  navigate('/tecnico/checklists', {
+    state: {
+      veiculo: veiculoSelecionado,
+    },
+  });
+}
+
+  function obterClasseValor(valor) {
+    if (valor === true) return 'checklist-status-ok';
+    if (valor === false) return 'checklist-status-no';
+    return '';
+  }
+
+  function obterTextoValor(valor) {
+    if (valor === true) return '✓';
+    if (valor === false) return 'X';
+    return '';
   }
 
   function renderItens(lista, tipo) {
-    const selecionados = tipo === 'entrada' ? entrada : diagnostico;
+    const itens = tipo === 'entrada' ? entrada : diagnostico;
 
-    return lista.map((item) => (
-      <label
-        className={
-          selecionados.includes(item)
-            ? 'checklist-item checklist-item-checked'
-            : 'checklist-item'
-        }
-        key={item}
-      >
-        <input
-          type="checkbox"
-          checked={selecionados.includes(item)}
-          onChange={() => alternarItem(tipo, item)}
-        />
-        <span>{item}</span>
-      </label>
-    ));
+    return lista.map((item) => {
+      const valor = itens[item];
+
+      return (
+        <button
+          type="button"
+          className={`checklist-item ${obterClasseValor(valor)}`}
+          key={item}
+          onClick={() => alternarItem(tipo, item)}
+          title="Clique para alternar entre ✓, X e vazio"
+        >
+          <span className="checklist-status-box">
+            {obterTextoValor(valor)}
+          </span>
+
+          <span className="checklist-item-text">{item}</span>
+        </button>
+      );
+    });
   }
 
-  function renderFoto(campo, titulo) {
+  function renderFoto(campo, titulo, subtitulo) {
     const foto = fotos[campo];
 
     return (
@@ -228,8 +311,7 @@ function Checklist() {
             <img src={foto.preview} alt={titulo} />
           ) : (
             <div className="checklist-photo-empty">
-              <strong>{titulo}</strong>
-              <span>Nenhuma foto inserida</span>
+              <strong>{subtitulo}</strong>
             </div>
           )}
         </div>
@@ -269,16 +351,6 @@ function Checklist() {
               diagnóstico.
             </p>
           </div>
-
-          <div className="tecnico-page-actions">
-            <button
-              type="button"
-              className="tecnico-voltar-painel"
-              onClick={() => navigate('/tecnico/painel')}
-            >
-              Voltar ao painel
-            </button>
-          </div>
         </section>
 
         <section className="checklist-vehicle-card">
@@ -307,52 +379,59 @@ function Checklist() {
             <section className="checklist-section">
               <div className="checklist-section-header">
                 <div>
-                  <h2>Inspeção mecânica na entrada</h2>
-                  <p>Execute esta etapa na presença do cliente.</p>
+                  <h2>
+                    Inspeção mecânica na ENTRADA{' '}
+                    <span>(execute na presença do cliente)</span>
+                  </h2>
                 </div>
 
-                <span>{entrada.length}/{itensEntrada.length}</span>
+                <strong>
+                  {totais.entradaPreenchidos}/{itensEntrada.length}
+                </strong>
               </div>
 
-              <div className="checklist-items-grid">
-                {renderItens(itensEntrada, 'entrada')}
-              </div>
+              <div className="checklist-grid-with-notes">
+                <div className="checklist-items-grid checklist-entrada-grid">
+                  {renderItens(itensEntrada, 'entrada')}
+                </div>
 
-              <div className="checklist-observacoes">
-                <label>Observações da entrada</label>
-                <textarea
-                  value={observacoesEntrada}
-                  onChange={(event) =>
-                    setObservacoesEntrada(event.target.value)
-                  }
-                  placeholder="Digite observações da inspeção de entrada..."
-                />
+                <div className="checklist-observacoes checklist-observacoes-table">
+                  <label>Observações:</label>
+                  <textarea
+                    value={observacoesEntrada}
+                    onChange={(event) =>
+                      setObservacoesEntrada(event.target.value)
+                    }
+                  />
+                </div>
               </div>
             </section>
 
             <section className="checklist-section">
               <div className="checklist-section-header">
                 <div>
-                  <h2>Inspeção mecânica na fase de diagnóstico</h2>
-                  <p>Marque os itens avaliados durante o diagnóstico técnico.</p>
+                  <h2>Inspeção mecânica na fase de DIAGNÓSTICO</h2>
                 </div>
 
-                <span>{diagnostico.length}/{itensDiagnostico.length}</span>
+                <strong>
+                  {totais.diagnosticoPreenchidos}/{itensDiagnostico.length}
+                </strong>
               </div>
 
-              <div className="checklist-items-grid">
-                {renderItens(itensDiagnostico, 'diagnostico')}
-              </div>
+              <div className="checklist-grid-with-notes">
+                <div className="checklist-items-grid checklist-diagnostico-grid">
+                  {renderItens(itensDiagnostico, 'diagnostico')}
+                </div>
 
-              <div className="checklist-observacoes">
-                <label>Observações do diagnóstico</label>
-                <textarea
-                  value={observacoesDiagnostico}
-                  onChange={(event) =>
-                    setObservacoesDiagnostico(event.target.value)
-                  }
-                  placeholder="Digite observações da fase de diagnóstico..."
-                />
+                <div className="checklist-observacoes checklist-observacoes-table">
+                  <label>Observações:</label>
+                  <textarea
+                    value={observacoesDiagnostico}
+                    onChange={(event) =>
+                      setObservacoesDiagnostico(event.target.value)
+                    }
+                  />
+                </div>
               </div>
             </section>
           </div>
@@ -364,10 +443,10 @@ function Checklist() {
             </div>
 
             <div className="checklist-photo-list">
-              {renderFoto('frente', 'Foto frontal')}
-              {renderFoto('traseira', 'Foto traseira')}
-              {renderFoto('esquerda', 'Lateral esquerda')}
-              {renderFoto('direita', 'Lateral direita')}
+              {renderFoto('frente', 'Foto frontal', 'Frente')}
+              {renderFoto('traseira', 'Foto traseira', 'Traseira')}
+              {renderFoto('esquerda', 'Lateral esquerda', 'L. Esquerdo')}
+              {renderFoto('direita', 'Lateral direita', 'L. Direito')}
             </div>
           </aside>
         </section>
@@ -386,7 +465,7 @@ function Checklist() {
             className="checklist-btn checklist-btn-dark"
             onClick={salvarChecklist}
           >
-            Salvar checklist
+            Salvar
           </button>
         </section>
       </main>

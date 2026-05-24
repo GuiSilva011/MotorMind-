@@ -3,8 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import Layout from '../../components/Layout';
 import '../../styles/operadorStyles/visualizarClientes.css';
-import "../../styles/operadorStyles/layout.css";
-
+import '../../styles/operadorStyles/layout.css';
 
 function formatCpf(cpf) {
   if (!cpf) return '-';
@@ -41,6 +40,13 @@ function formatPhone(phone) {
   return phone;
 }
 
+function normalizarTexto(valor) {
+  return String(valor || '')
+    .toLowerCase()
+    .replace(/\s/g, '')
+    .replace(/-/g, '');
+}
+
 function VisualizarClientes() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,7 +63,7 @@ function VisualizarClientes() {
 
     try {
       const { data } = await api.get('/clientes');
-      setClientes(data);
+      setClientes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
       setError('Não foi possível carregar os clientes.');
@@ -87,13 +93,28 @@ function VisualizarClientes() {
   }, [carregarClientes, location.pathname, location.state, navigate]);
 
   const clientesFiltrados = useMemo(() => {
-    const termo = buscaNome.trim().toLowerCase();
+    const termoOriginal = buscaNome.trim().toLowerCase();
+    const termoNormalizado = normalizarTexto(buscaNome);
 
-    if (!termo) return clientes;
+    if (!termoOriginal) return clientes;
 
-    return clientes.filter((cliente) =>
-      String(cliente.nome || '').toLowerCase().includes(termo)
-    );
+    return clientes.filter((cliente) => {
+      const nomeCliente = String(cliente.nome || '').toLowerCase();
+
+      const encontrouNome = nomeCliente.includes(termoOriginal);
+
+      const encontrouPlaca = cliente.veiculos?.some((veiculo) => {
+        const placaOriginal = String(veiculo.placa || '').toLowerCase();
+        const placaNormalizada = normalizarTexto(veiculo.placa);
+
+        return (
+          placaOriginal.includes(termoOriginal) ||
+          placaNormalizada.includes(termoNormalizado)
+        );
+      });
+
+      return encontrouNome || encontrouPlaca;
+    });
   }, [buscaNome, clientes]);
 
   return (
@@ -102,14 +123,14 @@ function VisualizarClientes() {
         <div className="consulta-clientes-header">
           <div>
             <h1>Consultar clientes</h1>
-            <p>Pesquise pelo nome do cliente para visualizar os dados.</p>
+            <p>Pesquise pelo nome do cliente ou pela placa do veículo.</p>
           </div>
         </div>
 
         <div className="barra-busca">
           <input
             type="text"
-            placeholder="Digite o nome do cliente"
+            placeholder="Digite o nome do cliente ou a placa do veículo"
             value={buscaNome}
             onChange={(event) => setBuscaNome(event.target.value)}
           />
@@ -121,9 +142,7 @@ function VisualizarClientes() {
           </p>
         )}
 
-        {loading && (
-          <p className="status-message">Carregando clientes...</p>
-        )}
+        {loading && <p className="status-message">Carregando clientes...</p>}
 
         {!loading && error && (
           <p className="status-message error">{error}</p>
@@ -131,7 +150,7 @@ function VisualizarClientes() {
 
         {!loading && !error && clientesFiltrados.length === 0 && (
           <div className="sem-clientes">
-            Nenhum cliente encontrado com esse nome.
+            Nenhum cliente encontrado com esse nome ou placa.
           </div>
         )}
 
@@ -162,6 +181,7 @@ function VisualizarClientes() {
                           <strong>
                             {veiculo.modelo || 'Modelo não informado'}
                           </strong>
+
                           <span>Placa: {veiculo.placa || '-'}</span>
                         </div>
                       ))}
@@ -178,7 +198,7 @@ function VisualizarClientes() {
                     type="button"
                     onClick={() =>
                       navigate(
-                        `/clientes/cadastro?nome=${encodeURIComponent(
+                        `/operador/clientes/cadastro?nome=${encodeURIComponent(
                           cliente.nome || ''
                         )}&visualizar=1`
                       )

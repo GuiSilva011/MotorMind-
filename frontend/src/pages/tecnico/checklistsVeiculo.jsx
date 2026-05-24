@@ -27,41 +27,42 @@ function ChecklistsVeiculo() {
   }, [veiculo?.id]);
 
   async function carregarChecklists() {
-  try {
-    if (!veiculo?.id) {
-      setChecklists([]);
-      return;
-    }
-
-    setCarregando(true);
-
-    const response = await api.get(`/checklists/veiculo/${veiculo.id}`);
-
-    setChecklists(Array.isArray(response.data) ? response.data : []);
-  } catch (error) {
-    console.error('Erro ao carregar checklists:', error);
-
-    const status = error.response?.status;
-
-    if (status === 404) {
-      setChecklists([]);
-      return;
-    }
-
-    setChecklists([]);
-
-    toast.error(
-      error.response?.data?.erro ||
-        error.response?.data?.detalhe ||
-        'Erro ao listar checklists.',
-      {
-        toastId: 'erro-listar-checklists',
+    try {
+      if (!veiculo?.id) {
+        setChecklists([]);
+        return;
       }
-    );
-  } finally {
-    setCarregando(false);
+
+      setCarregando(true);
+
+      const response = await api.get(`/checklists/veiculo/${veiculo.id}`);
+
+      setChecklists(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Erro ao carregar checklists:', error);
+
+      const status = error.response?.status;
+
+      if (status === 404) {
+        setChecklists([]);
+        return;
+      }
+
+      setChecklists([]);
+
+      toast.error(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao listar checklists.',
+        {
+          toastId: 'erro-listar-checklists',
+        }
+      );
+    } finally {
+      setCarregando(false);
+    }
   }
-}
+
   function montarNomeVeiculo() {
     if (!veiculo) return 'Nenhum veículo selecionado';
 
@@ -87,10 +88,66 @@ function ChecklistsVeiculo() {
     return `http://localhost:3000${caminho}`;
   }
 
-  function contarItens(lista) {
-    if (!Array.isArray(lista)) return 0;
+  function normalizarItensChecklist(lista) {
+    if (!Array.isArray(lista)) return [];
 
-    return lista.length;
+    return lista.map((item) => {
+      if (typeof item === 'string') {
+        return {
+          nome: item,
+          valor: true,
+        };
+      }
+
+      return {
+        nome: item?.nome || item?.label || item?.descricao || '-',
+        valor:
+          item?.valor === true
+            ? true
+            : item?.valor === false
+            ? false
+            : null,
+      };
+    });
+  }
+
+  function separarItensMarcados(lista) {
+    const itens = normalizarItensChecklist(lista);
+
+    return {
+      ok: itens.filter((item) => item.valor === true),
+      no: itens.filter((item) => item.valor === false),
+    };
+  }
+
+  function contarItensPreenchidos(lista) {
+    const itens = normalizarItensChecklist(lista);
+
+    return itens.filter((item) => item.valor !== null).length;
+  }
+
+  function contarItensOk(lista) {
+    const itens = normalizarItensChecklist(lista);
+
+    return itens.filter((item) => item.valor === true).length;
+  }
+
+  function contarItensNao(lista) {
+    const itens = normalizarItensChecklist(lista);
+
+    return itens.filter((item) => item.valor === false).length;
+  }
+
+  function obterTextoStatus(valor) {
+    if (valor === true) return '✓';
+    if (valor === false) return 'X';
+    return '';
+  }
+
+  function obterClasseStatus(valor) {
+    if (valor === true) return 'checklists-status-ok';
+    if (valor === false) return 'checklists-status-no';
+    return 'checklists-status-null';
   }
 
   function abrirNovaChecklist() {
@@ -110,16 +167,47 @@ function ChecklistsVeiculo() {
     navigate('/tecnico/painel');
   }
 
+  function renderGrupoItens(titulo, itens, valor) {
+    if (!itens.length) return null;
+
+    return (
+      <div className="checklists-itens-group">
+        <div className="checklists-itens-group-title">
+          <span className={`checklists-status-box ${obterClasseStatus(valor)}`}>
+            {obterTextoStatus(valor)}
+          </span>
+
+          <h4>{titulo}</h4>
+
+          <small>{itens.length} item(ns)</small>
+        </div>
+
+        <div className="checklists-itens-grid">
+          {itens.map((item, index) => (
+            <div className="checklists-item-check" key={`${item.nome}-${index}`}>
+              <span>{item.nome}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   function renderItens(lista) {
-    if (!Array.isArray(lista) || lista.length === 0) {
-      return <div className="checklists-empty-box">Nenhum item marcado.</div>;
+    const { ok, no } = separarItensMarcados(lista);
+
+    if (!ok.length && !no.length) {
+      return (
+        <div className="checklists-empty-box">
+          Nenhum item foi marcado nesta etapa.
+        </div>
+      );
     }
 
     return (
-      <div className="checklists-itens-list">
-        {lista.map((item) => (
-          <span key={item}>{item}</span>
-        ))}
+      <div className="checklists-itens-wrapper">
+        {renderGrupoItens('Itens marcados com ✓', ok, true)}
+        {renderGrupoItens('Itens marcados com X', no, false)}
       </div>
     );
   }
@@ -136,6 +224,32 @@ function ChecklistsVeiculo() {
         ) : (
           <div className="checklists-photo-empty">Sem foto</div>
         )}
+      </div>
+    );
+  }
+
+  function renderResumoChecklist(checklist) {
+    const entradaPreenchida = contarItensPreenchidos(checklist.itensEntrada);
+    const entradaOk = contarItensOk(checklist.itensEntrada);
+    const entradaNao = contarItensNao(checklist.itensEntrada);
+
+    const diagnosticoPreenchido = contarItensPreenchidos(
+      checklist.itensDiagnostico
+    );
+    const diagnosticoOk = contarItensOk(checklist.itensDiagnostico);
+    const diagnosticoNao = contarItensNao(checklist.itensDiagnostico);
+
+    return (
+      <div className="checklists-item-stats">
+        <span>
+          Entrada: {entradaPreenchida} preenchido(s) | ✓ {entradaOk} | X{' '}
+          {entradaNao}
+        </span>
+
+        <span>
+          Diagnóstico: {diagnosticoPreenchido} preenchido(s) | ✓{' '}
+          {diagnosticoOk} | X {diagnosticoNao}
+        </span>
       </div>
     );
   }
@@ -160,7 +274,7 @@ function ChecklistsVeiculo() {
             </button>
           </div>
 
-          <div className="checklists-modal-summary">
+          <div className="checklists-modal-vehicle">
             <div>
               <span>Veículo</span>
               <strong>{montarNomeVeiculo()}</strong>
@@ -170,23 +284,11 @@ function ChecklistsVeiculo() {
               <span>Placa</span>
               <strong>{veiculo?.placa || '-'}</strong>
             </div>
-
-            <div>
-              <span>Itens entrada</span>
-              <strong>{contarItens(checklistSelecionada.itensEntrada)}</strong>
-            </div>
-
-            <div>
-              <span>Itens diagnóstico</span>
-              <strong>
-                {contarItens(checklistSelecionada.itensDiagnostico)}
-              </strong>
-            </div>
           </div>
 
           <div className="checklists-modal-grid">
             <section className="checklists-modal-section">
-              <h3>Inspeção de entrada</h3>
+              <h3>Inspeção mecânica na entrada</h3>
 
               {renderItens(checklistSelecionada.itensEntrada)}
 
@@ -200,7 +302,7 @@ function ChecklistsVeiculo() {
             </section>
 
             <section className="checklists-modal-section">
-              <h3>Inspeção de diagnóstico</h3>
+              <h3>Inspeção mecânica na fase de diagnóstico</h3>
 
               {renderItens(checklistSelecionada.itensDiagnostico)}
 
@@ -220,10 +322,7 @@ function ChecklistsVeiculo() {
             <div className="checklists-photo-grid">
               {renderFoto(checklistSelecionada.fotoFrente, 'Foto frontal')}
               {renderFoto(checklistSelecionada.fotoTraseira, 'Foto traseira')}
-              {renderFoto(
-                checklistSelecionada.fotoEsquerda,
-                'Lateral esquerda'
-              )}
+              {renderFoto(checklistSelecionada.fotoEsquerda, 'Lateral esquerda')}
               {renderFoto(checklistSelecionada.fotoDireita, 'Lateral direita')}
             </div>
           </section>
@@ -314,12 +413,7 @@ function ChecklistsVeiculo() {
                   <span>{formatarData(checklist.createdAt)}</span>
                 </div>
 
-                <div className="checklists-item-stats">
-                  <span>Entrada: {contarItens(checklist.itensEntrada)}</span>
-                  <span>
-                    Diagnóstico: {contarItens(checklist.itensDiagnostico)}
-                  </span>
-                </div>
+                {renderResumoChecklist(checklist)}
 
                 <button
                   type="button"

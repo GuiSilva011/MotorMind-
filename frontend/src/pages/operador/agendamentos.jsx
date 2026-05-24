@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
+
 import api from '../../services/api';
 import Layout from '../../components/Layout';
+
 import '../../styles/operadorStyles/agendamento.css';
-import "../../styles/operadorStyles/layout.css";
-
-
-
+import '../../styles/operadorStyles/layout.css';
 
 const agendamentoInicial = {
   clienteId: '',
@@ -15,79 +15,104 @@ const agendamentoInicial = {
   mecanico: '',
   tipo_servico: '',
   servico: '',
-  status: 'AGENDADO'
 };
-
-
 
 function CadastroAgendamento() {
   const [clientes, setClientes] = useState([]);
+  const [tecnicos, setTecnicos] = useState([]);
+
   const [buscaCliente, setBuscaCliente] = useState('');
-  const [resultados, setResultados] = useState([]);
+  const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [veiculosCliente, setVeiculosCliente] = useState([]);
+
   const [formData, setFormData] = useState(agendamentoInicial);
-  const [mensagem, setMensagem] = useState('');
+
   const [loading, setLoading] = useState(false);
-  const [eventos, setEventos] = useState([]);
+  const [carregandoClientes, setCarregandoClientes] = useState(false);
+  const [carregandoTecnicos, setCarregandoTecnicos] = useState(false);
 
   useEffect(() => {
     carregarClientes();
-    carregarAgendamentos();
+    carregarTecnicos();
   }, []);
 
   async function carregarClientes() {
     try {
+      setCarregandoClientes(true);
+
       const { data } = await api.get('/clientes');
-      setClientes(data);
+
+      setClientes(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error(error);
-      setMensagem('Erro ao carregar clientes.');
+      console.error('Erro ao carregar clientes:', error);
+      toast.error('Erro ao carregar clientes.');
+    } finally {
+      setCarregandoClientes(false);
     }
   }
 
-  async function buscarClientes(nome) {
+  async function carregarTecnicos() {
     try {
-      if (!nome.trim()) {
-        setResultados([]);
-        return;
-      }
+      setCarregandoTecnicos(true);
 
-      const filtrados = clientes.filter((cliente) =>
-        cliente.nome.toLowerCase().includes(nome.toLowerCase())
-      );
+      const { data } = await api.get('/funcionarios');
 
-      setResultados(filtrados);
+      const tecnicosFiltrados = Array.isArray(data)
+        ? data.filter((funcionario) => funcionario.usuario?.Role === 'TECNICO')
+        : [];
+
+      setTecnicos(tecnicosFiltrados);
     } catch (error) {
-      console.error(error);
+      console.error('Erro ao carregar técnicos:', error);
+      toast.error('Erro ao carregar técnicos.');
+    } finally {
+      setCarregandoTecnicos(false);
     }
   }
 
-  async function carregarAgendamentos() {
-    try {
-      const { data } = await api.get('/agendamentos');
+  const resultados = useMemo(() => {
+    const termo = buscaCliente.trim().toLowerCase();
 
-      const eventosFormatados = data.map((agendamento) => ({
-        title: `${agendamento.servico} - ${agendamento.cliente.nome}`,
-        start: new Date(agendamento.dataHora),
-        end: new Date(agendamento.dataHora)
-      }));
-
-      setEventos(eventosFormatados);
-    } catch (error) {
-      console.error(error);
+    if (!termo || clienteSelecionado) {
+      return [];
     }
-  }
+
+    return clientes
+      .filter((cliente) => {
+        const nome = String(cliente.nome || '').toLowerCase();
+        const cpf = String(cliente.cpf || '').toLowerCase();
+
+        const placa = cliente.veiculos?.some((veiculo) =>
+          String(veiculo.placa || '').toLowerCase().includes(termo)
+        );
+
+        return nome.includes(termo) || cpf.includes(termo) || placa;
+      })
+      .slice(0, 8);
+  }, [buscaCliente, clientes, clienteSelecionado]);
 
   function selecionarCliente(cliente) {
+    setClienteSelecionado(cliente);
+    setBuscaCliente(cliente.nome || '');
+    setVeiculosCliente(cliente.veiculos || []);
+
     setFormData((prevState) => ({
       ...prevState,
       clienteId: cliente.id,
-      veiculoId: ''
+      veiculoId: '',
     }));
+  }
 
-    setBuscaCliente(cliente.nome);
-    setVeiculosCliente(cliente.veiculos || []);
-    setResultados([]);
+  function removerClienteSelecionado() {
+    setClienteSelecionado(null);
+    setBuscaCliente('');
+    setVeiculosCliente([]);
+
+    setFormData((prevState) => ({
+      ...prevState,
+      clienteId: '',
+      veiculoId: '',
+    }));
   }
 
   function handleChange(event) {
@@ -95,53 +120,86 @@ function CadastroAgendamento() {
 
     setFormData((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
     }));
+  }
+
+  function limparFormulario() {
+    setFormData(agendamentoInicial);
+    setBuscaCliente('');
+    setClienteSelecionado(null);
+    setVeiculosCliente([]);
+  }
+
+  function validarFormulario() {
+    if (!formData.clienteId) {
+      toast.warning('Selecione um cliente.');
+      return false;
+    }
+
+    if (!formData.veiculoId) {
+      toast.warning('Selecione um veículo.');
+      return false;
+    }
+
+    if (!formData.data) {
+      toast.warning('Informe a data do agendamento.');
+      return false;
+    }
+
+    if (!formData.hora) {
+      toast.warning('Informe a hora do agendamento.');
+      return false;
+    }
+
+    if (!formData.mecanico) {
+      toast.warning('Selecione o técnico responsável.');
+      return false;
+    }
+
+    if (!formData.servico.trim()) {
+      toast.warning('Informe a descrição do serviço.');
+      return false;
+    }
+
+    return true;
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (
-      !formData.clienteId ||
-      !formData.veiculoId ||
-      !formData.data ||
-      !formData.hora
-    ) {
-      setMensagem('Preencha cliente, veículo, data e hora.');
-      return;
-    }
-
-    if (!formData.servico.trim()) {
-      setMensagem('Informe o serviço do agendamento.');
-      return;
-    }
-
-    const dataHora = new Date(`${formData.data}T${formData.hora}:00`);
-
-    const payload = {
-      clienteId: Number(formData.clienteId),
-      veiculoId: Number(formData.veiculoId),
-      dataHora,
-      mecanico: formData.mecanico || null,
-      tipo_servico: formData.tipo_servico || null,
-      servico: formData.servico,
-      status: formData.status
-    };
-
     try {
+      if (!validarFormulario()) return;
+
       setLoading(true);
+
+      const dataHora = new Date(`${formData.data}T${formData.hora}:00`);
+
+      const payload = {
+        clienteId: Number(formData.clienteId),
+        veiculoId: Number(formData.veiculoId),
+        dataHora,
+        mecanico: formData.mecanico,
+        tipo_servico: formData.tipo_servico.trim() || null,
+        servico: formData.servico.trim(),
+
+        // Se o backend ainda tiver status obrigatório, mantém fixo.
+        // Não aparece na tela.
+        status: 'AGENDADO',
+      };
 
       await api.post('/agendamentos', payload);
 
-      setMensagem('Agendamento cadastrado com sucesso!');
-      setFormData(agendamentoInicial);
-      setBuscaCliente('');
-      setVeiculosCliente([]);
-      await carregarAgendamentos();
+      toast.success('Agendamento cadastrado com sucesso!');
+      limparFormulario();
     } catch (error) {
-      console.error(error);
-      setMensagem('Erro ao cadastrar agendamento.');
+      console.error('Erro ao cadastrar agendamento:', error);
+
+      toast.error(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao cadastrar agendamento.'
+      );
     } finally {
       setLoading(false);
     }
@@ -155,36 +213,56 @@ function CadastroAgendamento() {
           <p>Registre os serviços agendados pelos operadores da oficina.</p>
         </div>
 
-        {mensagem && <p className="toast-message">{mensagem}</p>}
-
         <form className="agendamento-form" onSubmit={handleSubmit}>
           <section className="form-section">
-            <h2>Dados do cliente</h2>
+            <div className="section-title-row">
+              <div>
+                <h2>Dados do cliente</h2>
+                <p>Pesquise e selecione o cliente antes de escolher o veículo.</p>
+              </div>
+
+              {carregandoClientes && (
+                <span className="loading-label">Carregando clientes...</span>
+              )}
+            </div>
 
             <div className="form-grid two-columns">
-              <div className="field-group">
+              <div className="field-group campo-com-dropdown">
                 <label>Cliente</label>
 
                 <input
                   type="text"
-                  placeholder="Digite o nome do cliente"
+                  placeholder="Digite o nome, CPF ou placa do cliente"
                   value={buscaCliente}
                   onChange={(event) => {
                     setBuscaCliente(event.target.value);
-                    buscarClientes(event.target.value);
+                    setClienteSelecionado(null);
+
+                    setFormData((prevState) => ({
+                      ...prevState,
+                      clienteId: '',
+                      veiculoId: '',
+                    }));
+
+                    setVeiculosCliente([]);
                   }}
                 />
 
                 {resultados.length > 0 && (
                   <div className="dropdown-clientes">
                     {resultados.map((cliente) => (
-                      <div
+                      <button
+                        type="button"
                         key={cliente.id}
                         className="item-cliente"
                         onClick={() => selecionarCliente(cliente)}
                       >
-                        {cliente.nome}
-                      </div>
+                        <strong>{cliente.nome}</strong>
+                        <span>
+                          {cliente.cpf || 'CPF não informado'} |{' '}
+                          {cliente.veiculos?.length || 0} veículo(s)
+                        </span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -197,7 +275,6 @@ function CadastroAgendamento() {
                   name="veiculoId"
                   value={formData.veiculoId}
                   onChange={handleChange}
-                  required
                   disabled={!formData.clienteId}
                 >
                   <option value="">
@@ -208,18 +285,42 @@ function CadastroAgendamento() {
 
                   {veiculosCliente.map((veiculo) => (
                     <option key={veiculo.id} value={veiculo.id}>
-                      {veiculo.placa} - {veiculo.modelo || 'Modelo não informado'}
+                      {veiculo.placa || 'Sem placa'} -{' '}
+                      {veiculo.modelo || 'Modelo não informado'}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
+
+            {clienteSelecionado && (
+              <div className="cliente-selecionado-card">
+                <div>
+                  <span>Cliente selecionado</span>
+                  <strong>{clienteSelecionado.nome || '-'}</strong>
+                </div>
+
+                <div>
+                  <span>CPF</span>
+                  <strong>{clienteSelecionado.cpf || '-'}</strong>
+                </div>
+
+                <div>
+                  <span>Celular</span>
+                  <strong>{clienteSelecionado.celular || '-'}</strong>
+                </div>
+
+                <button type="button" onClick={removerClienteSelecionado}>
+                  Trocar cliente
+                </button>
+              </div>
+            )}
           </section>
 
           <section className="form-section">
             <h2>Dados do agendamento</h2>
 
-            <div className="form-grid three-columns">
+            <div className="form-grid two-columns">
               <div className="field-group">
                 <label>Data</label>
 
@@ -228,7 +329,6 @@ function CadastroAgendamento() {
                   name="data"
                   value={formData.data}
                   onChange={handleChange}
-                  required
                 />
               </div>
 
@@ -240,37 +340,32 @@ function CadastroAgendamento() {
                   name="hora"
                   value={formData.hora}
                   onChange={handleChange}
-                  required
                 />
-              </div>
-
-              <div className="field-group">
-                <label>Status</label>
-
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                >
-                  <option value="AGENDADO">Agendado</option>
-                  <option value="EM_ANDAMENTO">Em andamento</option>
-                  <option value="CONCLUIDO">Concluído</option>
-                  <option value="CANCELADO">Cancelado</option>
-                </select>
               </div>
             </div>
 
             <div className="form-grid two-columns">
               <div className="field-group">
-                <label>Mecânico responsável</label>
+                <label>Técnico responsável</label>
 
-                <input
-                  type="text"
+                <select
                   name="mecanico"
-                  placeholder="Ex.: Carlos"
                   value={formData.mecanico}
                   onChange={handleChange}
-                />
+                  disabled={carregandoTecnicos}
+                >
+                  <option value="">
+                    {carregandoTecnicos
+                      ? 'Carregando técnicos...'
+                      : 'Selecione um técnico'}
+                  </option>
+
+                  {tecnicos.map((tecnico) => (
+                    <option key={tecnico.id} value={tecnico.usuario?.Nome || ''}>
+                      {tecnico.usuario?.Nome || 'Técnico sem nome'}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="field-group">
@@ -279,7 +374,7 @@ function CadastroAgendamento() {
                 <input
                   type="text"
                   name="tipo_servico"
-                  placeholder="Ex.: Revisão, troca de óleo, diagnóstico..."
+                  placeholder="Ex: Revisão, troca de óleo, diagnóstico..."
                   value={formData.tipo_servico}
                   onChange={handleChange}
                 />
@@ -295,7 +390,6 @@ function CadastroAgendamento() {
                   placeholder="Descreva o serviço solicitado pelo cliente"
                   value={formData.servico}
                   onChange={handleChange}
-                  required
                 />
               </div>
             </div>
@@ -305,12 +399,8 @@ function CadastroAgendamento() {
             <button
               type="button"
               className="btn-secondary"
-              onClick={() => {
-                setFormData(agendamentoInicial);
-                setBuscaCliente('');
-                setVeiculosCliente([]);
-                setMensagem('');
-              }}
+              onClick={limparFormulario}
+              disabled={loading}
             >
               Limpar
             </button>

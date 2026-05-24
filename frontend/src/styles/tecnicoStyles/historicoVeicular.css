@@ -144,11 +144,16 @@
   cursor: pointer;
 }
 
+/* RESUMO - SOMENTE DIAGNÓSTICOS, SERVIÇOS E PEÇAS */
 .historico-resumo-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.historico-resumo-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .historico-resumo-grid div {
@@ -208,6 +213,7 @@
   font-weight: 800;
 }
 
+/* TIMELINE */
 .historico-list {
   position: relative;
   display: flex;
@@ -215,32 +221,49 @@
   gap: 16px;
 }
 
-.historico-list::before {
+.historico-item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.historico-timeline-marker {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 35px;
+}
+
+.historico-timeline-marker::before {
   content: '';
   position: absolute;
-  top: 12px;
-  bottom: 12px;
-  left: 11px;
+  top: -16px;
+  bottom: -16px;
+  left: 50%;
   width: 2px;
+  transform: translateX(-50%);
   background: #d9e1ec;
 }
 
-.historico-item {
-  position: relative;
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 12px;
+.historico-item:first-child .historico-timeline-marker::before {
+  top: 35px;
+}
+
+.historico-item:last-child .historico-timeline-marker::before {
+  bottom: calc(100% - 35px);
 }
 
 .historico-timeline-dot {
-  width: 24px;
-  height: 24px;
+  position: relative;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
   background: #14a8e8;
-  border: 5px solid #e0f2fe;
-  position: relative;
-  z-index: 1;
-  margin-top: 18px;
+  border: 0;
+  box-shadow: 0 0 0 7px rgba(20, 168, 232, 0.16);
 }
 
 .historico-item-content {
@@ -372,6 +395,7 @@
   cursor: not-allowed;
 }
 
+/* MODAL */
 .historico-modal-overlay {
   position: fixed;
   inset: 0;
@@ -646,6 +670,7 @@
   filter: brightness(0.96);
 }
 
+/* RESPONSIVO */
 @media (max-width: 1180px) {
   .historico-modal-summary {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -689,6 +714,7 @@
 
   .historico-veicular-search,
   .historico-resumo-grid,
+  .historico-resumo-grid-three,
   .historico-veicular-vehicle-card {
     grid-template-columns: 1fr;
   }
@@ -696,6 +722,15 @@
   .historico-vehicle-icon {
     width: 52px;
     height: 52px;
+  }
+
+  .historico-item {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .historico-timeline-marker {
+    padding-top: 35px;
   }
 
   .historico-item-header,

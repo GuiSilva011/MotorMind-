@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
-import api from '../../services/api';
-import Layout from '../../components/Layout';
-import "../../styles/operadorStyles/layout.css";
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
+
+import api from '../../services/api';
+import Layout from '../../components/Layout';
+
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { toast } from 'react-toastify';
+import '../../styles/operadorStyles/calendarioAgendamentos.css';
+import '../../styles/operadorStyles/layout.css';
 
 const locales = {
-  'pt-BR': ptBR
+  'pt-BR': ptBR,
 };
 
 const localizer = dateFnsLocalizer({
@@ -18,11 +22,15 @@ const localizer = dateFnsLocalizer({
   parse,
   startOfWeek,
   getDay,
-  locales
+  locales,
 });
 
 function CalendarioAgendamento() {
+  const navigate = useNavigate();
+
   const [eventos, setEventos] = useState([]);
+  const [carregando, setCarregando] = useState(false);
+  const [eventoSelecionado, setEventoSelecionado] = useState(null);
 
   useEffect(() => {
     carregarAgendamentos();
@@ -30,101 +38,237 @@ function CalendarioAgendamento() {
 
   async function carregarAgendamentos() {
     try {
+      setCarregando(true);
+
       const { data } = await api.get('/agendamentos');
 
-      const eventosFormatados = data.map((agendamento) => ({
-        id: agendamento.id,
-        title: `${agendamento.servico} - ${agendamento.cliente.nome}`,
-        start: new Date(agendamento.dataHora),
-        end: new Date(agendamento.dataHora)
-      }));
+      const eventosFormatados = Array.isArray(data)
+        ? data.map((agendamento) => {
+            const dataInicio = new Date(agendamento.dataHora);
+            const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000);
+
+            return {
+              id: agendamento.id,
+              title: montarTituloEvento(agendamento),
+              start: dataInicio,
+              end: dataFim,
+              resource: agendamento,
+            };
+          })
+        : [];
 
       setEventos(eventosFormatados);
     } catch (error) {
-      console.error(error);
+      console.error('Erro ao carregar agendamentos:', error);
+      toast.error('Erro ao carregar agendamentos.');
+    } finally {
+      setCarregando(false);
     }
   }
-async function excluirAgendamento(evento) {
-  try {
-    await api.delete(`/agendamentos/${evento.id}`);
-    await carregarAgendamentos();
 
-    toast.success('Agendamento excluído com sucesso!');
-  } catch (error) {
-    console.error(error);
-    toast.error('Erro ao excluir agendamento.');
+  function montarTituloEvento(agendamento) {
+    const servico = agendamento.tipo_servico || agendamento.servico || 'Serviço';
+    const cliente = agendamento.cliente?.nome || 'Cliente';
+
+    return `${servico} - ${cliente}`;
   }
-}
 
-function confirmarExclusao(evento) {
-  toast(
-    ({ closeToast }) => (
-      <div>
-        <p>Excluir este agendamento?</p>
+  function formatarDataHora(data) {
+    if (!data) return '-';
 
-        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-          <button
-            onClick={async () => {
-              await excluirAgendamento(evento);
-              closeToast();
-            }}
-            style={{
-              background: '#dc2626',
-              color: 'white',
-              border: 'none',
-              padding: '6px 10px',
-              borderRadius: '6px'
-            }}
-          >
-            Excluir
-          </button>
+    return new Date(data).toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
+  }
 
-          <button
-            onClick={closeToast}
-            style={{
-              background: '#e5e7eb',
-              border: 'none',
-              padding: '6px 10px',
-              borderRadius: '6px'
-            }}
-          >
-            Cancelar
-          </button>
+  function abrirDetalhes(evento) {
+    setEventoSelecionado(evento);
+  }
+
+  function fecharDetalhes() {
+    setEventoSelecionado(null);
+  }
+
+  function gerarOrdemServico() {
+    if (!eventoSelecionado?.resource) {
+      toast.warning('Selecione um agendamento válido.');
+      return;
+    }
+
+    const agendamento = eventoSelecionado.resource;
+
+    if (!agendamento.cliente || !agendamento.veiculo) {
+      toast.warning('Este agendamento não possui cliente ou veículo vinculado.');
+      return;
+    }
+
+    navigate('/operador/ordem-servico', {
+      state: {
+        cliente: agendamento.cliente,
+        veiculo: agendamento.veiculo,
+        agendamento,
+      },
+    });
+  }
+
+  async function excluirAgendamento() {
+    try {
+      if (!eventoSelecionado?.id) return;
+
+      await api.delete(`/agendamentos/${eventoSelecionado.id}`);
+
+      toast.success('Agendamento excluído com sucesso!');
+      fecharDetalhes();
+      await carregarAgendamentos();
+    } catch (error) {
+      console.error('Erro ao excluir agendamento:', error);
+
+      toast.error(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao excluir agendamento.'
+      );
+    }
+  }
+
+  function renderModalDetalhes() {
+    if (!eventoSelecionado) return null;
+
+    const agendamento = eventoSelecionado.resource || {};
+    const cliente = agendamento.cliente || {};
+    const veiculo = agendamento.veiculo || {};
+
+    return (
+      <div className="calendario-modal-overlay">
+        <div className="calendario-modal">
+          <div className="calendario-modal-header">
+            <div>
+              <h2>Detalhes do agendamento</h2>
+              <span>{formatarDataHora(agendamento.dataHora)}</span>
+            </div>
+
+            <button type="button" onClick={fecharDetalhes}>
+              ×
+            </button>
+          </div>
+
+          <div className="calendario-modal-grid">
+            <div>
+              <span>Cliente</span>
+              <strong>{cliente.nome || '-'}</strong>
+            </div>
+
+            <div>
+              <span>Veículo</span>
+              <strong>
+                {veiculo.placa || '-'}{' '}
+                {veiculo.modelo ? `- ${veiculo.modelo}` : ''}
+              </strong>
+            </div>
+
+            <div>
+              <span>Técnico responsável</span>
+              <strong>{agendamento.mecanico || '-'}</strong>
+            </div>
+
+            <div>
+              <span>Tipo de serviço</span>
+              <strong>{agendamento.tipo_servico || '-'}</strong>
+            </div>
+
+            <div>
+              <span>Data e hora</span>
+              <strong>{formatarDataHora(agendamento.dataHora)}</strong>
+            </div>
+          </div>
+
+          <div className="calendario-modal-descricao">
+            <span>Descrição do serviço</span>
+            <p>{agendamento.servico || 'Sem descrição informada.'}</p>
+          </div>
+
+          <div className="calendario-modal-actions">
+            <button
+              type="button"
+              className="calendario-btn calendario-btn-outline"
+              onClick={fecharDetalhes}
+            >
+              Fechar
+            </button>
+
+            <button
+              type="button"
+              className="calendario-btn calendario-btn-primary"
+              onClick={gerarOrdemServico}
+            >
+              Gerar ordem de serviço
+            </button>
+
+            <button
+              type="button"
+              className="calendario-btn calendario-btn-danger"
+              onClick={excluirAgendamento}
+            >
+              Excluir agendamento
+            </button>
+          </div>
         </div>
       </div>
-    ),
-    {
-      autoClose: false
-    }
-  );
-}
+    );
+  }
 
   return (
     <Layout>
-      <main className="calendario">
-        <div className="agendamento-header">
-          <h1>Calendário de Agendamentos</h1>
-          <p>Visualize os serviços agendados por dia, semana ou mês.</p>
-        </div>
+      <main className="calendario-page">
+        <section className="calendario-header">
+          <div>
+            <h1>Calendário de Agendamentos</h1>
+            <p>Visualize os serviços agendados por dia, semana ou mês.</p>
+
+            {carregando && <small>Carregando agendamentos...</small>}
+          </div>
+
+          <button
+            type="button"
+            className="calendario-refresh"
+            onClick={carregarAgendamentos}
+            disabled={carregando}
+          >
+            Atualizar
+          </button>
+        </section>
 
         <section className="calendar-section">
           <Calendar
             localizer={localizer}
+            culture="pt-BR"
             events={eventos}
-            onSelectEvent={confirmarExclusao}
+            onSelectEvent={abrirDetalhes}
             startAccessor="start"
             endAccessor="end"
-            style={{ height: 500 }}
+            eventPropGetter={() => ({
+              className: 'calendario-evento',
+            })}
+            style={{ height: 620 }}
             messages={{
               today: 'Hoje',
               previous: 'Anterior',
               next: 'Próximo',
               month: 'Mês',
               week: 'Semana',
-              day: 'Dia'
+              day: 'Dia',
+              agenda: 'Agenda',
+              date: 'Data',
+              time: 'Hora',
+              event: 'Evento',
+              noEventsInRange: 'Nenhum agendamento neste período.',
+              showMore: (total) => `+${total} mais`,
             }}
           />
         </section>
+
+        {renderModalDetalhes()}
       </main>
     </Layout>
   );

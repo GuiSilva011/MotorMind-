@@ -1,0 +1,232 @@
+.cadastro-fornecedor-page {
+  width: 100%;
+  min-height: calc(100vh - 68px);
+  background: #edf2f7;
+  padding: 30px 48px 60px;
+  color: #07142b;
+}
+
+.cadastro-fornecedor-header {
+  margin-bottom: 26px;
+}
+
+.cadastro-fornecedor-header h1 {
+  margin: 0;
+  color: #07142b;
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.cadastro-fornecedor-header p {
+  margin: 6px 0 0;
+  color: #455875;
+  font-size: 15px;
+  max-width: 780px;
+}
+
+.cadastro-fornecedor-card {
+  width: min(1180px, 100%);
+  background: #fff;
+  border: 1px solid #d9e1ec;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  padding: 24px;
+}
+
+.cadastro-fornecedor-section {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+}
+
+.cadastro-fornecedor-section:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.cadastro-fornecedor-section-title {
+  margin-bottom: 18px;
+}
+
+.cadastro-fornecedor-section-title h2 {
+  margin: 0;
+  color: #07142b;
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.cadastro-fornecedor-section-title span {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cadastro-fornecedor-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cadastro-fornecedor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cadastro-fornecedor-field label {
+  color: #12213a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cadastro-fornecedor-field input,
+.cadastro-fornecedor-field select,
+.cadastro-fornecedor-field textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.cadastro-fornecedor-field input,
+.cadastro-fornecedor-field select {
+  height: 42px;
+}
+
+.cadastro-fornecedor-field textarea {
+  min-height: 90px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.cadastro-fornecedor-field input::placeholder,
+.cadastro-fornecedor-field textarea::placeholder {
+  color: #b8c4d6;
+}
+
+.cadastro-fornecedor-field input:focus,
+.cadastro-fornecedor-field select:focus,
+.cadastro-fornecedor-field textarea:focus {
+  border-color: #14a8e8;
+  box-shadow: 0 0 0 3px rgba(20, 168, 232, 0.14);
+}
+
+.cadastro-fornecedor-field input:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.field-large {
+  grid-column: span 2;
+}
+
+.cadastro-fornecedor-options {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.cadastro-fornecedor-options label {
+  min-width: 180px;
+  height: 46px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+}
+
+.cadastro-fornecedor-options input {
+  width: 16px;
+  height: 16px;
+}
+
+.cadastro-fornecedor-options span {
+  color: #12213a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.cadastro-fornecedor-actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 30px;
+}
+
+.cadastro-fornecedor-btn {
+  height: 44px;
+  min-width: 170px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.cadastro-fornecedor-btn-red {
+  background: #f31717;
+}
+
+.cadastro-fornecedor-btn-dark {
+  background: #07142b;
+}
+
+.cadastro-fornecedor-btn:hover {
+  filter: brightness(0.96);
+}
+
+.cadastro-fornecedor-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1100px) {
+  .cadastro-fornecedor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .field-large {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .cadastro-fornecedor-page {
+    padding: 24px;
+  }
+
+  .cadastro-fornecedor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-full,
+  .field-large {
+    grid-column: span 1;
+  }
+
+  .cadastro-fornecedor-actions {
+    flex-direction: column;
+  }
+
+  .cadastro-fornecedor-btn {
+    width: 100%;
+  }
+}

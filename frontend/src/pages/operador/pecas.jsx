@@ -3,6 +3,23 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/operadorStyles/pecas.css';
 
+const gruposPecas = [
+  'Arrefecimento',
+  'Freios',
+  'Suspensão',
+  'Amortecedores',
+  'Motor',
+  'Filtros',
+  'Lubrificação',
+  'Elétrica',
+  'Ignição',
+  'Transmissão',
+  'Direção',
+  'Escapamento',
+  'Pneus e rodas',
+  'Outros',
+];
+
 function gerarCodigo(prefixo) {
   const data = new Date();
 
@@ -19,9 +36,9 @@ function criarPecaInicial() {
     codigo: gerarCodigo('PECA'),
     nome: '',
     marca: '',
+    grupo: '',
     aplicacao: '',
     unidade: 'UN',
-    ativo: true,
   };
 }
 
@@ -43,7 +60,7 @@ function Pecas() {
 
       const response = await api.get('/pecas');
 
-      setPecas(response.data || []);
+      setPecas(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Erro ao carregar peças:', error);
       alert('Erro ao carregar peças.');
@@ -71,9 +88,9 @@ function Pecas() {
       codigo: peca.codigo || '',
       nome: peca.nome || '',
       marca: peca.marca || '',
+      grupo: peca.grupo || '',
       aplicacao: peca.aplicacao || '',
       unidade: peca.unidade || 'UN',
-      ativo: Boolean(peca.ativo),
     });
 
     window.scrollTo({
@@ -96,15 +113,20 @@ function Pecas() {
         return;
       }
 
+      if (!form.grupo.trim()) {
+        alert('Selecione o grupo da peça.');
+        return;
+      }
+
       setSalvando(true);
 
       const payload = {
         codigo: form.codigo.trim().toUpperCase(),
         nome: form.nome.trim(),
         marca: form.marca?.trim() || null,
+        grupo: form.grupo?.trim() || null,
         aplicacao: form.aplicacao?.trim() || null,
         unidade: form.unidade?.trim().toUpperCase() || 'UN',
-        ativo: Boolean(form.ativo),
       };
 
       if (editandoId) {
@@ -151,26 +173,6 @@ function Pecas() {
     }
   }
 
-  async function alternarStatus(peca) {
-    try {
-      const payload = {
-        codigo: peca.codigo,
-        nome: peca.nome,
-        marca: peca.marca,
-        aplicacao: peca.aplicacao,
-        unidade: peca.unidade || 'UN',
-        ativo: !peca.ativo,
-      };
-
-      await api.put(`/pecas/${peca.id}`, payload);
-
-      await carregarPecas();
-    } catch (error) {
-      console.error('Erro ao alterar status:', error);
-      alert('Erro ao alterar status da peça.');
-    }
-  }
-
   const pecasFiltradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
@@ -180,12 +182,14 @@ function Pecas() {
       const codigo = peca.codigo?.toLowerCase() || '';
       const nome = peca.nome?.toLowerCase() || '';
       const marca = peca.marca?.toLowerCase() || '';
+      const grupo = peca.grupo?.toLowerCase() || '';
       const aplicacao = peca.aplicacao?.toLowerCase() || '';
 
       return (
         codigo.includes(termo) ||
         nome.includes(termo) ||
         marca.includes(termo) ||
+        grupo.includes(termo) ||
         aplicacao.includes(termo)
       );
     });
@@ -245,6 +249,24 @@ function Pecas() {
               </div>
 
               <div className="pecas-field">
+                <label>Grupo</label>
+                <select
+                  value={form.grupo}
+                  onChange={(event) =>
+                    atualizarCampo('grupo', event.target.value)
+                  }
+                >
+                  <option value="">Selecione um grupo</option>
+
+                  {gruposPecas.map((grupo) => (
+                    <option key={grupo} value={grupo}>
+                      {grupo}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pecas-field">
                 <label>Unidade</label>
                 <select
                   value={form.unidade}
@@ -258,17 +280,6 @@ function Pecas() {
                   <option value="KIT">KIT</option>
                 </select>
               </div>
-
-              <label className="pecas-check">
-                <input
-                  type="checkbox"
-                  checked={form.ativo}
-                  onChange={(event) =>
-                    atualizarCampo('ativo', event.target.checked)
-                  }
-                />
-                Peça ativa
-              </label>
 
               <div className="pecas-field pecas-col-full">
                 <label>Aplicação</label>
@@ -317,7 +328,7 @@ function Pecas() {
               <input
                 value={busca}
                 onChange={(event) => setBusca(event.target.value)}
-                placeholder="Buscar por código, nome, marca ou aplicação"
+                placeholder="Buscar por código, nome, grupo, marca ou aplicação"
               />
             </div>
           </div>
@@ -328,10 +339,10 @@ function Pecas() {
                 <tr>
                   <th>Código</th>
                   <th>Nome</th>
+                  <th>Grupo</th>
                   <th>Marca</th>
                   <th>Aplicação</th>
                   <th>Unidade</th>
-                  <th>Status</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -353,23 +364,17 @@ function Pecas() {
 
                     <td>{peca.nome}</td>
 
+                    <td>
+                      <span className="pecas-grupo">
+                        {peca.grupo || 'Sem grupo'}
+                      </span>
+                    </td>
+
                     <td>{peca.marca || '-'}</td>
 
                     <td>{peca.aplicacao || '-'}</td>
 
                     <td>{peca.unidade || 'UN'}</td>
-
-                    <td>
-                      <span
-                        className={
-                          peca.ativo
-                            ? 'pecas-status ativo'
-                            : 'pecas-status inativo'
-                        }
-                      >
-                        {peca.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
 
                     <td>
                       <div className="pecas-table-actions">
@@ -379,14 +384,6 @@ function Pecas() {
                           onClick={() => editarPeca(peca)}
                         >
                           Editar
-                        </button>
-
-                        <button
-                          type="button"
-                          className="pecas-mini-btn"
-                          onClick={() => alternarStatus(peca)}
-                        >
-                          {peca.ativo ? 'Inativar' : 'Ativar'}
                         </button>
 
                         <button

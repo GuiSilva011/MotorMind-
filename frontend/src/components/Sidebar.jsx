@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [sidebarAberta, setSidebarAberta] = useState(true);
   const [openAgendamento, setOpenAgendamento] = useState(false);
   const [openOrdemServico, setOpenOrdemServico] = useState(false);
 
@@ -43,11 +44,44 @@ function Sidebar() {
     location.pathname.startsWith('/operador/pecas');
 
   function podeVerOperador() {
-    return isAdmin || isOperador;
+    return isOperador;
   }
 
   function podeVerTecnico() {
-    return isAdmin || isTecnico;
+    return isTecnico;
+  }
+
+  function alternarSidebar() {
+    setSidebarAberta((prevState) => {
+      const novaSituacao = !prevState;
+
+      if (!novaSituacao) {
+        setOpenAgendamento(false);
+        setOpenOrdemServico(false);
+      }
+
+      return novaSituacao;
+    });
+  }
+
+  function alternarAgendamento() {
+    if (!sidebarAberta) {
+      setSidebarAberta(true);
+      setOpenAgendamento(true);
+      return;
+    }
+
+    setOpenAgendamento((prevState) => !prevState);
+  }
+
+  function alternarOrdemServico() {
+    if (!sidebarAberta) {
+      setSidebarAberta(true);
+      setOpenOrdemServico(true);
+      return;
+    }
+
+    setOpenOrdemServico((prevState) => !prevState);
   }
 
   function sair() {
@@ -57,13 +91,30 @@ function Sidebar() {
   }
 
   return (
-    <aside className="sidebar">
+    <aside className={sidebarAberta ? 'sidebar' : 'sidebar sidebar-collapsed'}>
       <div className="sidebar-top">
-        <div className="logo">
-          Motor<span className="text-orange">Mind</span>
+        <div className="sidebar-header">
+          {sidebarAberta && (
+            <div className="logo">
+              Motor<span className="text-orange">Mind</span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="sidebar-toggle"
+            onClick={alternarSidebar}
+            title={sidebarAberta ? 'Recolher menu' : 'Expandir menu'}
+          >
+            <img
+              src="/icons/menu.svg"
+              alt={sidebarAberta ? 'Recolher menu' : 'Expandir menu'}
+              className="sidebar-toggle-icon"
+            />
+          </button>
         </div>
 
-        {usuario && (
+        {usuario && sidebarAberta && (
           <div className="sidebar-user">
             <strong>{usuario.Nome}</strong>
             <span>{usuario.Role}</span>
@@ -75,6 +126,8 @@ function Sidebar() {
             <>
               <NavLink
                 to="/operador/clientes/cadastro"
+                end
+                title="Cadastrar clientes"
                 className={({ isActive }) =>
                   isActive ? 'menu-item active' : 'menu-item'
                 }
@@ -84,11 +137,13 @@ function Sidebar() {
                   alt="Clientes"
                   className="menu-icon"
                 />
-                CADASTRAR CLIENTES
+                <span>CADASTRAR CLIENTES</span>
               </NavLink>
 
               <NavLink
                 to="/operador/clientes/consultar"
+                end
+                title="Consultar clientes"
                 className={({ isActive }) =>
                   isActive ? 'menu-item active' : 'menu-item'
                 }
@@ -98,30 +153,32 @@ function Sidebar() {
                   alt="Consultar clientes"
                   className="menu-icon"
                 />
-                CONSULTAR CLIENTES
+                <span>CONSULTAR CLIENTES</span>
               </NavLink>
 
               <button
                 type="button"
+                title="Agendamentos"
                 className={
                   agendamentoAtivo || openAgendamento
                     ? 'menu-item active'
                     : 'menu-item'
                 }
-                onClick={() => setOpenAgendamento(!openAgendamento)}
+                onClick={alternarAgendamento}
               >
                 <img
                   src="/icons/agendamento.svg"
                   alt="Agendamentos"
                   className="menu-icon"
                 />
-                AGENDAMENTOS
+                <span>AGENDAMENTOS</span>
               </button>
 
-              {openAgendamento && (
+              {sidebarAberta && openAgendamento && (
                 <div className="submenu">
                   <NavLink
                     to="/operador/agendamentos"
+                    end
                     className={({ isActive }) =>
                       isActive ? 'submenu-item active' : 'submenu-item'
                     }
@@ -131,11 +188,12 @@ function Sidebar() {
                       alt="Cadastrar agendamento"
                       className="submenu-icon"
                     />
-                    CADASTRAR AGENDAMENTO
+                    <span>CADASTRAR AGENDAMENTO</span>
                   </NavLink>
 
                   <NavLink
                     to="/operador/agendamentos/calendario"
+                    end
                     className={({ isActive }) =>
                       isActive ? 'submenu-item active' : 'submenu-item'
                     }
@@ -145,32 +203,34 @@ function Sidebar() {
                       alt="Calendário"
                       className="submenu-icon"
                     />
-                    VISUALIZAR CALENDÁRIO
+                    <span>VISUALIZAR CALENDÁRIO</span>
                   </NavLink>
                 </div>
               )}
 
               <button
                 type="button"
+                title="Ordem de serviço"
                 className={
                   ordemServicoAtivo || openOrdemServico
                     ? 'menu-item active'
                     : 'menu-item'
                 }
-                onClick={() => setOpenOrdemServico(!openOrdemServico)}
+                onClick={alternarOrdemServico}
               >
                 <img
                   src="/icons/ordemservico.svg"
                   alt="Ordem de serviço"
                   className="menu-icon"
                 />
-                ORDEM DE SERVIÇO
+                <span>ORDEM DE SERVIÇO</span>
               </button>
 
-              {openOrdemServico && (
+              {sidebarAberta && openOrdemServico && (
                 <div className="submenu">
                   <NavLink
                     to="/operador/ordem-servico"
+                    end
                     className={({ isActive }) =>
                       isActive ? 'submenu-item active' : 'submenu-item'
                     }
@@ -180,11 +240,12 @@ function Sidebar() {
                       alt="Gerenciar OS"
                       className="submenu-icon"
                     />
-                    GERENCIAR OS
+                    <span>GERENCIAR OS</span>
                   </NavLink>
 
                   <NavLink
                     to="/operador/diagnosticos"
+                    end
                     className={({ isActive }) =>
                       isActive ? 'submenu-item active' : 'submenu-item'
                     }
@@ -194,11 +255,12 @@ function Sidebar() {
                       alt="Diagnósticos"
                       className="submenu-icon"
                     />
-                    DIAGNÓSTICOS
+                    <span>DIAGNÓSTICOS</span>
                   </NavLink>
 
                   <NavLink
                     to="/operador/servicos"
+                    end
                     className={({ isActive }) =>
                       isActive ? 'submenu-item active' : 'submenu-item'
                     }
@@ -208,11 +270,12 @@ function Sidebar() {
                       alt="Serviços"
                       className="submenu-icon"
                     />
-                    SERVIÇOS
+                    <span>SERVIÇOS</span>
                   </NavLink>
 
                   <NavLink
                     to="/operador/pecas"
+                    end
                     className={({ isActive }) =>
                       isActive ? 'submenu-item active' : 'submenu-item'
                     }
@@ -222,50 +285,108 @@ function Sidebar() {
                       alt="Peças"
                       className="submenu-icon"
                     />
-                    PEÇAS
+                    <span>PEÇAS</span>
                   </NavLink>
                 </div>
               )}
             </>
           )}
 
+          {podeVerTecnico() && (
+            <>
+              {/* Sidebar do técnico removida conforme regra atual. */}
+            </>
+          )}
+
           {isAdmin && (
             <>
               <NavLink
-                to="/admin/fornecedores"
+                to="/admin/relatorios"
+                end
+                title="Relatórios"
+                className={({ isActive }) =>
+                  isActive ? 'menu-item active' : 'menu-item'
+                }
+              >
+                <img
+                  src="/icons/informacoes.svg"
+                  alt="Relatórios"
+                  className="menu-icon"
+                />
+                <span>RELATÓRIOS</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/fornecedores/cadastrar"
+                end
+                title="Cadastrar fornecedores"
                 className={({ isActive }) =>
                   isActive ? 'menu-item active' : 'menu-item'
                 }
               >
                 <img
                   src="/icons/cliente.svg"
-                  alt="Fornecedores"
+                  alt="Cadastrar fornecedores"
                   className="menu-icon"
                 />
-                FORNECEDORES
+                <span>CADASTRAR FORNECEDORES</span>
               </NavLink>
 
               <NavLink
-                to="/admin/usuarios"
+                to="/admin/fornecedores"
+                end
+                title="Visualizar fornecedores"
+                className={({ isActive }) =>
+                  isActive ? 'menu-item active' : 'menu-item'
+                }
+              >
+                <img
+                  src="/icons/consultar-clientes.svg"
+                  alt="Visualizar fornecedores"
+                  className="menu-icon"
+                />
+                <span>VISUALIZAR FORNECEDORES</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/funcionarios/cadastrar"
+                end
+                title="Cadastrar funcionários"
                 className={({ isActive }) =>
                   isActive ? 'menu-item active' : 'menu-item'
                 }
               >
                 <img
                   src="/icons/usuario.svg"
-                  alt="Usuários"
+                  alt="Cadastrar funcionários"
                   className="menu-icon"
                 />
-                USUÁRIOS
+                <span>CADASTRAR FUNCIONÁRIOS</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/funcionarios"
+                end
+                title="Visualizar funcionários"
+                className={({ isActive }) =>
+                  isActive ? 'menu-item active' : 'menu-item'
+                }
+              >
+                <img
+                  src="/icons/consultar-clientes.svg"
+                  alt="Visualizar funcionários"
+                  className="menu-icon"
+                />
+                <span>VISUALIZAR FUNCIONÁRIOS</span>
               </NavLink>
             </>
           )}
         </nav>
       </div>
 
-      <button type="button" className="logout-btn" onClick={sair}>
+      <button type="button" className="logout-btn" onClick={sair} title="Sair">
         <img src="/icons/logout.svg" alt="Logout" className="menu-icon" />
-        LOGOUT
+        <span>LOGOUT</span>
       </button>
     </aside>
   );

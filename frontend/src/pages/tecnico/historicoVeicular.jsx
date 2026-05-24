@@ -27,7 +27,6 @@ function HistoricoVeicular() {
   const totaisHistorico = useMemo(() => {
     return historico.reduce(
       (acc, ordem) => {
-        acc.totalOS += 1;
         acc.totalDiagnosticos += Number(ordem.diagnosticos?.length || 0);
         acc.totalServicos += contarServicos(ordem);
         acc.totalPecas += contarPecas(ordem);
@@ -35,7 +34,6 @@ function HistoricoVeicular() {
         return acc;
       },
       {
-        totalOS: 0,
         totalDiagnosticos: 0,
         totalServicos: 0,
         totalPecas: 0,
@@ -59,7 +57,7 @@ function HistoricoVeicular() {
         },
       });
 
-      setHistorico(response.data || []);
+      setHistorico(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Erro ao buscar histórico veicular:', error);
       setHistorico([]);
@@ -96,13 +94,6 @@ function HistoricoVeicular() {
     if (!data) return '-';
 
     return new Date(data).toLocaleDateString('pt-BR');
-  }
-
-  function formatarMoeda(valor) {
-    return Number(valor || 0).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
   }
 
   function montarNomeVeiculo(veiculo) {
@@ -167,7 +158,9 @@ function HistoricoVeicular() {
   function renderResumoOrdem(ordem) {
     return (
       <article className="historico-item" key={ordem.id}>
-        <div className="historico-timeline-dot" />
+        <div className="historico-timeline-marker">
+          <div className="historico-timeline-dot" />
+        </div>
 
         <div className="historico-item-content">
           <div className="historico-item-header">
@@ -382,7 +375,7 @@ function HistoricoVeicular() {
               </div>
 
               <div className="historico-section-title historico-margin-top">
-                <h3>Serviços sem diagnóstico</h3>
+                <h3>Serviços</h3>
                 <span>{ordemDetalhada.servicos?.length || 0} registro(s)</span>
               </div>
 
@@ -411,7 +404,7 @@ function HistoricoVeicular() {
               ))}
 
               <div className="historico-section-title historico-margin-top">
-                <h3>Peças avulsas</h3>
+                <h3>Peças</h3>
                 <span>{ordemDetalhada.pecas?.length || 0} registro(s)</span>
               </div>
 
@@ -447,8 +440,7 @@ function HistoricoVeicular() {
           <div>
             <h1>Histórico veicular</h1>
             <p>
-              Consulte ordens anteriores, diagnósticos, serviços realizados e
-              peças trocadas.
+              Consulte diagnósticos, serviços realizados e peças trocadas.
             </p>
 
             {carregando && <small>Buscando histórico...</small>}
@@ -510,12 +502,7 @@ function HistoricoVeicular() {
           </div>
         </section>
 
-        <section className="historico-resumo-grid">
-          <div>
-            <span>Ordens encontradas</span>
-            <strong>{totaisHistorico.totalOS}</strong>
-          </div>
-
+        <section className="historico-resumo-grid historico-resumo-grid-three">
           <div>
             <span>Diagnósticos</span>
             <strong>{totaisHistorico.totalDiagnosticos}</strong>

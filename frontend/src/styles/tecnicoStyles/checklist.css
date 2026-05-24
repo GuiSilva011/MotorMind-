@@ -1,6 +1,6 @@
 .checklist-page {
   width: 100%;
-  min-height: calc(100vh - 68px);
+  min-height: 100vh;
   background: #edf2f7;
   padding: 30px 48px 60px;
   color: #07142b;
@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .checklist-top h1 {
@@ -31,9 +31,9 @@
 .checklist-vehicle-card {
   background: #fff;
   border: 1px solid #d9e1ec;
-  border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  padding: 16px 18px;
   margin-bottom: 22px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 160px 220px 150px;
@@ -62,7 +62,7 @@
 }
 
 .checklist-vehicle-card button {
-  height: 40px;
+  height: 38px;
   border: 0;
   border-radius: 999px;
   background: #14a8e8;
@@ -74,7 +74,7 @@
 
 .checklist-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) 230px;
   gap: 22px;
   align-items: start;
 }
@@ -89,9 +89,9 @@
 .checklist-photos {
   background: #fff;
   border: 1px solid #d9e1ec;
-  border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-  padding: 22px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  padding: 18px;
 }
 
 .checklist-section-header {
@@ -99,7 +99,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .checklist-section-header h2,
@@ -108,19 +108,18 @@
   color: #07142b;
   font-size: 22px;
   font-weight: 900;
+  line-height: 1.2;
 }
 
-.checklist-section-header p,
-.checklist-photos-header p {
-  margin: 5px 0 0;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 600;
+.checklist-section-header h2 span {
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 800;
 }
 
-.checklist-section-header > span {
-  min-width: 74px;
-  height: 34px;
+.checklist-section-header strong {
+  min-width: 66px;
+  height: 32px;
   border-radius: 999px;
   background: #e0f2fe;
   color: #0369a1;
@@ -131,86 +130,128 @@
   font-weight: 900;
 }
 
+.checklist-photos-header p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.checklist-grid-with-notes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 0;
+  align-items: stretch;
+  border: 1px solid #07142b;
+  background: #fff;
+}
+
 .checklist-items-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(210px, 1fr);
+  gap: 0;
+}
+
+.checklist-entrada-grid {
+  grid-template-rows: repeat(10, 30px);
+}
+
+.checklist-diagnostico-grid {
+  grid-template-rows: repeat(10, 30px);
 }
 
 .checklist-item {
-  min-height: 42px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: #f8fafc;
-  padding: 0 11px;
+  height: 30px;
+  border: 0;
+  border-right: 1px solid #07142b;
+  border-bottom: 1px solid #07142b;
+  background: #ffffff;
+  padding: 0 9px;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   color: #12213a;
   font-size: 12px;
-  font-weight: 800;
+  font-style: italic;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.14s ease;
+  text-align: left;
 }
 
 .checklist-item:hover {
-  border-color: #14a8e8;
-  background: #eef8ff;
+  background: #f8fafc;
 }
 
-.checklist-item-checked {
-  border-color: #14a8e8;
-  background: #e0f2fe;
-}
-
-.checklist-item input {
+.checklist-status-box {
   width: 15px;
   height: 15px;
-  flex-shrink: 0;
+  min-width: 15px;
+  border: 1px solid #c7c7c7;
+  background: #eeeeee;
+  color: #07142b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
 }
 
-.checklist-item span {
-  line-height: 1.25;
+.checklist-item.checklist-status-ok .checklist-status-box {
+  background: #ffffff;
+  color: #07142b;
 }
 
-.checklist-observacoes {
-  margin-top: 18px;
+.checklist-item.checklist-status-no .checklist-status-box {
+  background: #ffffff;
+  color: #07142b;
+}
+
+.checklist-item-text {
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checklist-observacoes-table {
+  border-left: 1px solid #07142b;
+  margin: 0;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
-.checklist-observacoes label {
+.checklist-observacoes-table label {
   color: #12213a;
-  font-size: 13px;
-  font-weight: 900;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 700;
 }
 
-.checklist-observacoes textarea {
+.checklist-observacoes-table textarea {
+  flex: 1;
   width: 100%;
-  min-height: 92px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  min-height: 70px;
+  border: 0;
   background: #fff;
   color: #0f172a;
-  padding: 12px;
-  font-size: 14px;
+  padding: 6px;
+  font-size: 13px;
   outline: none;
-  resize: vertical;
-}
-
-.checklist-observacoes textarea:focus {
-  border-color: #14a8e8;
-  box-shadow: 0 0 0 3px rgba(20, 168, 232, 0.14);
+  resize: none;
 }
 
 .checklist-photos {
   position: sticky;
-  top: 86px;
+  top: 24px;
 }
 
 .checklist-photos-header {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .checklist-photo-list {
@@ -220,17 +261,15 @@
 }
 
 .checklist-photo-card {
-  border: 1px solid #d9e1ec;
-  border-radius: 14px;
-  background: #f8fafc;
-  padding: 12px;
+  border: 1px solid #07142b;
+  background: #fff;
+  padding: 8px;
 }
 
 .checklist-photo-preview {
   width: 100%;
-  height: 125px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
+  height: 86px;
+  border: 1px solid #07142b;
   background: #fff;
   display: flex;
   align-items: center;
@@ -240,22 +279,14 @@
 
 .checklist-photo-empty {
   text-align: center;
-  padding: 12px;
+  padding: 8px;
 }
 
 .checklist-photo-empty strong {
   display: block;
   color: #07142b;
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.checklist-photo-empty span {
-  display: block;
-  margin-top: 4px;
-  color: #94a3b8;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .checklist-photo-preview img {
@@ -266,17 +297,17 @@
 
 .checklist-photo-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 9px;
+  gap: 6px;
+  margin-top: 7px;
 }
 
 .checklist-photo-btn,
 .checklist-photo-remove {
   flex: 1;
-  height: 34px;
-  border-radius: 9px;
+  height: 28px;
+  border-radius: 5px;
   border: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   cursor: pointer;
 }
@@ -301,19 +332,21 @@
 .checklist-actions {
   display: flex;
   justify-content: center;
-  gap: 18px;
-  margin-top: 28px;
+  gap: 140px;
+  margin-top: 24px;
 }
 
 .checklist-btn {
   height: 42px;
-  min-width: 170px;
+  min-width: 190px;
   border: 0;
   border-radius: 999px;
   color: #fff;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 900;
   cursor: pointer;
+  text-transform: uppercase;
+  text-decoration: underline;
 }
 
 .checklist-btn-red {
@@ -321,7 +354,7 @@
 }
 
 .checklist-btn-dark {
-  background: #07142b;
+  background: #000000;
 }
 
 .checklist-btn:hover,
@@ -331,30 +364,7 @@
   filter: brightness(0.96);
 }
 
-.tecnico-page-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.tecnico-voltar-painel {
-  height: 42px;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 22px;
-  background: #07142b;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.tecnico-voltar-painel:hover {
-  filter: brightness(0.96);
-}
-
-@media (max-width: 1250px) {
+@media (max-width: 1400px) {
   .checklist-layout {
     grid-template-columns: 1fr;
   }
@@ -365,16 +375,35 @@
 
   .checklist-photo-list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1180px) {
+  .checklist-grid-with-notes {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist-observacoes-table {
+    border-left: 0;
+    border-top: 1px solid #07142b;
+  }
+
+  .checklist-items-grid {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+
+  .checklist-item {
+    border-right: 1px solid #07142b;
+  }
+
   .checklist-vehicle-card {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .checklist-items-grid {
+  .checklist-photo-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -389,15 +418,6 @@
     align-items: stretch;
   }
 
-  .tecnico-page-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .tecnico-voltar-painel {
-    width: 100%;
-  }
-
   .checklist-vehicle-card,
   .checklist-items-grid,
   .checklist-photo-list {
@@ -406,6 +426,7 @@
 
   .checklist-actions {
     flex-direction: column;
+    gap: 14px;
   }
 
   .checklist-btn {
