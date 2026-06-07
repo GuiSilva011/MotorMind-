@@ -32,6 +32,7 @@ function Login() {
 
   const [carregando, setCarregando] = useState(false);
 
+  // Atualiza qualquer campo do formulário de login.
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -39,6 +40,7 @@ function Login() {
     }));
   }
 
+  // Preenche email e senha com um usuário de teste.
   function preencherUsuario(email, senha) {
     setForm({
       Email: email,
@@ -46,6 +48,7 @@ function Login() {
     });
   }
 
+  // Escolhe a rota inicial de acordo com o perfil retornado pelo backend.
   function obterRotaInicialPorRole(role) {
     if (role === 'TECNICO') return '/tecnico/painel';
     if (role === 'ADMIN') return '/admin/relatorios';
@@ -54,6 +57,7 @@ function Login() {
     return '/login';
   }
 
+  // Envia as credenciais para a API e salva o usuário autenticado localmente.
   async function entrar(event) {
     event.preventDefault();
 

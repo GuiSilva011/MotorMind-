@@ -3,6 +3,7 @@ import {criarVeiculo, deletarVeiculo, editarVeiculo, listarVeiculo,buscarVeiculo
 
 const router = express.Router()
 
+// Rotas de CRUD de veículos e busca para ordem de serviço.
 router.post('/', criarVeiculo)
 router.get('/', listarVeiculo)
 router.put('/:id',editarVeiculo)

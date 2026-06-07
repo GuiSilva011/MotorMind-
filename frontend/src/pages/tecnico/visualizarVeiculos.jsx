@@ -12,10 +12,12 @@ function VisualizarVeiculos() {
   const [filtro, setFiltro] = useState('todos');
   const [carregando, setCarregando] = useState(false);
 
+  // Carrega a lista de veiculos quando a tela abre.
   useEffect(() => {
     carregarVeiculos();
   }, []);
 
+  // Busca os veiculos registrados no sistema.
   async function carregarVeiculos() {
     try {
       setCarregando(true);
@@ -31,6 +33,7 @@ function VisualizarVeiculos() {
     }
   }
 
+  // Formata o ano para exibir fabricacao/modelo quando ambos existem.
   function montarAnoVeiculo(veiculo) {
     if (veiculo.ano_fabricacao && veiculo.ano_modelo) {
       return `${veiculo.ano_fabricacao}/${veiculo.ano_modelo}`;
@@ -39,6 +42,7 @@ function VisualizarVeiculos() {
     return veiculo.ano_modelo || veiculo.ano_fabricacao || '-';
   }
 
+  // Monta o nome amigavel do veiculo.
   function montarNomeVeiculo(veiculo) {
     const fabricante = veiculo.fabricante || '';
     const modelo = veiculo.modelo || '';
@@ -46,6 +50,7 @@ function VisualizarVeiculos() {
     return `${fabricante} ${modelo}`.trim() || 'Veículo sem descrição';
   }
 
+  // Abre a tela de checklist para o veiculo escolhido.
   function irParaChecklist(veiculo) {
     navigate('/tecnico/checklist', {
       state: {
@@ -54,6 +59,7 @@ function VisualizarVeiculos() {
     });
   }
 
+  // Abre o historico veicular do veiculo escolhido.
   function irParaHistorico(veiculo) {
     navigate('/tecnico/historico-veicular', {
       state: {
@@ -62,6 +68,7 @@ function VisualizarVeiculos() {
     });
   }
 
+  // Aplica busca e filtro de vinculo com cliente.
   const veiculosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 

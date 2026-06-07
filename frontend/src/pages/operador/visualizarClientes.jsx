@@ -57,6 +57,7 @@ function VisualizarClientes() {
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
 
+  // Busca a lista de clientes na API.
   const carregarClientes = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -72,10 +73,12 @@ function VisualizarClientes() {
     }
   }, []);
 
+  // Atualiza a lista assim que a pagina monta.
   useEffect(() => {
     carregarClientes();
   }, [carregarClientes]);
 
+  // Processa retorno de navegacao para mostrar toast e recarregar dados.
   useEffect(() => {
     const state = location.state;
 
@@ -92,6 +95,7 @@ function VisualizarClientes() {
     }
   }, [carregarClientes, location.pathname, location.state, navigate]);
 
+  // Filtra clientes por nome ou placa, aceitando variacoes sem hifen/espaco.
   const clientesFiltrados = useMemo(() => {
     const termoOriginal = buscaNome.trim().toLowerCase();
     const termoNormalizado = normalizarTexto(buscaNome);

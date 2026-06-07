@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js'
 
+// Funções auxiliares para montar valores, códigos e relações da ordem de serviço.
 function toNumberOrNull(valor) {
   if (valor === undefined || valor === null || valor === '') {
     return null
@@ -8,6 +9,7 @@ function toNumberOrNull(valor) {
   return Number(valor)
 }
 
+// Converte uma data opcional vinda do frontend em objeto Date.
 function toDateOrNull(valor) {
   if (!valor) {
     return null
@@ -16,6 +18,7 @@ function toDateOrNull(valor) {
   return new Date(valor)
 }
 
+// Calcula o total de um serviço já descontando abatimentos.
 function calcularTotalServico(servico) {
   const preco = Number(servico.precoVenda || 0)
   const desconto = Number(servico.desconto || 0)
@@ -23,6 +26,7 @@ function calcularTotalServico(servico) {
   return Math.max(preco - desconto, 0)
 }
 
+// Calcula o total de uma peça considerando quantidade, custo e desconto.
 function calcularTotalPeca(peca) {
   const quantidade = Number(peca.quantidade || 0)
   const custoUnitario = Number(peca.custoUnitario || 0)
@@ -31,10 +35,12 @@ function calcularTotalPeca(peca) {
   return Math.max(quantidade * custoUnitario - desconto, 0)
 }
 
+// Gera o identificador em letra para diagnóstico hierárquico.
 function letraDiagnostico(index) {
   return String.fromCharCode(65 + index)
 }
 
+// Define quais relações precisam ser carregadas junto da ordem completa.
 function montarIncludeOrdemCompleta() {
   return {
     veiculo: {
@@ -67,6 +73,7 @@ function montarIncludeOrdemCompleta() {
   }
 }
 
+// Busca um serviço do catálogo antes de copiar dados para a ordem.
 async function buscarServicoCatalogo(tx, servicoCatalogoId) {
   if (!servicoCatalogoId) {
     return null
@@ -79,6 +86,7 @@ async function buscarServicoCatalogo(tx, servicoCatalogoId) {
   })
 }
 
+// Busca uma peça do catálogo antes de copiar dados para a ordem.
 async function buscarPecaCatalogo(tx, pecaCatalogoId) {
   if (!pecaCatalogoId) {
     return null
@@ -91,6 +99,7 @@ async function buscarPecaCatalogo(tx, pecaCatalogoId) {
   })
 }
 
+// Busca um diagnóstico do catálogo antes de gerar os dados da ordem.
 async function buscarDiagnosticoCatalogo(tx, diagnosticoCatalogoId) {
   if (!diagnosticoCatalogoId) {
     return null
@@ -103,6 +112,7 @@ async function buscarDiagnosticoCatalogo(tx, diagnosticoCatalogoId) {
   })
 }
 
+// Monta o payload de um diagnóstico da ordem, incluindo o código hierárquico.
 async function montarDadosDiagnostico(tx, diagnostico, diagnosticoIndex) {
   const codigoDiagnostico = letraDiagnostico(diagnosticoIndex)
 
@@ -137,6 +147,7 @@ async function montarDadosDiagnostico(tx, diagnostico, diagnosticoIndex) {
   }
 }
 
+// Monta o payload de um serviço da ordem, com vínculo opcional ao diagnóstico.
 async function montarDadosServico({
   tx,
   servico,
@@ -185,6 +196,7 @@ async function montarDadosServico({
   }
 }
 
+// Monta o payload de uma peça da ordem e define sua hierarquia.
 async function montarDadosPeca({
   tx,
   peca,
@@ -234,6 +246,7 @@ async function montarDadosPeca({
   }
 }
 
+// Cria peças ligadas a um serviço, diagnóstico ou ordem avulsa.
 async function criarPecasDaOrdem({
   tx,
   ordemServicoId,
@@ -263,6 +276,7 @@ async function criarPecasDaOrdem({
   }
 }
 
+// Cria os serviços vinculados a um diagnóstico ou diretamente à ordem.
 async function criarServicosDaOrdem({
   tx,
   ordemServicoId,
@@ -299,6 +313,7 @@ async function criarServicosDaOrdem({
   }
 }
 
+// Cria os diagnósticos da ordem e seus serviços filhos.
 async function criarDiagnosticosDaOrdem({
   tx,
   ordemServicoId,
@@ -334,6 +349,7 @@ async function criarDiagnosticosDaOrdem({
   }
 }
 
+// Cria peças que não pertencem a um diagnóstico nem a um serviço específico.
 async function criarPecasAvulsasDaOrdem({
   tx,
   ordemServicoId,
@@ -349,6 +365,7 @@ async function criarPecasAvulsasDaOrdem({
   })
 }
 
+// Recria toda a estrutura filha da ordem após limpeza ou criação inicial.
 async function recriarItensDaOrdem({
   tx,
   ordemServicoId,
@@ -377,6 +394,7 @@ async function recriarItensDaOrdem({
   })
 }
 
+// Remove itens filhos antes de atualizar ou excluir a ordem.
 async function limparItensDaOrdem(tx, ordemServicoId) {
   await tx.ordemPecaItem.deleteMany({
     where: {
@@ -397,6 +415,7 @@ async function limparItensDaOrdem(tx, ordemServicoId) {
   })
 }
 
+// Carrega a ordem completa com veículo, cliente, diagnósticos, serviços e peças.
 async function buscarOrdemCompleta(tx, id) {
   return tx.ordemServico.findUnique({
     where: {
@@ -406,6 +425,7 @@ async function buscarOrdemCompleta(tx, id) {
   })
 }
 
+// Resume a ordem em uma linha para uso na busca/listagem filtrada.
 function montarResumoBusca(ordem) {
   const totalServicos = ordem.servicos.reduce((acc, servico) => {
     return acc + Number(servico.valorTotal || 0)
@@ -443,6 +463,7 @@ function montarResumoBusca(ordem) {
   }
 }
 
+// Lista todas as ordens de serviço com a estrutura completa relacionada.
 export async function listarOrdensServico(req, res) {
   try {
     const ordens = await prisma.ordemServico.findMany({
@@ -463,6 +484,7 @@ export async function listarOrdensServico(req, res) {
   }
 }
 
+// Busca uma ordem específica pelo ID com todos os relacionamentos.
 export async function buscarOrdemServicoPorId(req, res) {
   try {
     const { id } = req.params
@@ -486,6 +508,7 @@ export async function buscarOrdemServicoPorId(req, res) {
   }
 }
 
+// Cria uma ordem de serviço e seus itens filhos dentro de uma transação.
 export async function criarOrdemServico(req, res) {
   try {
     const {
@@ -564,6 +587,7 @@ export async function criarOrdemServico(req, res) {
   }
 }
 
+// Atualiza uma ordem existente recriando diagnósticos, serviços e peças.
 export async function editarOrdemServico(req, res) {
   try {
     const { id } = req.params
@@ -661,6 +685,7 @@ export async function editarOrdemServico(req, res) {
   }
 }
 
+// Exclui a ordem e remove primeiro todos os registros filhos relacionados.
 export async function deletarOrdemServico(req, res) {
   try {
     const { id } = req.params
@@ -700,6 +725,7 @@ export async function deletarOrdemServico(req, res) {
   }
 }
 
+// Gera o próximo código sequencial no formato OS-0001.
 export async function gerarProximoCodigoOS(req, res) {
   try {
     const ultimaOS = await prisma.ordemServico.findFirst({
@@ -722,6 +748,7 @@ export async function gerarProximoCodigoOS(req, res) {
   }
 }
 
+// Faz busca filtrada por termo, status e intervalo de datas.
 export async function buscarOrdensServico(req, res) {
   try {
     const {

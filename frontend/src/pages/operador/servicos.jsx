@@ -31,10 +31,12 @@ function Servicos() {
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
+  // Carrega os servicos cadastrados quando a tela abre.
   useEffect(() => {
     carregarServicos();
   }, []);
 
+  // Busca todos os servicos da API.
   async function carregarServicos() {
     try {
       setCarregando(true);
@@ -50,6 +52,7 @@ function Servicos() {
     }
   }
 
+  // Atualiza um campo do formulario.
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -57,11 +60,13 @@ function Servicos() {
     }));
   }
 
+  // Volta o formulario ao estado inicial.
   function limparFormulario() {
     setForm(criarServicoInicial());
     setEditandoId(null);
   }
 
+  // Coloca os dados de um servico no formulario para edicao.
   function editarServico(servico) {
     setEditandoId(servico.id);
 
@@ -78,6 +83,7 @@ function Servicos() {
     });
   }
 
+  // Salva o servico novo ou atualizado.
   async function salvarServico(event) {
     event.preventDefault();
 
@@ -124,6 +130,7 @@ function Servicos() {
     }
   }
 
+  // Remove um servico apos confirmacao.
   async function excluirServico(id) {
     const confirmar = window.confirm('Deseja realmente excluir este serviço?');
 
@@ -145,6 +152,7 @@ function Servicos() {
     }
   }
 
+  // Formata o valor padrao para exibicao em reais.
   function formatarMoeda(valor) {
     if (valor === null || valor === undefined || valor === '') {
       return '-';
@@ -156,6 +164,7 @@ function Servicos() {
     });
   }
 
+  // Filtra os servicos por codigo, nome ou categoria.
   const servicosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 

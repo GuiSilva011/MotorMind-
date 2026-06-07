@@ -23,6 +23,7 @@ const funcionarioInicial = {
   Role: 'OPERADOR',
 };
 
+// As seções abaixo são de formtação de input
 function formatarCpf(valor) {
   return valor
     .replace(/\D/g, '')
@@ -67,6 +68,7 @@ function CadastrarFuncionarios() {
   const [funcionario, setFuncionario] = useState(funcionarioInicial);
   const [carregando, setCarregando] = useState(false);
 
+  // Atualiza um campo do formulario do funcionario.
   function atualizarCampo(campo, valor) {
     setFuncionario((prev) => ({
       ...prev,
@@ -74,10 +76,12 @@ function CadastrarFuncionarios() {
     }));
   }
 
+  // Limpa o formulario e devolve os valores iniciais.
   function limparFormulario() {
     setFuncionario(funcionarioInicial);
   }
 
+  // Valida os campos obrigatorios antes do cadastro.
   function validarFormulario() {
     if (!funcionario.Nome.trim()) {
       toast.warning('Informe o nome do funcionário.');
@@ -107,6 +111,7 @@ function CadastrarFuncionarios() {
     return true;
   }
 
+  // Envia o funcionario e o usuario associado para a API.
   async function cadastrarFuncionario(event) {
     event.preventDefault();
 

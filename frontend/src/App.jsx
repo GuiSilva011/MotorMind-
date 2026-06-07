@@ -30,9 +30,11 @@ import Relatorios from './pages/admin/relatorios';
 function App() {
   return (
     <>
+      {/* Define todas as rotas da aplicação e protege áreas por perfil. */}
       <Routes>
         <Route path="/login" element={<Login />} />
 
+        {/* Redireciona a raiz para a primeira tela principal do operador. */}
         <Route path="/" element={<Navigate to="/operador/ordem-servico" replace />} />
 
         <Route

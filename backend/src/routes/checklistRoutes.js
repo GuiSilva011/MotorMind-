@@ -14,12 +14,14 @@ const router = express.Router();
 
 const uploadDir = path.resolve('uploads/checklists');
 
+// Garante que a pasta de uploads exista antes de receber fotos.
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, {
     recursive: true,
   });
 }
 
+// Configura o nome e o destino dos arquivos enviados na checklist.
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -37,6 +39,7 @@ const upload = multer({
   storage,
 });
 
+// Rotas de checklist, incluindo upload de imagens em múltiplos campos.
 router.post(
   '/',
   upload.fields([

@@ -3,6 +3,7 @@ import {listarFornecedores,buscarFornecedorPorNome,criarFornecedor,editarFornece
 
 const router = express.Router()
 
+// Rotas do cadastro e consulta de fornecedores.
 router.get('/', listarFornecedores)
 router.get('/buscar-por-nome', buscarFornecedorPorNome)
 router.post('/', criarFornecedor)

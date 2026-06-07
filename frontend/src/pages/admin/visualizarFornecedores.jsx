@@ -73,10 +73,12 @@ function VisualizarFornecedor() {
   const [fornecedorEditando, setFornecedorEditando] =
     useState(fornecedorInicial);
 
+  // Carrega os fornecedores quando a tela abre.
   useEffect(() => {
     carregarFornecedores();
   }, []);
 
+  // Busca a lista completa de fornecedores na API.
   async function carregarFornecedores() {
     try {
       setCarregando(true);
@@ -97,6 +99,7 @@ function VisualizarFornecedor() {
     }
   }
 
+  // Normaliza os dados para abrir o modal em modo edicao.
   function montarFornecedorParaEditar(fornecedor) {
     return {
       id: fornecedor.id,
@@ -120,16 +123,19 @@ function VisualizarFornecedor() {
     };
   }
 
+  // Abre o modal de edicao com os dados do fornecedor selecionado.
   function abrirEdicao(fornecedor) {
     setFornecedorEditando(montarFornecedorParaEditar(fornecedor));
     setEditando(true);
   }
 
+  // Fecha o modal e volta para o estado limpo.
   function fecharEdicao() {
     setEditando(false);
     setFornecedorEditando(fornecedorInicial);
   }
 
+  // Atualiza um campo do formulario de edicao.
   function atualizarCampo(campo, valor) {
     setFornecedorEditando((prev) => ({
       ...prev,
@@ -137,6 +143,7 @@ function VisualizarFornecedor() {
     }));
   }
 
+  // Valida os campos obrigatorios antes de salvar a edicao.
   function validarEdicao() {
     if (!fornecedorEditando.nome.trim()) {
       toast.warning('Informe o nome do fornecedor.');
@@ -159,6 +166,7 @@ function VisualizarFornecedor() {
     return true;
   }
 
+  // Envia as alteracoes do fornecedor para o backend.
   async function salvarEdicao(event) {
     event.preventDefault();
 
@@ -203,6 +211,7 @@ function VisualizarFornecedor() {
     }
   }
 
+  // Exclui um fornecedor apos confirmacao do usuario.
   async function excluirFornecedor(fornecedor) {
     const confirmar = window.confirm(
       `Deseja realmente excluir ${fornecedor.nome || 'este fornecedor'}?`
@@ -226,6 +235,7 @@ function VisualizarFornecedor() {
     }
   }
 
+  // Filtra os fornecedores por codigo, nome, documento ou cidade.
   const fornecedoresFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
@@ -254,6 +264,7 @@ function VisualizarFornecedor() {
     });
   }, [fornecedores, busca]);
 
+  // Retorna o texto que resume o tipo de fornecedor.
   function renderTipoFornecedor(fornecedor) {
     if (fornecedor.fornecePecas && fornecedor.forneceServicos) {
       return 'Peças e serviços';
@@ -270,6 +281,7 @@ function VisualizarFornecedor() {
     return '-';
   }
 
+  // Renderiza o modal de edicao somente quando a tela esta aberta.
   function renderModalEdicao() {
     if (!editando) return null;
 

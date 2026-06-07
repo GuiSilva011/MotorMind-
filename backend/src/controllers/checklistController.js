@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 
+// Converte campos JSON que chegam como texto em array/objeto utilizável.
 function parseJsonField(value, fallback = []) {
   if (!value) return fallback;
 
@@ -14,6 +15,7 @@ function parseJsonField(value, fallback = []) {
   }
 }
 
+// Recupera o caminho do arquivo enviado para uma foto da checklist.
 function pegarArquivo(req, campo) {
   const arquivo = req.files?.[campo]?.[0];
 
@@ -22,6 +24,7 @@ function pegarArquivo(req, campo) {
   return `/uploads/checklists/${arquivo.filename}`;
 }
 
+// Cria uma checklist com observações, itens e fotos vinculadas ao veículo.
 export async function criarChecklist(req, res) {
   try {
     const {
@@ -85,6 +88,7 @@ export async function criarChecklist(req, res) {
   }
 }
 
+// Lista todas as checklists de um veículo específico.
 export async function listarChecklistsPorVeiculo(req, res) {
   try {
     const { veiculoId } = req.params;
@@ -122,6 +126,7 @@ export async function listarChecklistsPorVeiculo(req, res) {
   }
 }
 
+// Busca uma checklist única com os dados do veículo e do cliente.
 export async function buscarChecklistPorId(req, res) {
   try {
     const { id } = req.params;
@@ -156,6 +161,7 @@ export async function buscarChecklistPorId(req, res) {
   }
 }
 
+// Remove uma checklist existente.
 export async function deletarChecklist(req, res) {
   try {
     const { id } = req.params;

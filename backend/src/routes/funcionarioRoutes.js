@@ -4,6 +4,7 @@ import {criarFuncionario,listarFuncionarios,buscarFuncionarioPorId,atualizarFunc
 
 const router = express.Router();
 
+// Rotas administrativas para cadastro e manutenção de funcionários.
 router.post('/', criarFuncionario);
 router.get('/', listarFuncionarios);
 router.get('/:id', buscarFuncionarioPorId);

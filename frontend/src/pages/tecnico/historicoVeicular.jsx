@@ -17,6 +17,7 @@ function HistoricoVeicular() {
   const [carregando, setCarregando] = useState(false);
   const [carregandoDetalhes, setCarregandoDetalhes] = useState(false);
 
+  // Se um veiculo vier da navegação, dispara a primeira busca automaticamente.
   useEffect(() => {
     if (veiculoSelecionado?.placa) {
       setBusca(veiculoSelecionado.placa);
@@ -24,6 +25,7 @@ function HistoricoVeicular() {
     }
   }, []);
 
+  // Soma os totais usados no resumo superior do historico.
   const totaisHistorico = useMemo(() => {
     return historico.reduce(
       (acc, ordem) => {
@@ -41,6 +43,7 @@ function HistoricoVeicular() {
     );
   }, [historico]);
 
+  // Busca ordens de servico pelo termo informado.
   async function buscarHistoricoPorTermo(termoBusca) {
     try {
       if (!termoBusca.trim()) {
@@ -67,10 +70,12 @@ function HistoricoVeicular() {
     }
   }
 
+  // Dispara a busca usando o valor digitado na tela.
   function buscarHistorico() {
     buscarHistoricoPorTermo(busca);
   }
 
+  // Abre os detalhes completos de uma ordem de servico.
   async function abrirDetalhesOrdem(ordemId) {
     try {
       setCarregandoDetalhes(true);
@@ -86,22 +91,26 @@ function HistoricoVeicular() {
     }
   }
 
+  // Fecha o painel de detalhes da ordem.
   function fecharDetalhes() {
     setOrdemDetalhada(null);
   }
 
+  // Formata datas para exibição amigavel.
   function formatarData(data) {
     if (!data) return '-';
 
     return new Date(data).toLocaleDateString('pt-BR');
   }
 
+  // Monta o nome do veiculo com fabricante e modelo.
   function montarNomeVeiculo(veiculo) {
     if (!veiculo) return '-';
 
     return `${veiculo.fabricante || ''} ${veiculo.modelo || ''}`.trim() || '-';
   }
 
+  // Conta quantos servicos existem na ordem, inclusive nos diagnósticos.
   function contarServicos(ordem) {
     const servicosDiagnostico =
       ordem?.diagnosticos?.reduce((acc, diagnostico) => {
@@ -113,6 +122,7 @@ function HistoricoVeicular() {
     return servicosDiagnostico + servicosSoltos;
   }
 
+  // Conta quantas peças existem na ordem, inclusive nas estruturas filhas.
   function contarPecas(ordem) {
     const pecasDiagnostico =
       ordem?.diagnosticos?.reduce((accDiagnostico, diagnostico) => {
@@ -129,6 +139,7 @@ function HistoricoVeicular() {
     return pecasDiagnostico + pecasSoltas;
   }
 
+  // Escolhe a classe visual conforme o status da ordem.
   function obterClasseStatus(status) {
     const statusNormalizado = String(status || '').toLowerCase();
 
@@ -155,6 +166,7 @@ function HistoricoVeicular() {
     return 'historico-status-gray';
   }
 
+  // Renderiza um card resumido de uma ordem encontrada.
   function renderResumoOrdem(ordem) {
     return (
       <article className="historico-item" key={ordem.id}>
@@ -213,6 +225,7 @@ function HistoricoVeicular() {
     );
   }
 
+  // Renderiza o modal com os detalhes completos da ordem.
   function renderDetalhesOrdem() {
     if (!ordemDetalhada) return null;
 

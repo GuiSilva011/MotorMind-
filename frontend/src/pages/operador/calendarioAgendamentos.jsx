@@ -32,10 +32,12 @@ function CalendarioAgendamento() {
   const [carregando, setCarregando] = useState(false);
   const [eventoSelecionado, setEventoSelecionado] = useState(null);
 
+  // Carrega os agendamentos assim que a tela abre.
   useEffect(() => {
     carregarAgendamentos();
   }, []);
 
+  // Busca os agendamentos e converte cada um em evento do calendario.
   async function carregarAgendamentos() {
     try {
       setCarregando(true);
@@ -66,6 +68,7 @@ function CalendarioAgendamento() {
     }
   }
 
+  // Monta o titulo curto exibido no evento do calendario.
   function montarTituloEvento(agendamento) {
     const servico = agendamento.tipo_servico || agendamento.servico || 'Serviço';
     const cliente = agendamento.cliente?.nome || 'Cliente';
@@ -73,6 +76,7 @@ function CalendarioAgendamento() {
     return `${servico} - ${cliente}`;
   }
 
+  // Formata a data/hora para exibicao no modal.
   function formatarDataHora(data) {
     if (!data) return '-';
 
@@ -82,14 +86,17 @@ function CalendarioAgendamento() {
     });
   }
 
+  // Abre o modal com os detalhes do evento selecionado.
   function abrirDetalhes(evento) {
     setEventoSelecionado(evento);
   }
 
+  // Fecha o modal de detalhes.
   function fecharDetalhes() {
     setEventoSelecionado(null);
   }
 
+  // Leva o usuario para a tela de ordem de servico usando o agendamento atual.
   function gerarOrdemServico() {
     if (!eventoSelecionado?.resource) {
       toast.warning('Selecione um agendamento válido.');
@@ -112,6 +119,7 @@ function CalendarioAgendamento() {
     });
   }
 
+  // Remove o agendamento selecionado e atualiza o calendario.
   async function excluirAgendamento() {
     try {
       if (!eventoSelecionado?.id) return;
@@ -132,6 +140,7 @@ function CalendarioAgendamento() {
     }
   }
 
+  // Renderiza o modal de detalhes somente quando ha um evento selecionado.
   function renderModalDetalhes() {
     if (!eventoSelecionado) return null;
 

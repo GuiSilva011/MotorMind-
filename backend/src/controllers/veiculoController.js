@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 
+// Cria um veículo associado a um cliente e valida placa/cliente antes de salvar.
 export async function criarVeiculo(req, res) {
   try {
     const {
@@ -62,6 +63,7 @@ export async function criarVeiculo(req, res) {
   }
 }
 
+// Lista os veículos cadastrados, incluindo o cliente dono de cada veículo.
 export async function listarVeiculo(req, res) {
   try {
     const veiculo = await prisma.veiculo.findMany({
@@ -80,6 +82,7 @@ export async function listarVeiculo(req, res) {
   }
 }
 
+// Atualiza os campos do veículo sem apagar o vínculo com o cliente.
 export async function editarVeiculo(req, res) {
   try {
     const { id } = req.params;
@@ -165,6 +168,7 @@ export async function editarVeiculo(req, res) {
   }
 }
 
+// Remove um veículo depois de confirmar que ele existe.
 export async function deletarVeiculo(req, res) {
   try {
     const { id } = req.params;
@@ -192,6 +196,7 @@ export async function deletarVeiculo(req, res) {
   }
 }
 
+// Faz busca textual de veículos para uso na criação de ordem de serviço.
 export async function buscarVeiculosParaOS(req, res) {
   try {
     const { termo } = req.query;

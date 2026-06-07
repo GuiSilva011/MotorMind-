@@ -18,6 +18,7 @@ function Sidebar() {
   const isOperador = role === 'OPERADOR';
   const isTecnico = role === 'TECNICO';
 
+  // Mantém os submenus abertos quando o usuário navega por páginas relacionadas.
   useEffect(() => {
     if (location.pathname.startsWith('/operador/agendamentos')) {
       setOpenAgendamento(true);
@@ -43,6 +44,7 @@ function Sidebar() {
     location.pathname.startsWith('/operador/servicos') ||
     location.pathname.startsWith('/operador/pecas');
 
+  // Helpers simples para decidir quais menus aparecem para cada perfil.
   function podeVerOperador() {
     return isOperador;
   }
@@ -51,6 +53,7 @@ function Sidebar() {
     return isTecnico;
   }
 
+  // Recolhe ou expande a sidebar e fecha os submenus quando necessário.
   function alternarSidebar() {
     setSidebarAberta((prevState) => {
       const novaSituacao = !prevState;
@@ -64,6 +67,7 @@ function Sidebar() {
     });
   }
 
+  // Abre/fecha o submenu de agendamentos.
   function alternarAgendamento() {
     if (!sidebarAberta) {
       setSidebarAberta(true);
@@ -74,6 +78,7 @@ function Sidebar() {
     setOpenAgendamento((prevState) => !prevState);
   }
 
+  // Abre/fecha o submenu de ordem de serviço.
   function alternarOrdemServico() {
     if (!sidebarAberta) {
       setSidebarAberta(true);
@@ -84,6 +89,7 @@ function Sidebar() {
     setOpenOrdemServico((prevState) => !prevState);
   }
 
+  // Encerra a sessão removendo os dados salvos localmente.
   function sair() {
     localStorage.removeItem('motormind_usuario');
     localStorage.removeItem('motormind_ordem_servico_rascunho');

@@ -32,6 +32,7 @@ function gerarCodigoFornecedor() {
   return `FOR-${ano}-${numero}`;
 }
 
+// As funcoes abaixo aplicam mascaras nos campos do formulario.
 function formatarCnpj(valor) {
   return valor
     .replace(/\D/g, '')
@@ -80,6 +81,7 @@ function CadastrarFornecedor() {
 
   const [carregando, setCarregando] = useState(false);
 
+  // Atualiza um campo do formulario de fornecedor.
   function atualizarCampo(campo, valor) {
     setFornecedor((prev) => ({
       ...prev,
@@ -87,6 +89,7 @@ function CadastrarFornecedor() {
     }));
   }
 
+  // Limpa o formulario e gera um novo codigo.
   function limparFormulario() {
     setFornecedor({
       ...fornecedorInicial,
@@ -94,6 +97,7 @@ function CadastrarFornecedor() {
     });
   }
 
+  // Valida os campos obrigatorios antes do envio.
   function validarFormulario() {
     if (!fornecedor.nome.trim()) {
       toast.warning('Informe o nome do fornecedor.');
@@ -113,6 +117,7 @@ function CadastrarFornecedor() {
     return true;
   }
 
+  // Envia o cadastro do fornecedor para a API.
   async function cadastrarFornecedor(event) {
     event.preventDefault();
 

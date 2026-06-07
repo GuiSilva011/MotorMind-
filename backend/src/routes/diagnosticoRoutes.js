@@ -3,6 +3,7 @@ import {listarDiagnosticos,buscarDiagnosticoPorNome,criarDiagnostico,editarDiagn
 
 const router = express.Router()
 
+// Rotas do catálogo de diagnósticos.
 router.get('/', listarDiagnosticos)
 router.get('/buscar-por-nome', buscarDiagnosticoPorNome)
 router.post('/', criarDiagnostico)

@@ -1,15 +1,18 @@
 import prisma from '../config/prisma.js';
 
+// Garante que apenas perfis permitidos possam ser usados no cadastro.
 function validarRole(role) {
   return ['OPERADOR', 'TECNICO'].includes(role);
 }
 
+// Normaliza datas opcionais que chegam do frontend.
 function converterData(data) {
   if (!data) return null;
 
   return new Date(data);
 }
 
+// Monta o select usado para trazer funcionário e usuário juntos.
 function montarSelectFuncionario() {
   return {
     id: true,
@@ -41,6 +44,7 @@ function montarSelectFuncionario() {
   };
 }
 
+// Cria o usuário e o registro de funcionário dentro da mesma transação.
 export async function criarFuncionario(req, res) {
   try {
     const {
@@ -148,6 +152,7 @@ export async function criarFuncionario(req, res) {
   }
 }
 
+// Lista os funcionários ligados aos perfis OPERADOR e TECNICO.
 export async function listarFuncionarios(req, res) {
   try {
     const funcionarios = await prisma.funcionario.findMany({
@@ -175,6 +180,7 @@ export async function listarFuncionarios(req, res) {
   }
 }
 
+// Busca um funcionário específico pelo ID.
 export async function buscarFuncionarioPorId(req, res) {
   try {
     const { id } = req.params;
@@ -203,6 +209,7 @@ export async function buscarFuncionarioPorId(req, res) {
   }
 }
 
+// Atualiza dados do usuário e do funcionário de forma sincronizada.
 export async function atualizarFuncionario(req, res) {
   try {
     const { id } = req.params;
@@ -358,6 +365,7 @@ export async function atualizarFuncionario(req, res) {
   }
 }
 
+// Remove o funcionário e o usuário associado a ele.
 export async function deletarFuncionario(req, res) {
   try {
     const { id } = req.params;

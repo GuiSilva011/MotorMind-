@@ -74,26 +74,32 @@ function CadastroCliente() {
   const [editandoIndex, setEditandoIndex] = useState(null);
   const [loadingCliente, setLoadingCliente] = useState(false);
 
+  // Remove qualquer caractere que nao seja numero.
   function onlyNumbers(value) {
     return value.replace(/\D/g, '');
   }
 
+  // Coloca a primeira letra de cada palavra em maiusculo.
   function capitalizeWords(value) {
     return value.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
   }
 
+  // Formata a placa no padrao usado pelo formulario.
   function maskPlaca(value) {
     return value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 7);
   }
 
+  // Limita o ano a quatro digitos numericos.
   function maskAno(value) {
     return value.replace(/\D/g, '').slice(0, 4);
   }
 
+  // Remove espacos e limita o chassi ao tamanho esperado.
   function maskChassi(value) {
     return value.replace(/\s/g, '').toUpperCase().slice(0, 17);
   }
 
+  // Aplica a mascara correta em cada campo de veiculo.
   function formatVeiculoField(name, value) {
     const map = {
       placa: maskPlaca,
@@ -109,6 +115,7 @@ function CadastroCliente() {
     return map[name] ? map[name](value) : value;
   }
 
+  // Atualiza os campos do veiculo temporario enquanto o modal esta aberto.
   function handleVeiculoChange(event) {
     if (isVisualizacao) return;
 
@@ -120,6 +127,7 @@ function CadastroCliente() {
     }));
   }
 
+  // Abre o modal para cadastrar um novo veiculo.
   function abrirModalNovoVeiculo() {
     if (isVisualizacao) return;
 
@@ -129,12 +137,14 @@ function CadastroCliente() {
     setMensagem('');
   }
 
+  // Fecha o modal e limpa o estado temporario do veiculo.
   function fecharModalVeiculo() {
     setModalOpen(false);
     setNovoVeiculo(veiculoInicial);
     setEditandoIndex(null);
   }
 
+  // Prepara um veiculo existente para edicao no modal.
   function editarVeiculo(index) {
     const veiculoSelecionado = veiculos[index];
 
@@ -149,6 +159,7 @@ function CadastroCliente() {
     setMensagem('');
   }
 
+  // Carrega o cliente quando a tela abre em modo edicao ou visualizacao.
   useEffect(() => {
     async function carregarClienteEmEdicao() {
       if (!nomeBusca) {
@@ -210,6 +221,7 @@ function CadastroCliente() {
     carregarClienteEmEdicao();
   }, [nomeBusca]);
 
+  // Adiciona um veiculo novo ou substitui o veiculo em edicao.
   function adicionarVeiculo() {
     if (isVisualizacao) return;
 
@@ -251,12 +263,14 @@ function CadastroCliente() {
     setMensagem('');
   }
 
+  // Remove um veiculo da lista local antes de salvar o cliente.
   function removerVeiculo(index) {
     if (isVisualizacao) return;
 
     setVeiculos((prevState) => prevState.filter((_, i) => i !== index));
   }
 
+  // Aplica mascara de CPF para exibicao e edicao.
   function maskCPF(value) {
     const numbers = onlyNumbers(value).slice(0, 11);
 
@@ -266,6 +280,7 @@ function CadastroCliente() {
       .replace(/\.(\d{3})(\d)/, '.$1-$2');
   }
 
+  // Aplica mascara de telefone ou celular.
   function maskPhone(value) {
     const numbers = onlyNumbers(value).slice(0, 11);
 
@@ -280,19 +295,23 @@ function CadastroCliente() {
       .replace(/(\d{5})(\d)/, '$1-$2');
   }
 
+  // Formata o CEP.
   function maskCEP(value) {
     const numbers = onlyNumbers(value).slice(0, 8);
     return numbers.replace(/^(\d{5})(\d)/, '$1-$2');
   }
 
+  // Limita a UF a duas letras maiusculas.
   function maskUF(value) {
     return value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
   }
 
+  // Limita o numero do endereco a digitos.
   function maskNumero(value) {
     return onlyNumbers(value).slice(0, 6);
   }
 
+  // Escolhe a mascara correta para o campo alterado.
   function applyMask(name, value) {
     const maskMap = {
       cpf: maskCPF,
@@ -305,6 +324,7 @@ function CadastroCliente() {
     return maskMap[name] ? maskMap[name](value) : value;
   }
 
+  // Atualiza os campos do formulario principal com mascara quando necessario.
   function handleChange(event) {
     if (isVisualizacao) return;
 
@@ -316,6 +336,7 @@ function CadastroCliente() {
     }));
   }
 
+  // Reseta o formulario e volta para a tela de consulta quando necessario.
   function limparFormulario() {
     setFormData(formClienteCadastro);
     setVeiculos([]);
@@ -334,6 +355,7 @@ function CadastroCliente() {
     }
   }
 
+  // Exclui o cliente atual, incluindo o fluxo de confirmacao do navegador.
   async function handleExcluirCliente() {
     if (!clienteEmEdicaoId) {
       setMensagem('Não foi possível identificar o cliente para exclusão.');
@@ -364,6 +386,7 @@ function CadastroCliente() {
     }
   }
 
+  // Envia o cadastro ou a atualizacao do cliente para a API.
   async function handleSubmit(event) {
     event.preventDefault();
 

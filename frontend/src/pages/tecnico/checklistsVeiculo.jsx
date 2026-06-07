@@ -17,6 +17,7 @@ function ChecklistsVeiculo() {
 
   const carregouInicialmente = useRef(false);
 
+  // Busca a lista de checklists apenas na primeira vez que ha veiculo selecionado.
   useEffect(() => {
     if (carregouInicialmente.current) return;
 
@@ -26,6 +27,7 @@ function ChecklistsVeiculo() {
     }
   }, [veiculo?.id]);
 
+  // Carrega todas as checklists do veiculo selecionado.
   async function carregarChecklists() {
     try {
       if (!veiculo?.id) {
@@ -63,6 +65,7 @@ function ChecklistsVeiculo() {
     }
   }
 
+  // Monta o nome amigavel do veiculo exibido na tela.
   function montarNomeVeiculo() {
     if (!veiculo) return 'Nenhum veículo selecionado';
 
@@ -72,12 +75,14 @@ function ChecklistsVeiculo() {
     return `${fabricante} ${modelo}`.trim() || 'Veículo sem descrição';
   }
 
+  // Formata a data da checklist para visualizacao.
   function formatarData(data) {
     if (!data) return '-';
 
     return new Date(data).toLocaleString('pt-BR');
   }
 
+  // Resolve a URL completa da imagem enviada no backend.
   function obterUrlFoto(caminho) {
     if (!caminho) return null;
 
@@ -88,6 +93,7 @@ function ChecklistsVeiculo() {
     return `http://localhost:3000${caminho}`;
   }
 
+  // Normaliza itens que podem vir como texto ou objeto.
   function normalizarItensChecklist(lista) {
     if (!Array.isArray(lista)) return [];
 
@@ -111,6 +117,7 @@ function ChecklistsVeiculo() {
     });
   }
 
+  // Separa itens marcados como ok e nao ok.
   function separarItensMarcados(lista) {
     const itens = normalizarItensChecklist(lista);
 
@@ -120,36 +127,42 @@ function ChecklistsVeiculo() {
     };
   }
 
+  // Conta quantos itens foram preenchidos na lista.
   function contarItensPreenchidos(lista) {
     const itens = normalizarItensChecklist(lista);
 
     return itens.filter((item) => item.valor !== null).length;
   }
 
+  // Conta quantos itens foram marcados com ok.
   function contarItensOk(lista) {
     const itens = normalizarItensChecklist(lista);
 
     return itens.filter((item) => item.valor === true).length;
   }
 
+  // Conta quantos itens foram marcados com nao.
   function contarItensNao(lista) {
     const itens = normalizarItensChecklist(lista);
 
     return itens.filter((item) => item.valor === false).length;
   }
 
+  // Converte o valor da checklist em texto curto.
   function obterTextoStatus(valor) {
     if (valor === true) return '✓';
     if (valor === false) return 'X';
     return '';
   }
 
+  // Escolhe a classe CSS conforme o estado do item.
   function obterClasseStatus(valor) {
     if (valor === true) return 'checklists-status-ok';
     if (valor === false) return 'checklists-status-no';
     return 'checklists-status-null';
   }
 
+  // Abre a tela de nova checklist para o veiculo atual.
   function abrirNovaChecklist() {
     if (!veiculo) {
       toast.warning('Selecione um veículo antes de criar uma checklist.');
@@ -163,10 +176,12 @@ function ChecklistsVeiculo() {
     });
   }
 
+  // Volta para o painel tecnico.
   function voltarPainel() {
     navigate('/tecnico/painel');
   }
 
+  // Agrupa itens marcados por estado dentro do modal.
   function renderGrupoItens(titulo, itens, valor) {
     if (!itens.length) return null;
 
@@ -193,6 +208,7 @@ function ChecklistsVeiculo() {
     );
   }
 
+  // Renderiza os itens de uma lista em blocos separados.
   function renderItens(lista) {
     const { ok, no } = separarItensMarcados(lista);
 
@@ -212,6 +228,7 @@ function ChecklistsVeiculo() {
     );
   }
 
+  // Renderiza a foto ou o estado vazio.
   function renderFoto(caminho, titulo) {
     const url = obterUrlFoto(caminho);
 
@@ -228,6 +245,7 @@ function ChecklistsVeiculo() {
     );
   }
 
+  // Resume os totais de preenchimento da checklist.
   function renderResumoChecklist(checklist) {
     const entradaPreenchida = contarItensPreenchidos(checklist.itensEntrada);
     const entradaOk = contarItensOk(checklist.itensEntrada);
@@ -254,6 +272,7 @@ function ChecklistsVeiculo() {
     );
   }
 
+  // Renderiza o modal de detalhes da checklist selecionada.
   function renderModalDetalhes() {
     if (!checklistSelecionada) return null;
 

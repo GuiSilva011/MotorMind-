@@ -3,6 +3,7 @@ import {buscarClientePorNome,criarCliente,deletarClientes,editarClientes,listarC
 
 const router = express.Router()
 
+// Rotas de CRUD de clientes.
 router.get('/', listarClientes);
 router.get('/buscar-por-nome', buscarClientePorNome);
 router.post('/', criarCliente);

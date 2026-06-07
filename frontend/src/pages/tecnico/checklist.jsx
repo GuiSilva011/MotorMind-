@@ -84,6 +84,7 @@ function criarEstadoItens(lista) {
   }, {});
 }
 
+// Converte os itens em um formato simples para envio ao backend.
 function converterItensParaEnvio(itens) {
   return Object.entries(itens).map(([nome, valor]) => ({
     nome,
@@ -106,6 +107,7 @@ function Checklist() {
   const [observacoesDiagnostico, setObservacoesDiagnostico] = useState('');
   const [fotos, setFotos] = useState(fotosIniciais);
 
+  // Calcula quantos itens foram preenchidos em cada etapa da checklist.
   const totais = useMemo(() => {
     const entradaPreenchidos = Object.values(entrada).filter(
       (valor) => valor !== null
@@ -121,6 +123,7 @@ function Checklist() {
     };
   }, [entrada, diagnostico]);
 
+  // Monta o nome exibido do veiculo selecionado.
   function montarNomeVeiculo() {
     if (!veiculoSelecionado) return 'Nenhum veículo selecionado';
 
@@ -130,12 +133,14 @@ function Checklist() {
     return `${fabricante} ${modelo}`.trim() || 'Veículo sem descrição';
   }
 
+  // Faz o ciclo entre vazio, true e false ao clicar em um item.
   function obterProximoValor(valorAtual) {
     if (valorAtual === null) return true;
     if (valorAtual === true) return false;
     return null;
   }
 
+  // Alterna o estado de um item da inspeção ou do diagnóstico.
   function alternarItem(tipo, item) {
     if (tipo === 'entrada') {
       setEntrada((prev) => ({
@@ -152,6 +157,7 @@ function Checklist() {
     }));
   }
 
+  // Registra uma imagem escolhida pelo usuario para o campo informado.
   function alterarFoto(campo, arquivo) {
     if (!arquivo) return;
 
@@ -166,6 +172,7 @@ function Checklist() {
     }));
   }
 
+  // Remove a foto selecionada e limpa a preview.
   function removerFoto(campo) {
     setFotos((prev) => ({
       ...prev,
@@ -173,6 +180,7 @@ function Checklist() {
     }));
   }
 
+  // Monta o formulario multipart e envia a checklist para a API.
   async function salvarChecklist() {
     try {
       if (!veiculoSelecionado?.id) {
@@ -234,49 +242,53 @@ function Checklist() {
     }
   }
 
+  // Cancela a checklist e descarta os dados nao salvos.
   function cancelarChecklist() {
-  const confirmar = window.confirm(
-    'Deseja cancelar esta checklist? As informações preenchidas serão perdidas.'
-  );
+    const confirmar = window.confirm(
+      'Deseja cancelar esta checklist? As informações preenchidas serão perdidas.'
+    );
 
-  if (!confirmar) return;
+    if (!confirmar) return;
 
-  Object.values(fotos).forEach((foto) => {
-    if (foto?.preview) {
-      URL.revokeObjectURL(foto.preview);
-    }
-  });
+    Object.values(fotos).forEach((foto) => {
+      if (foto?.preview) {
+        URL.revokeObjectURL(foto.preview);
+      }
+    });
 
-  setEntrada(criarEstadoItens(itensEntrada));
-  setDiagnostico(criarEstadoItens(itensDiagnostico));
-  setObservacoesEntrada('');
-  setObservacoesDiagnostico('');
-  setFotos({
-    frente: null,
-    traseira: null,
-    esquerda: null,
-    direita: null,
-  });
+    setEntrada(criarEstadoItens(itensEntrada));
+    setDiagnostico(criarEstadoItens(itensDiagnostico));
+    setObservacoesEntrada('');
+    setObservacoesDiagnostico('');
+    setFotos({
+      frente: null,
+      traseira: null,
+      esquerda: null,
+      direita: null,
+    });
 
-  navigate('/tecnico/checklists', {
-    state: {
-      veiculo: veiculoSelecionado,
-    },
-  });
-}
+    navigate('/tecnico/checklists', {
+      state: {
+        veiculo: veiculoSelecionado,
+      },
+    });
+  }
 
+  // Escolhe a classe CSS usada para cada valor possível do item.
   function obterClasseValor(valor) {
     if (valor === true) return 'checklist-status-ok';
     if (valor === false) return 'checklist-status-no';
     return '';
   }
 
+  // Converte o valor booleano em um simbolo visual.
   function obterTextoValor(valor) {
     if (valor === true) return '✓';
     if (valor === false) return 'X';
     return '';
   }
 
+  // Renderiza uma lista de itens alternaveis em forma de botoes.
   function renderItens(lista, tipo) {
     const itens = tipo === 'entrada' ? entrada : diagnostico;
 
@@ -301,6 +313,7 @@ function Checklist() {
     });
   }
 
+  // Renderiza uma foto com preview ou o estado vazio.
   function renderFoto(campo, titulo, subtitulo) {
     const foto = fotos[campo];
 

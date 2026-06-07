@@ -8,10 +8,12 @@ function Relatorios() {
   const [ordensServico, setOrdensServico] = useState([]);
   const [carregando, setCarregando] = useState(false);
 
+  // Carrega as ordens de servico usadas para montar os rankings.
   useEffect(() => {
     carregarRelatorios();
   }, []);
 
+  // Busca a lista completa de ordens na API.
   async function carregarRelatorios() {
     try {
       setCarregando(true);
@@ -32,6 +34,7 @@ function Relatorios() {
     }
   }
 
+  // Soma uma ocorrencia dentro de um ranking dinamico.
   function incrementarRanking(ranking, chave) {
     if (!chave) return;
 
@@ -42,6 +45,7 @@ function Relatorios() {
     ranking[chaveTratada] = (ranking[chaveTratada] || 0) + 1;
   }
 
+  // Converte o objeto de ranking em uma lista ordenada e limitada.
   function transformarRankingEmLista(ranking) {
     return Object.entries(ranking)
       .map(([nome, quantidade]) => ({
@@ -52,6 +56,7 @@ function Relatorios() {
       .slice(0, 5);
   }
 
+  // Processa as ordens e extrai os indicadores exibidos na pagina.
   const relatorios = useMemo(() => {
     const pecas = {};
     const servicos = {};
@@ -104,6 +109,7 @@ function Relatorios() {
     };
   }, [ordensServico]);
 
+  // Renderiza uma tabela simples de ranking.
   function renderTabela(titulo, subtitulo, dados, colunaNome) {
     return (
       <article className="relatorio-card">
@@ -139,6 +145,7 @@ function Relatorios() {
     );
   }
 
+  // Renderiza o ranking visual com barras verticais.
   function renderRanking(titulo, subtitulo, dados) {
     const maiorValor = dados[0]?.quantidade || 1;
 

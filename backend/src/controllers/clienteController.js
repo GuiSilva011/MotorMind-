@@ -1,6 +1,6 @@
 import prisma from '../config/prisma.js';
 
-// TODO O CRUD DO CLIENTE
+// Cria um cliente e, se vierem veículos no body, cadastra os veículos vinculados.
 export async function criarCliente(req, res) {
   try {
     const {
@@ -77,6 +77,7 @@ export async function criarCliente(req, res) {
   }
 }
 
+// Busca um cliente exato pelo nome informado na query e traz os veículos junto.
 export async function buscarClientePorNome(req, res) {
   try {
     const nome = req.query.nome?.trim();
@@ -108,6 +109,7 @@ export async function buscarClientePorNome(req, res) {
   }
 }
 
+// Lista todos os clientes com seus veículos, do mais recente para o mais antigo.
 export async function listarClientes(req, res) {
   try {
     const clientes = await prisma.cliente.findMany({
@@ -126,6 +128,7 @@ export async function listarClientes(req, res) {
   }
 }
 
+// Atualiza dados do cliente e substitui a lista de veículos quando ela é enviada.
 export async function editarClientes(req, res) {
   try {
     const { id } = req.params;
@@ -221,6 +224,7 @@ export async function editarClientes(req, res) {
   }
 }
 
+// Remove o cliente e todos os veículos ligados a ele dentro de uma transação.
 export async function deletarClientes(req, res) {
   try {
     const { id } = req.params;

@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 
+// Lista as peças cadastradas no catálogo.
 export async function listarPecas(req, res) {
   try {
     const pecas = await prisma.pecaCatalogo.findMany({
@@ -15,6 +16,7 @@ export async function listarPecas(req, res) {
   }
 }
 
+// Faz busca textual por peça usando nome, código, marca, aplicação ou grupo.
 export async function buscarPecaPorNome(req, res) {
   try {
     const { nome } = req.query;
@@ -70,6 +72,7 @@ export async function buscarPecaPorNome(req, res) {
   }
 }
 
+// Cria uma peça nova no catálogo.
 export async function criarPeca(req, res) {
   try {
     const { codigo, nome, marca, aplicacao, grupo, unidade } = req.body;
@@ -108,6 +111,7 @@ export async function criarPeca(req, res) {
   }
 }
 
+// Atualiza os dados da peça sem duplicar código ou nome.
 export async function editarPeca(req, res) {
   try {
     const { id } = req.params;
@@ -163,6 +167,7 @@ export async function editarPeca(req, res) {
   }
 }
 
+// Remove uma peça do catálogo.
 export async function deletarPeca(req, res) {
   try {
     const { id } = req.params;

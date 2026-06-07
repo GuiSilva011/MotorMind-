@@ -3,6 +3,7 @@ import {criarAgendamento,listarAgendamentos,buscarAgendamentoPorId,editarAgendam
 
 const router = express.Router();
 
+// Rotas de agendamento usadas pelo calendário e pela tela de cadastro.
 router.post('/', criarAgendamento);
 router.get('/', listarAgendamentos);
 router.get('/:id', buscarAgendamentoPorId);

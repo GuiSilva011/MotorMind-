@@ -50,10 +50,12 @@ function Pecas() {
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
+  // Carrega as pecas cadastradas ao iniciar a pagina.
   useEffect(() => {
     carregarPecas();
   }, []);
 
+  // Busca todas as pecas do catalogo.
   async function carregarPecas() {
     try {
       setCarregando(true);
@@ -69,6 +71,7 @@ function Pecas() {
     }
   }
 
+  // Atualiza um campo simples do formulario.
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -76,11 +79,13 @@ function Pecas() {
     }));
   }
 
+  // Restaura o formulario da tela.
   function limparFormulario() {
     setForm(criarPecaInicial());
     setEditandoId(null);
   }
 
+  // Coloca uma peca existente em modo de edicao.
   function editarPeca(peca) {
     setEditandoId(peca.id);
 
@@ -99,6 +104,7 @@ function Pecas() {
     });
   }
 
+  // Salva a peca nova ou atualizada.
   async function salvarPeca(event) {
     event.preventDefault();
 
@@ -152,6 +158,7 @@ function Pecas() {
     }
   }
 
+  // Exclui uma peca depois da confirmacao do usuario.
   async function excluirPeca(id) {
     const confirmar = window.confirm('Deseja realmente excluir esta peça?');
 
@@ -173,6 +180,7 @@ function Pecas() {
     }
   }
 
+  // Filtra as pecas por codigo, nome, marca, grupo ou aplicacao.
   const pecasFiltradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 

@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 
+// Lista os serviços cadastrados no catálogo.
 export async function listarServicos(req, res) {
   try {
     const servicos = await prisma.servicoCatalogo.findMany({
@@ -15,6 +16,7 @@ export async function listarServicos(req, res) {
   }
 }
 
+// Pesquisa serviços por nome, código ou categoria.
 export async function buscarServicoPorNome(req, res) {
   try {
     const { nome } = req.query;
@@ -58,6 +60,7 @@ export async function buscarServicoPorNome(req, res) {
   }
 }
 
+// Cria um novo serviço no catálogo.
 export async function criarServico(req, res) {
   try {
     const { codigo, nome, categoria, valorPadrao } = req.body;
@@ -100,6 +103,7 @@ export async function criarServico(req, res) {
   }
 }
 
+// Atualiza um serviço já cadastrado.
 export async function editarServico(req, res) {
   try {
     const { id } = req.params;
@@ -160,6 +164,7 @@ export async function editarServico(req, res) {
   }
 }
 
+// Exclui um serviço do catálogo.
 export async function deletarServico(req, res) {
   try {
     const { id } = req.params;

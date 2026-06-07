@@ -3,6 +3,7 @@ import {listarServicos,buscarServicoPorNome,criarServico,editarServico,deletarSe
 
 const router = express.Router()
 
+// Rotas do catálogo de serviços.
 router.get('/', listarServicos)
 router.get('/buscar-por-nome', buscarServicoPorNome)
 router.post('/', criarServico)

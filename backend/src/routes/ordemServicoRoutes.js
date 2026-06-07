@@ -3,6 +3,7 @@ import {listarOrdensServico,buscarOrdensServico,buscarOrdemServicoPorId,criarOrd
 
 const router = express.Router()
 
+// Rotas principais da ordem de serviço, com listagem, busca e CRUD.
 router.get('/', listarOrdensServico)
 router.get('/proximo-codigo', gerarProximoCodigoOS)
 router.get('/buscar', buscarOrdensServico)

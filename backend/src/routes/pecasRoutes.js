@@ -3,6 +3,7 @@ import {listarPecas,buscarPecaPorNome,criarPeca,editarPeca,deletarPeca} from '..
 
 const router = express.Router()
 
+// Rotas do catálogo de peças.
 router.get('/', listarPecas)
 router.get('/buscar-por-nome', buscarPecaPorNome)
 router.post('/', criarPeca)

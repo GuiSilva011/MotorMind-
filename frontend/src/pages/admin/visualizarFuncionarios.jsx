@@ -33,10 +33,12 @@ function VisualizarFuncionarios() {
   const [funcionarioEditando, setFuncionarioEditando] =
     useState(funcionarioInicial);
 
+  // Carrega a lista de funcionarios ao abrir a tela.
   useEffect(() => {
     carregarFuncionarios();
   }, []);
 
+  // Busca funcionarios e usuarios vinculados na API.
   async function carregarFuncionarios() {
     try {
       setCarregando(true);
@@ -57,18 +59,21 @@ function VisualizarFuncionarios() {
     }
   }
 
+  // Formata data para exibir em um input do tipo date.
   function formatarDataParaInput(data) {
     if (!data) return '';
 
     return new Date(data).toISOString().split('T')[0];
   }
 
+  // Formata data para exibicao amigavel na tela.
   function formatarDataTela(data) {
     if (!data) return '-';
 
     return new Date(data).toLocaleDateString('pt-BR');
   }
 
+  // Monta um objeto pronto para abrir no modal de edicao.
   function montarFuncionarioParaEditar(funcionario) {
     return {
       id: funcionario.id,
@@ -92,16 +97,19 @@ function VisualizarFuncionarios() {
     };
   }
 
+  // Abre o modal de edicao com os dados do funcionario escolhido.
   function abrirEdicao(funcionario) {
     setFuncionarioEditando(montarFuncionarioParaEditar(funcionario));
     setEditando(true);
   }
 
+  // Fecha o modal e limpa o formulario temporario.
   function fecharEdicao() {
     setEditando(false);
     setFuncionarioEditando(funcionarioInicial);
   }
 
+  // Atualiza um campo do funcionario em edicao.
   function atualizarCampo(campo, valor) {
     setFuncionarioEditando((prev) => ({
       ...prev,
@@ -109,6 +117,7 @@ function VisualizarFuncionarios() {
     }));
   }
 
+  // Valida as informacoes basicas antes de salvar a edicao.
   function validarEdicao() {
     if (!funcionarioEditando.Nome.trim()) {
       toast.warning('Informe o nome do funcionário.');
@@ -133,6 +142,7 @@ function VisualizarFuncionarios() {
     return true;
   }
 
+  // Envia a edicao do usuario e do funcionario para a API.
   async function salvarEdicao(event) {
     event.preventDefault();
 
@@ -180,6 +190,7 @@ function VisualizarFuncionarios() {
     }
   }
 
+  // Exclui o funcionario e o acesso dele ao sistema.
   async function excluirFuncionario(funcionario) {
     const nome = funcionario.usuario?.Nome || 'este funcionário';
 
@@ -205,6 +216,7 @@ function VisualizarFuncionarios() {
     }
   }
 
+  // Filtra os funcionarios por nome, email, perfil ou CPF.
   const funcionariosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
@@ -227,6 +239,7 @@ function VisualizarFuncionarios() {
     });
   }, [funcionarios, busca]);
 
+  // Renderiza o modal de edicao apenas quando ele esta aberto.
   function renderModalEdicao() {
     if (!editando) return null;
 

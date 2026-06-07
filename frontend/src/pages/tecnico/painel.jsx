@@ -12,10 +12,12 @@ function Painel() {
   const [filtro, setFiltro] = useState('todos');
   const [carregando, setCarregando] = useState(false);
 
+  // Carrega os veiculos assim que o painel tecnico abre.
   useEffect(() => {
     carregarVeiculos();
   }, []);
 
+  // Busca os veiculos cadastrados para exibir na lista.
   async function carregarVeiculos() {
     try {
       setCarregando(true);
@@ -31,6 +33,7 @@ function Painel() {
     }
   }
 
+  // Monta o texto do ano combinando fabricacao e modelo.
   function montarAnoVeiculo(veiculo) {
     if (veiculo.ano_fabricacao && veiculo.ano_modelo) {
       return `${veiculo.ano_fabricacao}/${veiculo.ano_modelo}`;
@@ -39,6 +42,7 @@ function Painel() {
     return veiculo.ano_modelo || veiculo.ano_fabricacao || '-';
   }
 
+  // Monta o nome exibido para o veiculo no card.
   function montarNomeVeiculo(veiculo) {
     const fabricante = veiculo.fabricante || '';
     const modelo = veiculo.modelo || '';
@@ -46,6 +50,7 @@ function Painel() {
     return `${fabricante} ${modelo}`.trim() || 'Veículo sem descrição';
   }
 
+  // Leva o usuario para a tela de nova checklist.
   function abrirNovaChecklist(veiculo) {
     navigate('/tecnico/checklist', {
       state: {
@@ -54,6 +59,7 @@ function Painel() {
     });
   }
 
+  // Leva o usuario para o historico de checklists do veiculo.
   function abrirChecklists(veiculo) {
     navigate('/tecnico/checklists', {
       state: {
@@ -62,6 +68,7 @@ function Painel() {
     });
   }
 
+  // Leva o usuario para o historico veicular completo.
   function abrirHistorico(veiculo) {
     navigate('/tecnico/historico-veicular', {
       state: {
@@ -70,6 +77,7 @@ function Painel() {
     });
   }
 
+  // Filtra os veiculos pelo texto e pelo tipo de vinculo com cliente.
   const veiculosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 

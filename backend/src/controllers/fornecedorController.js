@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js'
 
+// Lista todos os fornecedores em ordem alfabética.
 export async function listarFornecedores(req, res) {
   try {
     const fornecedores = await prisma.fornecedor.findMany({
@@ -15,6 +16,7 @@ export async function listarFornecedores(req, res) {
   }
 }
 
+// Busca fornecedores por nome, código, CNPJ ou cidade.
 export async function buscarFornecedorPorNome(req, res) {
   try {
     const { nome } = req.query
@@ -64,6 +66,7 @@ export async function buscarFornecedorPorNome(req, res) {
   }
 }
 
+// Cadastra um fornecedor novo validando os campos obrigatórios.
 export async function criarFornecedor(req, res) {
   try {
     const {
@@ -136,6 +139,7 @@ export async function criarFornecedor(req, res) {
   }
 }
 
+// Atualiza os dados do fornecedor selecionado.
 export async function editarFornecedor(req, res) {
   try {
     const { id } = req.params
@@ -220,6 +224,7 @@ export async function editarFornecedor(req, res) {
   }
 }
 
+// Exclui um fornecedor depois de confirmar que ele existe.
 export async function deletarFornecedor(req, res) {
   try {
     const { id } = req.params

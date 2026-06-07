@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 
+// Faz a autenticação simples do usuário usando email e senha.
 export async function login(req, res) {
   try {
     const { Email, Senha } = req.body;
@@ -47,6 +48,7 @@ export async function login(req, res) {
   }
 }
 
+// Retorna uma lista de usuários de teste para facilitar validação manual.
 export async function listarUsuariosTeste(req, res) {
   try {
     const usuarios = await prisma.usuario.findMany({

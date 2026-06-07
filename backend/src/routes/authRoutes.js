@@ -3,6 +3,7 @@ import {login,listarUsuariosTeste,} from '../controllers/authController.js';
 
 const router = express.Router();
 
+// Rotas de autenticação usadas pela tela de login.
 router.post('/login', login);
 router.get('/usuarios-teste', listarUsuariosTeste);
 

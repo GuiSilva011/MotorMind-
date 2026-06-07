@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 
+// Bloqueia acesso a páginas internas quando não há usuário logado ou o perfil não confere.
 function ProtectedRoute({ children, allowedRoles = [] }) {
   const usuarioSalvo = localStorage.getItem('motormind_usuario');
 

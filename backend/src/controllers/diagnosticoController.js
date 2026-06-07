@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 
+// Lista os diagnósticos cadastrados no catálogo.
 export async function listarDiagnosticos(req, res) {
   try {
     const diagnosticos = await prisma.diagnosticoCatalogo.findMany({
@@ -15,6 +16,7 @@ export async function listarDiagnosticos(req, res) {
   }
 }
 
+// Procura diagnósticos por nome, código ou descrição.
 export async function buscarDiagnosticoPorNome(req, res) {
   try {
     const { nome } = req.query;
@@ -58,6 +60,7 @@ export async function buscarDiagnosticoPorNome(req, res) {
   }
 }
 
+// Cria um novo diagnóstico no catálogo.
 export async function criarDiagnostico(req, res) {
   try {
     const { codigo, nome, descricao } = req.body;
@@ -96,6 +99,7 @@ export async function criarDiagnostico(req, res) {
   }
 }
 
+// Atualiza um diagnóstico existente, evitando duplicidade de código ou nome.
 export async function editarDiagnostico(req, res) {
   try {
     const { id } = req.params;
@@ -150,6 +154,7 @@ export async function editarDiagnostico(req, res) {
   }
 }
 
+// Remove um diagnóstico do catálogo.
 export async function deletarDiagnostico(req, res) {
   try {
     const { id } = req.params;

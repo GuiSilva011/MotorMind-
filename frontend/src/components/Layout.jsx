@@ -3,6 +3,7 @@ import Topbar from './Topbar';
 
 function Layout({ children }) {
   return (
+    // Estrutura base usada nas páginas internas: menu lateral + topo + conteúdo.
     <div className="cadastro-page">
       <Sidebar />
 

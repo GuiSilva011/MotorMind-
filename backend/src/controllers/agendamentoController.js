@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 
+// Cria um agendamento ligando cliente, veículo e serviço em uma data específica.
 export async function criarAgendamento(req, res) {
   try {
     const {
@@ -41,6 +42,7 @@ export async function criarAgendamento(req, res) {
   }
 }
 
+// Lista todos os agendamentos com cliente e veículo para montar agenda/calendário.
 export async function listarAgendamentos(req, res) {
   try {
     const agendamentos = await prisma.agendamento.findMany({
@@ -60,6 +62,7 @@ export async function listarAgendamentos(req, res) {
   }
 }
 
+// Busca um agendamento único para detalhes ou edição.
 export async function buscarAgendamentoPorId(req, res) {
   try {
     const { id } = req.params;
@@ -85,6 +88,7 @@ export async function buscarAgendamentoPorId(req, res) {
   }
 }
 
+// Atualiza os dados de um agendamento já existente.
 export async function editarAgendamento(req, res) {
   try {
     const { id } = req.params;
@@ -125,6 +129,7 @@ export async function editarAgendamento(req, res) {
   }
 }
 
+// Exclui um agendamento pelo ID.
 export async function deletarAgendamento(req, res) {
   try {
     const { id } = req.params;

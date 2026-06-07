@@ -30,10 +30,12 @@ function Diagnosticos() {
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
+  // Carrega o catalogo de diagnosticos ao abrir a pagina.
   useEffect(() => {
     carregarDiagnosticos();
   }, []);
 
+  // Busca todos os diagnosticos cadastrados na API.
   async function carregarDiagnosticos() {
     try {
       setCarregando(true);
@@ -49,6 +51,7 @@ function Diagnosticos() {
     }
   }
 
+  // Atualiza um campo simples do formulario.
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -56,11 +59,13 @@ function Diagnosticos() {
     }));
   }
 
+  // Restaura o formulario para o estado inicial.
   function limparFormulario() {
     setForm(criarDiagnosticoInicial());
     setEditandoId(null);
   }
 
+  // Preenche o formulario com os dados de um diagnostico para edicao.
   function editarDiagnostico(diagnostico) {
     setEditandoId(diagnostico.id);
 
@@ -76,6 +81,7 @@ function Diagnosticos() {
     });
   }
 
+  // Valida, cria ou atualiza um diagnostico no backend.
   async function salvarDiagnostico(event) {
     event.preventDefault();
 
@@ -121,6 +127,7 @@ function Diagnosticos() {
     }
   }
 
+  // Remove um diagnostico apos confirmacao do usuario.
   async function excluirDiagnostico(id) {
     const confirmar = window.confirm(
       'Deseja realmente excluir este diagnóstico?'
@@ -144,6 +151,7 @@ function Diagnosticos() {
     }
   }
 
+  // Filtra a lista conforme codigo, nome ou descricao.
   const diagnosticosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
