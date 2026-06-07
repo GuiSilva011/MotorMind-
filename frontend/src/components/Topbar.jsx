@@ -1,5 +1,3 @@
-
-
 function Topbar() {
   return null;
 }
