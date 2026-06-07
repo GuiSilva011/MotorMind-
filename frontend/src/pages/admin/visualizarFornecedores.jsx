@@ -150,11 +150,6 @@ function VisualizarFornecedor() {
       return false;
     }
 
-    if (!fornecedorEditando.cnpj.trim()) {
-      toast.warning('Informe o CNPJ do fornecedor.');
-      return false;
-    }
-
     if (
       !fornecedorEditando.fornecePecas &&
       !fornecedorEditando.forneceServicos
@@ -176,7 +171,7 @@ function VisualizarFornecedor() {
       const payload = {
         codigo: fornecedorEditando.codigo.trim(),
         nome: fornecedorEditando.nome.trim(),
-        cnpj: fornecedorEditando.cnpj.trim(),
+        cnpj: fornecedorEditando.cnpj.trim() || null,
         email: fornecedorEditando.email.trim(),
         telefone: fornecedorEditando.telefone.trim(),
         celular: fornecedorEditando.celular.trim(),

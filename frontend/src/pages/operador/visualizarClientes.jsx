@@ -121,6 +121,17 @@ function VisualizarClientes() {
     });
   }, [buscaNome, clientes]);
 
+  // Abre o cadastro em modo visualizacao/edicao usando ID, preservando veiculos.
+  function abrirCliente(cliente) {
+    if (!cliente?.id) return;
+
+    navigate(`/operador/clientes/cadastro?id=${cliente.id}&visualizar=1`, {
+      state: {
+        cliente,
+      },
+    });
+  }
+
   return (
     <Layout>
       <main className="consulta-clientes-container">
@@ -200,13 +211,7 @@ function VisualizarClientes() {
                 <div className="acoes-cliente">
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate(
-                        `/operador/clientes/cadastro?nome=${encodeURIComponent(
-                          cliente.nome || ''
-                        )}&visualizar=1`
-                      )
-                    }
+                    onClick={() => abrirCliente(cliente)}
                   >
                     Visualizar
                   </button>

@@ -91,10 +91,12 @@ export async function criarFuncionario(req, res) {
       });
     }
 
-    if (Cpf) {
+    const cpfNormalizado = Cpf?.trim() || null;
+
+    if (cpfNormalizado) {
       const cpfExistente = await prisma.funcionario.findUnique({
         where: {
-          Cpf: Cpf.trim(),
+          Cpf: cpfNormalizado,
         },
       });
 
@@ -118,7 +120,7 @@ export async function criarFuncionario(req, res) {
       const funcionarioCriado = await tx.funcionario.create({
         data: {
           usuarioId: usuarioCriado.id,
-          Cpf: Cpf?.trim() || null,
+          Cpf: cpfNormalizado,
           Rg: Rg?.trim() || null,
           DataNascimento: converterData(DataNascimento),
           Celular: Celular?.trim() || null,
@@ -269,10 +271,12 @@ export async function atualizarFuncionario(req, res) {
       }
     }
 
-    if (Cpf && Cpf.trim() !== funcionarioExistente.Cpf) {
+    const cpfNormalizado = Cpf?.trim() || null;
+
+    if (cpfNormalizado && cpfNormalizado !== funcionarioExistente.Cpf) {
       const cpfExistente = await prisma.funcionario.findUnique({
         where: {
-          Cpf: Cpf.trim(),
+          Cpf: cpfNormalizado,
         },
       });
 
@@ -301,7 +305,8 @@ export async function atualizarFuncionario(req, res) {
           id: Number(id),
         },
         data: {
-          Cpf: Cpf !== undefined ? Cpf?.trim() || null : funcionarioExistente.Cpf,
+          Cpf:
+            Cpf !== undefined ? cpfNormalizado : funcionarioExistente.Cpf,
           Rg: Rg !== undefined ? Rg?.trim() || null : funcionarioExistente.Rg,
           DataNascimento:
             DataNascimento !== undefined

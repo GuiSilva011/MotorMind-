@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import Layout from '../../components/Layout';
 import '../../styles/operadorStyles/layout.css';
@@ -29,6 +29,7 @@ const opcoesCambio = [
 ];
 
 const veiculoInicial = {
+  id: null,
   placa: '',
   chassi: '',
   modelo: '',
@@ -40,6 +41,7 @@ const veiculoInicial = {
   cor: '',
   ar: '',
   Cambio: '',
+  _remover: false,
 };
 
 function formatDateInput(value) {
@@ -61,9 +63,13 @@ function formatBooleanToSelect(value) {
 
 function CadastroCliente() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+
+  const idBusca = searchParams.get('id');
   const nomeBusca = searchParams.get('nome');
   const isVisualizacao = searchParams.get('visualizar') === '1';
+  const clienteRecebido = location.state?.cliente || null;
 
   const [formData, setFormData] = useState(formClienteCadastro);
   const [clienteEmEdicaoId, setClienteEmEdicaoId] = useState(null);
@@ -74,29 +80,39 @@ function CadastroCliente() {
   const [editandoIndex, setEditandoIndex] = useState(null);
   const [loadingCliente, setLoadingCliente] = useState(false);
 
+  const veiculosVisiveis = useMemo(
+    () => veiculos.filter((veiculo) => !veiculo._remover),
+    [veiculos]
+  );
+
   // Remove qualquer caractere que nao seja numero.
   function onlyNumbers(value) {
-    return value.replace(/\D/g, '');
+    return String(value || '').replace(/\D/g, '');
   }
 
   // Coloca a primeira letra de cada palavra em maiusculo.
   function capitalizeWords(value) {
-    return value.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+    return String(value || '')
+      .toLowerCase()
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   }
 
   // Formata a placa no padrao usado pelo formulario.
   function maskPlaca(value) {
-    return value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 7);
+    return String(value || '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+      .slice(0, 7);
   }
 
   // Limita o ano a quatro digitos numericos.
   function maskAno(value) {
-    return value.replace(/\D/g, '').slice(0, 4);
+    return String(value || '').replace(/\D/g, '').slice(0, 4);
   }
 
   // Remove espacos e limita o chassi ao tamanho esperado.
   function maskChassi(value) {
-    return value.replace(/\s/g, '').toUpperCase().slice(0, 17);
+    return String(value || '').replace(/\s/g, '').toUpperCase().slice(0, 17);
   }
 
   // Aplica a mascara correta em cada campo de veiculo.
@@ -108,11 +124,54 @@ function CadastroCliente() {
       ano_fabricacao: maskAno,
       modelo: capitalizeWords,
       fabricante: capitalizeWords,
-      motor: (v) => v.toUpperCase(),
+      motor: (v) => String(v || '').toUpperCase(),
       cor: capitalizeWords,
     };
 
     return map[name] ? map[name](value) : value;
+  }
+
+  function mapearVeiculoParaTela(veiculo) {
+    return {
+      id: veiculo.id || null,
+      placa: veiculo.placa || '',
+      chassi: veiculo.chassi || '',
+      modelo: veiculo.modelo || '',
+      fabricante: veiculo.fabricante || '',
+      ano_modelo: veiculo.ano_modelo ? String(veiculo.ano_modelo) : '',
+      ano_fabricacao: veiculo.ano_fabricacao
+        ? String(veiculo.ano_fabricacao)
+        : '',
+      motor: veiculo.motor || '',
+      km: veiculo.km || '',
+      cor: veiculo.cor || '',
+      ar: veiculo.ar,
+      Cambio: veiculo.Cambio || veiculo.cambio || '',
+      _remover: false,
+    };
+  }
+
+  function preencherClienteNaTela(cliente) {
+    if (!cliente) return;
+
+    setClienteEmEdicaoId(cliente.id || null);
+
+    setFormData({
+      nome: cliente.nome || '',
+      cpf: cliente.cpf ? maskCPF(String(cliente.cpf)) : '',
+      email: cliente.email || '',
+      dataNascimento: formatDateInput(cliente.dataNascimento),
+      cep: cliente.cep ? maskCEP(String(cliente.cep)) : '',
+      endereco: cliente.endereco || '',
+      bairro: cliente.bairro || '',
+      cidade: cliente.cidade || '',
+      uf: cliente.uf || '',
+      numero: cliente.numero || '',
+      complemento: cliente.complemento || '',
+      celular: cliente.celular ? maskPhone(String(cliente.celular)) : '',
+    });
+
+    setVeiculos((cliente.veiculos || []).map(mapearVeiculoParaTela));
   }
 
   // Atualiza os campos do veiculo temporario enquanto o modal esta aberto.
@@ -145,8 +204,8 @@ function CadastroCliente() {
   }
 
   // Prepara um veiculo existente para edicao no modal.
-  function editarVeiculo(index) {
-    const veiculoSelecionado = veiculos[index];
+  function editarVeiculo(indexOriginal) {
+    const veiculoSelecionado = veiculos[indexOriginal];
 
     setNovoVeiculo({
       ...veiculoSelecionado,
@@ -154,7 +213,7 @@ function CadastroCliente() {
       Cambio: veiculoSelecionado.Cambio || veiculoSelecionado.cambio || '',
     });
 
-    setEditandoIndex(index);
+    setEditandoIndex(indexOriginal);
     setModalOpen(true);
     setMensagem('');
   }
@@ -162,7 +221,7 @@ function CadastroCliente() {
   // Carrega o cliente quando a tela abre em modo edicao ou visualizacao.
   useEffect(() => {
     async function carregarClienteEmEdicao() {
-      if (!nomeBusca) {
+      if (!idBusca && !nomeBusca && !clienteRecebido) {
         setClienteEmEdicaoId(null);
         return;
       }
@@ -171,44 +230,41 @@ function CadastroCliente() {
       setMensagem('');
 
       try {
+        if (clienteRecebido) {
+          preencherClienteNaTela(clienteRecebido);
+          return;
+        }
+
+        if (idBusca) {
+          try {
+            const { data } = await api.get(`/clientes/${idBusca}`);
+            preencherClienteNaTela(data);
+            return;
+          } catch (error) {
+            console.warn(
+              'Não foi possível buscar cliente por ID. Tentando lista de clientes.',
+              error
+            );
+
+            const { data } = await api.get('/clientes');
+            const clienteEncontrado = Array.isArray(data)
+              ? data.find((cliente) => Number(cliente.id) === Number(idBusca))
+              : null;
+
+            if (!clienteEncontrado) {
+              throw error;
+            }
+
+            preencherClienteNaTela(clienteEncontrado);
+            return;
+          }
+        }
+
         const { data } = await api.get('/clientes/buscar-por-nome', {
           params: { nome: nomeBusca },
         });
 
-        setClienteEmEdicaoId(data.id);
-
-        setFormData({
-          nome: data.nome || '',
-          cpf: data.cpf ? maskCPF(String(data.cpf)) : '',
-          email: data.email || '',
-          dataNascimento: formatDateInput(data.dataNascimento),
-          cep: data.cep ? maskCEP(String(data.cep)) : '',
-          endereco: data.endereco || '',
-          bairro: data.bairro || '',
-          cidade: data.cidade || '',
-          uf: data.uf || '',
-          numero: data.numero || '',
-          complemento: data.complemento || '',
-          celular: data.celular ? maskPhone(String(data.celular)) : '',
-        });
-
-        setVeiculos(
-          (data.veiculos || []).map((veiculo) => ({
-            placa: veiculo.placa || '',
-            chassi: veiculo.chassi || '',
-            modelo: veiculo.modelo || '',
-            fabricante: veiculo.fabricante || '',
-            ano_modelo: veiculo.ano_modelo ? String(veiculo.ano_modelo) : '',
-            ano_fabricacao: veiculo.ano_fabricacao
-              ? String(veiculo.ano_fabricacao)
-              : '',
-            motor: veiculo.motor || '',
-            km: veiculo.km || '',
-            cor: veiculo.cor || '',
-            ar: veiculo.ar,
-            Cambio: veiculo.Cambio || veiculo.cambio || '',
-          }))
-        );
+        preencherClienteNaTela(data);
       } catch (error) {
         console.error(error);
         setClienteEmEdicaoId(null);
@@ -219,7 +275,7 @@ function CadastroCliente() {
     }
 
     carregarClienteEmEdicao();
-  }, [nomeBusca]);
+  }, [idBusca, nomeBusca, clienteRecebido]);
 
   // Adiciona um veiculo novo ou substitui o veiculo em edicao.
   function adicionarVeiculo() {
@@ -232,6 +288,7 @@ function CadastroCliente() {
 
     const veiculoFormatado = {
       ...novoVeiculo,
+      id: novoVeiculo.id || null,
       chassi: novoVeiculo.chassi || null,
       modelo: novoVeiculo.modelo || null,
       fabricante: novoVeiculo.fabricante || null,
@@ -241,10 +298,8 @@ function CadastroCliente() {
       km: novoVeiculo.km || null,
       cor: novoVeiculo.cor || null,
       Cambio: novoVeiculo.Cambio || null,
-      ar:
-        novoVeiculo.ar === ''
-          ? null
-          : novoVeiculo.ar === 'true',
+      ar: novoVeiculo.ar === '' ? null : novoVeiculo.ar === 'true',
+      _remover: false,
     };
 
     if (editandoIndex !== null) {
@@ -264,10 +319,33 @@ function CadastroCliente() {
   }
 
   // Remove um veiculo da lista local antes de salvar o cliente.
-  function removerVeiculo(index) {
+  function removerVeiculo(indexOriginal) {
     if (isVisualizacao) return;
 
-    setVeiculos((prevState) => prevState.filter((_, i) => i !== index));
+    const confirmar = window.confirm('Deseja remover este veículo?');
+
+    if (!confirmar) return;
+
+    setVeiculos((prevState) => {
+      const veiculo = prevState[indexOriginal];
+
+      // Veículo novo, ainda não salvo no banco: remove direto da tela.
+      if (!veiculo?.id) {
+        return prevState.filter((_, index) => index !== indexOriginal);
+      }
+
+      // Veículo já salvo no banco: marca para remoção no backend.
+      return prevState.map((item, index) =>
+        index === indexOriginal
+          ? {
+              ...item,
+              _remover: true,
+            }
+          : item
+      );
+    });
+
+    setMensagem('Veículo marcado para remoção. Clique em "Salvar alterações" para confirmar.');
   }
 
   // Aplica mascara de CPF para exibicao e edicao.
@@ -303,7 +381,7 @@ function CadastroCliente() {
 
   // Limita a UF a duas letras maiusculas.
   function maskUF(value) {
-    return value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
+    return String(value || '').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
   }
 
   // Limita o numero do endereco a digitos.
@@ -350,7 +428,7 @@ function CadastroCliente() {
       return;
     }
 
-    if (nomeBusca) {
+    if (idBusca || nomeBusca) {
       navigate('/operador/clientes/cadastro', { replace: true });
     }
   }
@@ -382,7 +460,11 @@ function CadastroCliente() {
       });
     } catch (error) {
       console.error(error);
-      setMensagem('Erro ao excluir cliente.');
+      setMensagem(
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          'Erro ao excluir cliente.'
+      );
     }
   }
 
@@ -401,7 +483,21 @@ function CadastroCliente() {
         celular: formData.celular.replace(/\D/g, '') || null,
         cep: formData.cep.replace(/\D/g, '') || null,
         dataNascimento: formData.dataNascimento || null,
-        veiculos,
+        veiculos: veiculos.map((veiculo) => ({
+          id: veiculo.id || null,
+          placa: veiculo.placa,
+          chassi: veiculo.chassi,
+          modelo: veiculo.modelo,
+          fabricante: veiculo.fabricante,
+          ano_modelo: veiculo.ano_modelo,
+          ano_fabricacao: veiculo.ano_fabricacao,
+          motor: veiculo.motor,
+          km: veiculo.km,
+          cor: veiculo.cor,
+          ar: veiculo.ar,
+          Cambio: veiculo.Cambio || veiculo.cambio || null,
+          _remover: veiculo._remover || false,
+        })),
       };
 
       if (clienteEmEdicaoId) {
@@ -425,9 +521,11 @@ function CadastroCliente() {
     } catch (error) {
       console.error(error);
       setMensagem(
-        clienteEmEdicaoId
-          ? 'Erro ao atualizar cliente.'
-          : 'Erro ao cadastrar cliente.'
+        error.response?.data?.erro ||
+          error.response?.data?.detalhe ||
+          (clienteEmEdicaoId
+            ? 'Erro ao atualizar cliente.'
+            : 'Erro ao cadastrar cliente.')
       );
     }
   }
@@ -439,7 +537,7 @@ function CadastroCliente() {
           <h1>
             {isVisualizacao
               ? 'Visualizar Cliente'
-              : nomeBusca
+              : clienteEmEdicaoId
               ? 'Editar Cliente'
               : 'Cadastro de Clientes'}
           </h1>
@@ -447,7 +545,7 @@ function CadastroCliente() {
           <p>
             {isVisualizacao
               ? 'Confira os dados do cliente e dos veículos cadastrados.'
-              : nomeBusca
+              : clienteEmEdicaoId
               ? 'Atualize os dados do cliente e dos veículos cadastrados.'
               : 'Preencha os dados do cliente'}
           </p>
@@ -695,7 +793,7 @@ function CadastroCliente() {
                 <span>Ações</span>
               </div>
 
-              {veiculos.length === 0 ? (
+              {veiculosVisiveis.length === 0 ? (
                 <div className="veiculos-empty">
                   <div className="empty-icon">
                     <img
@@ -709,48 +807,52 @@ function CadastroCliente() {
                   <small>Clique em "Adicionar veículo" para incluir.</small>
                 </div>
               ) : (
-                veiculos.map((veiculo, index) => (
-                  <div className="veiculo-row" key={index}>
-                    <span>{veiculo.placa || '-'}</span>
-                    <span>{veiculo.chassi || '-'}</span>
-                    <span>
-                      {veiculo.fabricante || '-'} / {veiculo.modelo || '-'}
-                    </span>
-                    <span>{veiculo.motor || '-'}</span>
-                    <span>{veiculo.Cambio || veiculo.cambio || '-'}</span>
-                    <span>{veiculo.km || '-'}</span>
-                    <span>{veiculo.ano_fabricacao || '-'}</span>
-                    <span>{veiculo.ano_modelo || '-'}</span>
-                    <span>{veiculo.cor || '-'}</span>
-                    <span>
-                      {veiculo.ar === null
-                        ? '-'
-                        : veiculo.ar
-                        ? 'Sim'
-                        : 'Não'}
-                    </span>
+                veiculos.map((veiculo, index) => {
+                  if (veiculo._remover) return null;
 
-                    <div className="veiculo-acoes">
-                      <button
-                        type="button"
-                        className="btn-editar-veiculo"
-                        onClick={() => editarVeiculo(index)}
-                      >
-                        {isVisualizacao ? 'Ver' : 'Editar'}
-                      </button>
+                  return (
+                    <div className="veiculo-row" key={veiculo.id || index}>
+                      <span>{veiculo.placa || '-'}</span>
+                      <span>{veiculo.chassi || '-'}</span>
+                      <span>
+                        {veiculo.fabricante || '-'} / {veiculo.modelo || '-'}
+                      </span>
+                      <span>{veiculo.motor || '-'}</span>
+                      <span>{veiculo.Cambio || veiculo.cambio || '-'}</span>
+                      <span>{veiculo.km || '-'}</span>
+                      <span>{veiculo.ano_fabricacao || '-'}</span>
+                      <span>{veiculo.ano_modelo || '-'}</span>
+                      <span>{veiculo.cor || '-'}</span>
+                      <span>
+                        {veiculo.ar === null
+                          ? '-'
+                          : veiculo.ar
+                          ? 'Sim'
+                          : 'Não'}
+                      </span>
 
-                      {!isVisualizacao && (
+                      <div className="veiculo-acoes">
                         <button
                           type="button"
-                          className="btn-remover-veiculo"
-                          onClick={() => removerVeiculo(index)}
+                          className="btn-editar-veiculo"
+                          onClick={() => editarVeiculo(index)}
                         >
-                          Remover
+                          {isVisualizacao ? 'Ver' : 'Editar'}
                         </button>
-                      )}
+
+                        {!isVisualizacao && (
+                          <button
+                            type="button"
+                            className="btn-remover-veiculo"
+                            onClick={() => removerVeiculo(index)}
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </section>
@@ -771,9 +873,7 @@ function CadastroCliente() {
                   className="btn-edit-cliente"
                   onClick={() =>
                     navigate(
-                      `/operador/clientes/cadastro?nome=${encodeURIComponent(
-                        nomeBusca || ''
-                      )}`
+                      `/operador/clientes/cadastro?id=${clienteEmEdicaoId || idBusca}`
                     )
                   }
                 >
@@ -790,7 +890,7 @@ function CadastroCliente() {
               </>
             ) : (
               <button type="submit" className="btn-primary">
-                {nomeBusca ? 'Salvar alterações' : 'Cadastrar cliente'}
+                {clienteEmEdicaoId ? 'Salvar alterações' : 'Cadastrar cliente'}
               </button>
             )}
           </div>

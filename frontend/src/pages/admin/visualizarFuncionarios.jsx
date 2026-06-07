@@ -124,11 +124,6 @@ function VisualizarFuncionarios() {
       return false;
     }
 
-    if (!funcionarioEditando.Cpf.trim()) {
-      toast.warning('Informe o CPF do funcionário.');
-      return false;
-    }
-
     if (!funcionarioEditando.Email.trim()) {
       toast.warning('Informe o email do funcionário.');
       return false;
@@ -154,7 +149,7 @@ function VisualizarFuncionarios() {
         Email: funcionarioEditando.Email.trim(),
         Role: funcionarioEditando.Role,
 
-        Cpf: funcionarioEditando.Cpf.trim(),
+        Cpf: funcionarioEditando.Cpf.trim() || null,
         Rg: funcionarioEditando.Rg.trim(),
         DataNascimento: funcionarioEditando.DataNascimento || null,
         Celular: funcionarioEditando.Celular.trim(),

@@ -89,9 +89,25 @@ export async function criarFornecedor(req, res) {
       observacoes
     } = req.body
 
-    if (!codigo || !nome || !cnpj) {
+    if (!codigo || !nome) {
       return res.status(400).json({
-        erro: 'Código, nome e CNPJ são obrigatórios'
+        erro: 'Código e nome são obrigatórios'
+      })
+    }
+
+    const cnpjNormalizado = cnpj?.trim() || null
+    const telefoneNormalizado = telefone?.trim() || null
+    const celularNormalizado = celular?.trim() || null
+
+    if (!cnpjNormalizado) {
+      return res.status(400).json({
+        erro: 'CNPJ é obrigatório para cadastro de fornecedor'
+      })
+    }
+
+    if (!telefoneNormalizado && !celularNormalizado) {
+      return res.status(400).json({
+        erro: 'Informe pelo menos um contato: telefone (fixo) ou celular (WhatsApp)'
       })
     }
 
@@ -99,7 +115,7 @@ export async function criarFornecedor(req, res) {
       where: {
         OR: [
           { codigo },
-          { cnpj }
+          ...(cnpjNormalizado ? [{ cnpj: cnpjNormalizado }] : [])
         ]
       }
     })
@@ -114,10 +130,10 @@ export async function criarFornecedor(req, res) {
       data: {
         codigo,
         nome,
-        cnpj,
+        cnpj: cnpjNormalizado,
         email,
-        telefone,
-        celular,
+        telefone: telefoneNormalizado,
+        celular: celularNormalizado,
         inscricao,
         cep,
         endereco,
@@ -174,6 +190,8 @@ export async function editarFornecedor(req, res) {
       observacoes
     } = req.body
 
+    const cnpjNormalizado = cnpj?.trim() || null
+
     const fornecedorDuplicado = await prisma.fornecedor.findFirst({
       where: {
         id: {
@@ -181,7 +199,7 @@ export async function editarFornecedor(req, res) {
         },
         OR: [
           codigo ? { codigo } : undefined,
-          cnpj ? { cnpj } : undefined
+          cnpjNormalizado ? { cnpj: cnpjNormalizado } : undefined
         ].filter(Boolean)
       }
     })
@@ -199,7 +217,7 @@ export async function editarFornecedor(req, res) {
       data: {
         codigo,
         nome,
-        cnpj,
+        cnpj: cnpjNormalizado,
         email,
         telefone,
         celular,

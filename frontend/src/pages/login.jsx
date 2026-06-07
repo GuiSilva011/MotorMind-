@@ -32,7 +32,6 @@ function Login() {
 
   const [carregando, setCarregando] = useState(false);
 
-  // Atualiza qualquer campo do formulário de login.
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -40,7 +39,6 @@ function Login() {
     }));
   }
 
-  // Preenche email e senha com um usuário de teste.
   function preencherUsuario(email, senha) {
     setForm({
       Email: email,
@@ -48,7 +46,6 @@ function Login() {
     });
   }
 
-  // Escolhe a rota inicial de acordo com o perfil retornado pelo backend.
   function obterRotaInicialPorRole(role) {
     if (role === 'TECNICO') return '/tecnico/painel';
     if (role === 'ADMIN') return '/admin/relatorios';
@@ -57,7 +54,6 @@ function Login() {
     return '/login';
   }
 
-  // Envia as credenciais para a API e salva o usuário autenticado localmente.
   async function entrar(event) {
     event.preventDefault();
 
@@ -107,38 +103,16 @@ function Login() {
   return (
     <main className="login-page">
       <section className="login-card">
-        <aside className="login-brand-panel">
-          <div className="login-brand-content">
-            <div className="login-logo">
-              Motor<span>Mind</span>
-            </div>
-
-            <div>
-              <h1>Controle inteligente para oficinas.</h1>
-              <p>
-                Organize clientes, veículos, checklists, agendamentos e ordens
-                de serviço em um só sistema.
-              </p>
-            </div>
-          </div>
-
-          <div className="login-brand-footer">
-            <span>Gestão automotiva</span>
-            <strong>MotorMind</strong>
-          </div>
-        </aside>
-
         <section className="login-form-panel">
           <form className="login-form" onSubmit={entrar}>
             <div className="login-title">
-              <span>Acesso ao sistema</span>
-              <h2>Entrar</h2>
               <p>Informe suas credenciais para acessar o painel.</p>
             </div>
 
             <div className="login-field">
-              <label>Email</label>
+              <label htmlFor="email">E-mail</label>
               <input
+                id="email"
                 type="email"
                 value={form.Email}
                 onChange={(event) => atualizarCampo('Email', event.target.value)}
@@ -148,8 +122,9 @@ function Login() {
             </div>
 
             <div className="login-field">
-              <label>Senha</label>
+              <label htmlFor="senha">Senha</label>
               <input
+                id="senha"
                 type="password"
                 value={form.Senha}
                 onChange={(event) => atualizarCampo('Senha', event.target.value)}

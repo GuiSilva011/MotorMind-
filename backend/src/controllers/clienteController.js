@@ -128,7 +128,6 @@ export async function listarClientes(req, res) {
   }
 }
 
-// Atualiza dados do cliente e substitui a lista de veículos quando ela é enviada.
 export async function editarClientes(req, res) {
   try {
     const { id } = req.params;
@@ -151,45 +150,68 @@ export async function editarClientes(req, res) {
 
     const clienteId = Number(id);
 
+    if (!clienteId) {
+      return res.status(400).json({
+        erro: 'ID do cliente inválido.',
+      });
+    }
+
     const clienteExistente = await prisma.cliente.findUnique({
       where: {
         id: clienteId,
       },
-    });
-
-    if (!clienteExistente) {
-      return res.status(404).json({ erro: 'Cliente não encontrado' });
-    }
-
-    const cliente = await prisma.cliente.update({
-      where: { id: clienteId },
-      data: {
-        nome,
-        cpf,
-        email,
-        dataNascimento: dataNascimento ? new Date(dataNascimento) : null,
-        cep,
-        endereco,
-        bairro,
-        cidade,
-        uf,
-        numero,
-        complemento,
-        celular,
+      include: {
+        veiculos: true,
       },
     });
 
-    if (Array.isArray(veiculos)) {
-      await prisma.veiculo.deleteMany({
+    if (!clienteExistente) {
+      return res.status(404).json({
+        erro: 'Cliente não encontrado.',
+      });
+    }
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      await tx.cliente.update({
         where: {
-          clienteId,
+          id: clienteId,
+        },
+        data: {
+          nome,
+          cpf,
+          email: email || null,
+          dataNascimento: dataNascimento ? new Date(dataNascimento) : null,
+          cep: cep || null,
+          endereco: endereco || null,
+          bairro: bairro || null,
+          cidade: cidade || null,
+          uf: uf || null,
+          numero: numero || null,
+          complemento: complemento || null,
+          celular: celular || null,
         },
       });
 
-      if (veiculos.length > 0) {
-        await prisma.veiculo.createMany({
-          data: veiculos.map((veiculo) => ({
-            clienteId,
+      if (Array.isArray(veiculos)) {
+        for (const veiculo of veiculos) {
+          const veiculoId = veiculo.id ? Number(veiculo.id) : null;
+
+          // Caso o veículo tenha sido marcado para remoção no frontend
+          if (veiculo._remover === true) {
+            if (!veiculoId) {
+              continue;
+            }
+
+            await tx.veiculo.delete({
+              where: {
+                id: veiculoId,
+              },
+            });
+
+            continue;
+          }
+
+          const dadosVeiculo = {
             placa: veiculo.placa,
             modelo: veiculo.modelo || null,
             chassi: veiculo.chassi || null,
@@ -205,12 +227,97 @@ export async function editarClientes(req, res) {
             cor: veiculo.cor || null,
             ar: veiculo.ar !== undefined ? veiculo.ar : null,
             cambio: veiculo.Cambio || veiculo.cambio || null,
-          })),
-        });
-      }
-    }
+          };
 
-    return res.json(cliente);
+          // Caso 1: veículo existente, atualiza pelo ID
+          if (veiculoId) {
+            const veiculoExistente = await tx.veiculo.findUnique({
+              where: {
+                id: veiculoId,
+              },
+            });
+
+            if (!veiculoExistente) {
+              continue;
+            }
+
+            if (Number(veiculoExistente.clienteId) !== Number(clienteId)) {
+              const error = new Error(
+                'Este veículo não pertence ao cliente informado.'
+              );
+
+              error.code = 'VEICULO_NAO_PERTENCE_CLIENTE';
+              throw error;
+            }
+
+            await tx.veiculo.update({
+              where: {
+                id: veiculoId,
+              },
+              data: dadosVeiculo,
+            });
+
+            continue;
+          }
+
+          // Caso 2: veículo sem ID, mas já existe pela placa
+          const veiculoExistentePorPlaca = veiculo.placa
+            ? await tx.veiculo.findUnique({
+                where: {
+                  placa: veiculo.placa,
+                },
+              })
+            : null;
+
+          if (
+            veiculoExistentePorPlaca &&
+            Number(veiculoExistentePorPlaca.clienteId) === Number(clienteId)
+          ) {
+            await tx.veiculo.update({
+              where: {
+                id: veiculoExistentePorPlaca.id,
+              },
+              data: dadosVeiculo,
+            });
+
+            continue;
+          }
+
+          if (
+            veiculoExistentePorPlaca &&
+            Number(veiculoExistentePorPlaca.clienteId) !== Number(clienteId)
+          ) {
+            const error = new Error(
+              'Já existe um veículo cadastrado com esta placa para outro cliente.'
+            );
+
+            error.code = 'PLACA_OUTRO_CLIENTE';
+            throw error;
+          }
+
+          // Caso 3: veículo realmente novo
+          await tx.veiculo.create({
+            data: {
+              clienteId,
+              ...dadosVeiculo,
+            },
+          });
+        }
+      }
+
+      const clienteComVeiculos = await tx.cliente.findUnique({
+        where: {
+          id: clienteId,
+        },
+        include: {
+          veiculos: true,
+        },
+      });
+
+      return clienteComVeiculos;
+    });
+
+    return res.json(resultado);
   } catch (error) {
     console.log(error);
 
@@ -220,7 +327,34 @@ export async function editarClientes(req, res) {
       });
     }
 
-    return res.status(500).json({ erro: 'Erro ao atualizar o cliente' });
+    if (error.code === 'PLACA_OUTRO_CLIENTE') {
+      return res.status(409).json({
+        erro: error.message,
+      });
+    }
+
+    if (error.code === 'VEICULO_NAO_PERTENCE_CLIENTE') {
+      return res.status(403).json({
+        erro: error.message,
+      });
+    }
+
+    if (
+      error.code === 'P2003' ||
+      String(error.message || '').includes('OrdemServico_veiculoId_fkey') ||
+      String(error.message || '').includes('Checklist_veiculoId_fkey') ||
+      String(error.message || '').includes('Agendamento_veiculoId_fkey')
+    ) {
+      return res.status(409).json({
+        erro:
+          'Este veículo não pode ser removido porque já possui ordem de serviço, checklist ou agendamento vinculado.',
+      });
+    }
+
+    return res.status(500).json({
+      erro: 'Erro ao atualizar o cliente.',
+      detalhe: error.message,
+    });
   }
 }
 

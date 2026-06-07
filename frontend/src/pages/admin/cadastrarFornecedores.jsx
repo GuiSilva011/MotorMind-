@@ -109,6 +109,13 @@ function CadastrarFornecedor() {
       return false;
     }
 
+    if (!fornecedor.telefone.trim() && !fornecedor.celular.trim()) {
+      toast.warning(
+        'Informe pelo menos um contato: telefone (fixo) ou celular (WhatsApp).'
+      );
+      return false;
+    }
+
     if (!fornecedor.fornecePecas && !fornecedor.forneceServicos) {
       toast.warning('Selecione se o fornecedor fornece peças ou serviços.');
       return false;
@@ -131,8 +138,8 @@ function CadastrarFornecedor() {
         nome: fornecedor.nome.trim(),
         cnpj: fornecedor.cnpj.trim(),
         email: fornecedor.email.trim(),
-        telefone: fornecedor.telefone.trim(),
-        celular: fornecedor.celular.trim(),
+        telefone: fornecedor.telefone.trim() || null,
+        celular: fornecedor.celular.trim() || null,
         inscricao: fornecedor.inscricao.trim(),
 
         cep: fornecedor.cep.trim(),
@@ -207,7 +214,7 @@ function CadastrarFornecedor() {
                   onChange={(event) =>
                     atualizarCampo('cnpj', formatarCnpj(event.target.value))
                   }
-                
+                  placeholder="00.000.000/0000-00"
                 />
               </div>
 
@@ -235,7 +242,7 @@ function CadastrarFornecedor() {
               </div>
 
               <div className="cadastro-fornecedor-field">
-                <label>Telefone</label>
+                <label>Telefone (fixo)</label>
                 <input
                   value={fornecedor.telefone}
                   onChange={(event) =>
@@ -244,12 +251,12 @@ function CadastrarFornecedor() {
                       formatarTelefone(event.target.value)
                     )
                   }
-             
+                  placeholder="(00) 0000-0000"
                 />
               </div>
 
               <div className="cadastro-fornecedor-field">
-                <label>Celular</label>
+                <label>Celular (WhatsApp)</label>
                 <input
                   value={fornecedor.celular}
                   onChange={(event) =>
@@ -258,7 +265,7 @@ function CadastrarFornecedor() {
                       formatarCelular(event.target.value)
                     )
                   }
-                
+                  placeholder="(00) 00000-0000"
                 />
               </div>
             </div>

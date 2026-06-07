@@ -15,6 +15,7 @@ function ChecklistsVeiculo() {
   const [checklistSelecionada, setChecklistSelecionada] = useState(null);
   const [carregando, setCarregando] = useState(false);
 
+  // Flag para garantir que o carregamento inicial ocorra apenas uma vez.
   const carregouInicialmente = useRef(false);
 
   // Busca a lista de checklists apenas na primeira vez que ha veiculo selecionado.
@@ -272,6 +273,532 @@ function ChecklistsVeiculo() {
     );
   }
 
+
+  // Protege valores usados dentro do HTML de impressão.
+  function escaparHtml(valor) {
+    return String(valor ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // Gera o documento de impressão da checklist selecionada.
+  function imprimirChecklist(checklist) {
+    if (!checklist) {
+      toast.warning('Nenhuma checklist selecionada para impressão.');
+      return;
+    }
+
+    const veiculoChecklist = checklist.veiculo || veiculo || {};
+    const cliente = veiculoChecklist.cliente || veiculo?.cliente || {};
+
+    const itensEntradaNormalizados = normalizarItensChecklist(
+      checklist.itensEntrada
+    );
+
+    const itensDiagnosticoNormalizados = normalizarItensChecklist(
+      checklist.itensDiagnostico
+    );
+
+    const entradaOk = itensEntradaNormalizados.filter(
+      (item) => item.valor === true
+    );
+
+    const entradaNo = itensEntradaNormalizados.filter(
+      (item) => item.valor === false
+    );
+
+    const diagnosticoOk = itensDiagnosticoNormalizados.filter(
+      (item) => item.valor === true
+    );
+
+    const diagnosticoNo = itensDiagnosticoNormalizados.filter(
+      (item) => item.valor === false
+    );
+
+    const dataChecklist = checklist.createdAt
+      ? new Date(checklist.createdAt).toLocaleDateString('pt-BR')
+      : new Date().toLocaleDateString('pt-BR');
+
+    const horaChecklist = checklist.createdAt
+      ? new Date(checklist.createdAt).toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : new Date().toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+
+    function montarTabelaItens(titulo, itens, simbolo, classe) {
+      return `
+        <section class="box box-itens">
+          <h2>${escaparHtml(titulo)}</h2>
+
+          ${
+            itens.length > 0
+              ? `
+                <div class="itens-print-grid">
+                  ${itens
+                    .map(
+                      (item) => `
+                        <div class="item-print">
+                          <span class="status ${classe}">${simbolo}</span>
+                          <span>${escaparHtml(item.nome || '-')}</span>
+                        </div>
+                      `
+                    )
+                    .join('')}
+                </div>
+              `
+              : '<p class="vazio">Nenhum item registrado.</p>'
+          }
+        </section>
+      `;
+    }
+
+    function montarFoto(caminho, titulo) {
+      const url = obterUrlFoto(caminho);
+
+      return `
+        <div class="foto-card">
+          <strong>${escaparHtml(titulo)}</strong>
+
+          ${
+            url
+              ? `<img src="${escaparHtml(url)}" alt="${escaparHtml(titulo)}" />`
+              : '<div class="foto-vazia">Sem foto</div>'
+          }
+        </div>
+      `;
+    }
+
+    const nomeVeiculo =
+      [
+        veiculoChecklist.fabricante,
+        veiculoChecklist.marca,
+        veiculoChecklist.modelo,
+      ]
+        .filter(Boolean)
+        .join(' ') || 'Veículo sem descrição';
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Checklist - ${escaparHtml(veiculoChecklist.placa || '')}</title>
+
+          <style>
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              margin: 0;
+              padding: 14px;
+              font-family: Arial, Helvetica, sans-serif;
+              color: #07142f;
+              background: #ffffff;
+              font-size: 10px;
+            }
+
+            .documento {
+              max-width: 100%;
+              margin: 0 auto;
+            }
+
+            .cabecalho {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              border-bottom: 3px solid #0066ff;
+              padding-bottom: 10px;
+              margin-bottom: 12px;
+            }
+
+            .marca h1 {
+              margin: 0;
+              font-size: 22px;
+              color: #0066ff;
+              letter-spacing: -0.5px;
+            }
+
+            .marca h1 span {
+              color: #ff7a00;
+            }
+
+            .marca p {
+              margin: 4px 0 0;
+              color: #64748b;
+            }
+
+            .info {
+              text-align: right;
+            }
+
+            .info strong {
+              display: block;
+              color: #0066ff;
+              font-size: 14px;
+              margin-bottom: 4px;
+            }
+
+            .info span {
+              display: block;
+              margin-top: 3px;
+            }
+
+            .box {
+              border: 1px solid #dbe3ef;
+              border-radius: 6px;
+              padding: 10px;
+              margin-bottom: 10px;
+              break-inside: auto;
+              page-break-inside: auto;
+            }
+
+            .box-dados,
+            .box-observacao,
+            .box-fotos,
+            .assinaturas {
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+
+            .box h2 {
+              margin: 0 0 10px;
+              padding-bottom: 6px;
+              border-bottom: 1px solid #e5eaf2;
+              color: #0066ff;
+              font-size: 13px;
+            }
+
+            .grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 8px 12px;
+            }
+
+            .campo label {
+              display: block;
+              font-size: 8px;
+              text-transform: uppercase;
+              color: #64748b;
+              margin-bottom: 3px;
+            }
+
+            .campo span {
+              display: block;
+              font-weight: 700;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 8px;
+            }
+
+            th,
+            td {
+              border: 1px solid #dbe3ef;
+              padding: 8px;
+              text-align: left;
+              vertical-align: top;
+            }
+
+            th {
+              background: #f1f5f9;
+              color: #07142f;
+              font-size: 11px;
+            }
+
+            td {
+              font-size: 11px;
+            }
+
+            .ok {
+              width: 70px;
+              color: #15803d;
+              font-weight: bold;
+              text-align: center;
+            }
+
+            .erro {
+              width: 70px;
+              color: #dc2626;
+              font-weight: bold;
+              text-align: center;
+            }
+
+            .vazio {
+              color: #64748b;
+              font-style: italic;
+            }
+
+            .itens-print-grid {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+              gap: 5px 8px;
+            }
+
+            .item-print {
+              display: grid;
+              grid-template-columns: 24px 1fr;
+              align-items: center;
+              gap: 6px;
+              min-height: 23px;
+              padding: 4px 6px;
+              border: 1px solid #dbe3ef;
+              border-radius: 5px;
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+
+            .status {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              font-weight: 800;
+            }
+
+            .observacao {
+              min-height: 50px;
+              white-space: pre-wrap;
+              line-height: 1.5;
+            }
+
+            .foto-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 8px;
+            }
+
+            .foto-card {
+              border: 1px solid #dbe3ef;
+              border-radius: 8px;
+              padding: 8px;
+              min-height: 130px;
+            }
+
+            .foto-card strong {
+              display: block;
+              margin-bottom: 8px;
+              font-size: 11px;
+              color: #07142f;
+            }
+
+            .foto-card img {
+              width: 100%;
+              height: 80px;
+              object-fit: cover;
+              border-radius: 6px;
+              display: block;
+            }
+
+            .foto-vazia {
+              height: 80px;
+              border-radius: 6px;
+              background: #f1f5f9;
+              color: #64748b;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 11px;
+            }
+
+            .assinaturas {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 48px;
+              margin-top: 36px;
+              page-break-inside: avoid;
+            }
+
+            .assinatura {
+              border-top: 1px solid #07142f;
+              text-align: center;
+              padding-top: 8px;
+              font-size: 11px;
+            }
+
+            .rodape {
+              margin-top: 16px;
+              padding-top: 12px;
+              border-top: 1px solid #dbe3ef;
+              text-align: center;
+              color: #64748b;
+              font-size: 10px;
+            }
+
+            @page {
+              size: A4;
+              margin: 8mm;
+            }
+
+            @media print {
+              body {
+                padding: 0;
+              }
+
+              .documento {
+                max-width: 100%;
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          <main class="documento">
+            <header class="cabecalho">
+              <div class="marca">
+                <h1>Motor<span>Mind</span></h1>
+                <p>Sistema de Gestão para Oficinas Mecânicas</p>
+              </div>
+
+              <div class="info">
+                <strong>Checklist do veículo</strong>
+                <span>Checklist #${escaparHtml(checklist.id || '-')}</span>
+                <span>Data: ${escaparHtml(dataChecklist)}</span>
+                <span>Hora: ${escaparHtml(horaChecklist)}</span>
+              </div>
+            </header>
+
+            <section class="box box-dados">
+              <h2>Dados do veículo e cliente</h2>
+
+              <div class="grid">
+                <div class="campo">
+                  <label>Veículo</label>
+                  <span>${escaparHtml(nomeVeiculo)}</span>
+                </div>
+
+                <div class="campo">
+                  <label>Placa</label>
+                  <span>${escaparHtml(veiculoChecklist.placa || '-')}</span>
+                </div>
+
+                <div class="campo">
+                  <label>Cliente</label>
+                  <span>${escaparHtml(cliente.nome || cliente.Nome || '-')}</span>
+                </div>
+
+                <div class="campo">
+                  <label>Checklist</label>
+                  <span>#${escaparHtml(checklist.id || '-')}</span>
+                </div>
+              </div>
+            </section>
+
+            ${montarTabelaItens(
+              'Entrada - Itens marcados com ✓',
+              entradaOk,
+              '✓',
+              'ok'
+            )}
+
+            ${montarTabelaItens(
+              'Entrada - Itens marcados com X',
+              entradaNo,
+              'X',
+              'erro'
+            )}
+
+            ${montarTabelaItens(
+              'Diagnóstico - Itens marcados com ✓',
+              diagnosticoOk,
+              '✓',
+              'ok'
+            )}
+
+            ${montarTabelaItens(
+              'Diagnóstico - Itens marcados com X',
+              diagnosticoNo,
+              'X',
+              'erro'
+            )}
+
+            <section class="box box-observacao">
+              <h2>Observações da entrada</h2>
+              <div class="observacao">
+                ${escaparHtml(
+                  checklist.observacoesEntrada ||
+                    'Nenhuma observação registrada.'
+                )}
+              </div>
+            </section>
+
+            <section class="box box-observacao">
+              <h2>Observações do diagnóstico</h2>
+              <div class="observacao">
+                ${escaparHtml(
+                  checklist.observacoesDiagnostico ||
+                    'Nenhuma observação registrada.'
+                )}
+              </div>
+            </section>
+
+            <section class="box box-fotos">
+              <h2>Fotos registradas</h2>
+
+              <div class="foto-grid">
+                ${montarFoto(checklist.fotoFrente, 'Foto frontal')}
+                ${montarFoto(checklist.fotoTraseira, 'Foto traseira')}
+                ${montarFoto(checklist.fotoEsquerda, 'Lateral esquerda')}
+                ${montarFoto(checklist.fotoDireita, 'Lateral direita')}
+              </div>
+            </section>
+
+            <section class="assinaturas">
+              <div class="assinatura">
+                Assinatura do cliente
+              </div>
+
+              <div class="assinatura">
+                Responsável técnico
+              </div>
+            </section>
+
+            <footer class="rodape">
+              Documento gerado pelo MotorMind.
+            </footer>
+          </main>
+
+          <script>
+            window.onload = function () {
+              // Aguarda a montagem completa do documento antes de disparar a impressão.
+              setTimeout(function () {
+                window.print();
+
+                // Fecha automaticamente a aba auxiliar após finalizar a impressão.
+                window.onafterprint = function () {
+                  window.close();
+                };
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    // Abre uma nova aba para imprimir sem alterar a tela principal do usuário.
+    const janela = window.open('', '_blank');
+
+    if (!janela) {
+      toast.error('Não foi possível abrir a janela de impressão.');
+      return;
+    }
+
+    janela.document.open();
+    janela.document.write(html);
+    janela.document.close();
+  }
+
   // Renderiza o modal de detalhes da checklist selecionada.
   function renderModalDetalhes() {
     if (!checklistSelecionada) return null;
@@ -285,12 +812,23 @@ function ChecklistsVeiculo() {
               <span>{formatarData(checklistSelecionada.createdAt)}</span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setChecklistSelecionada(null)}
-            >
-              ×
-            </button>
+            <div className="checklists-modal-header-actions">
+              <button
+                type="button"
+                className="checklists-print-btn desktop-only-print"
+                onClick={() => imprimirChecklist(checklistSelecionada)}
+              >
+                Imprimir checklist
+              </button>
+
+              <button
+                type="button"
+                className="checklists-modal-close"
+                onClick={() => setChecklistSelecionada(null)}
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           <div className="checklists-modal-vehicle">

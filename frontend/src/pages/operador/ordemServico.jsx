@@ -15,6 +15,19 @@ const ordemInicial = {
   cliente: {
     id: '',
     nome: '',
+    cpf: '',
+    dataNascimento: '',
+    celular: '',
+    telefone: '',
+    whatsapp: '',
+    email: '',
+    cep: '',
+    endereco: '',
+    numero: '',
+    bairro: '',
+    cidade: '',
+    uf: '',
+    complemento: '',
   },
   veiculo: {
     id: '',
@@ -95,13 +108,15 @@ function OrdemServico() {
   const podeEditar = modoTela === 'nova' || modoTela === 'edicao';
   const estaVisualizando = modoTela === 'visualizacao';
 
+  // Evita inicialização duplicada da tela em re-renderizações.
   useEffect(() => {
-  if (iniciouTelaRef.current) return;
+    if (iniciouTelaRef.current) return;
 
-  iniciouTelaRef.current = true;
-  iniciarTelaOrdemServico();
-}, []);
+    iniciouTelaRef.current = true;
+    iniciarTelaOrdemServico();
+  }, []);
 
+  // Salva automaticamente o rascunho da OS enquanto houver progresso de preenchimento.
   useEffect(() => {
     if (!rascunhoCarregado) return;
     if (modoTela === 'visualizacao') return;
@@ -127,104 +142,106 @@ function OrdemServico() {
     localStorage.setItem(OS_RASCUNHO_KEY, JSON.stringify(dados));
   }, [ordem, modoTela, busca, fornecedoresCotacao, rascunhoCarregado]);
 
+  // Inicializa catálogos, tenta recuperar rascunho e define código para nova OS.
   async function iniciarTelaOrdemServico() {
-  try {
-    await carregarCatalogos();
+    try {
+      await carregarCatalogos();
 
-    if (agendamentoOrigem && clienteOrigem && veiculoOrigem) {
-      await prepararOrdemAPartirDoAgendamento({
-        agendamento: agendamentoOrigem,
-        cliente: clienteOrigem,
-        veiculo: veiculoOrigem,
-      });
+      if (agendamentoOrigem && clienteOrigem && veiculoOrigem) {
+        await prepararOrdemAPartirDoAgendamento({
+          agendamento: agendamentoOrigem,
+          cliente: clienteOrigem,
+          veiculo: veiculoOrigem,
+        });
 
-      return;
-    }
+        return;
+      }
 
-    const rascunho = localStorage.getItem(OS_RASCUNHO_KEY);
+      const rascunho = localStorage.getItem(OS_RASCUNHO_KEY);
 
-    if (rascunho) {
-      toast.info(
-        ({ closeToast }) => (
-          <div className="os-toast-draft">
-            <strong>OS em andamento encontrada</strong>
+      if (rascunho) {
+        toast.info(
+          ({ closeToast }) => (
+            <div className="os-toast-draft">
+              <strong>OS em andamento encontrada</strong>
 
-            <span>
-              Existe um rascunho salvo desta ordem de serviço. Deseja
-              recuperar?
-            </span>
+              <span>
+                Existe um rascunho salvo desta ordem de serviço. Deseja
+                recuperar?
+              </span>
 
-            <div className="os-toast-actions">
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    const dados = JSON.parse(rascunho);
+              <div className="os-toast-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      const dados = JSON.parse(rascunho);
 
-                    setOrdem(dados.ordem || ordemInicial);
-                    setModoTela(dados.modoTela || 'nova');
-                    setBusca(dados.busca || '');
-                    setFornecedoresCotacao(dados.fornecedoresCotacao || []);
-                    setRascunhoCarregado(true);
+                      setOrdem(dados.ordem || ordemInicial);
+                      setModoTela(dados.modoTela || 'nova');
+                      setBusca(dados.busca || '');
+                      setFornecedoresCotacao(dados.fornecedoresCotacao || []);
+                      setRascunhoCarregado(true);
 
-                    toast.success('Rascunho recuperado com sucesso!');
-                    closeToast();
-                  } catch (error) {
-                    console.error('Erro ao recuperar rascunho:', error);
+                      toast.success('Rascunho recuperado com sucesso!');
+                      closeToast();
+                    } catch (error) {
+                      console.error('Erro ao recuperar rascunho:', error);
 
+                      localStorage.removeItem(OS_RASCUNHO_KEY);
+                      setRascunhoCarregado(true);
+                      carregarProximoCodigo();
+
+                      toast.error(
+                        'Erro ao recuperar rascunho. Ele foi descartado.'
+                      );
+
+                      closeToast();
+                    }
+                  }}
+                >
+                  Recuperar
+                </button>
+
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={async () => {
                     localStorage.removeItem(OS_RASCUNHO_KEY);
+
+                    await carregarProximoCodigo();
                     setRascunhoCarregado(true);
-                    carregarProximoCodigo();
 
-                    toast.error(
-                      'Erro ao recuperar rascunho. Ele foi descartado.'
-                    );
-
+                    toast.info('Rascunho descartado.');
                     closeToast();
-                  }
-                }}
-              >
-                Recuperar
-              </button>
-
-              <button
-                type="button"
-                className="secondary"
-                onClick={async () => {
-                  localStorage.removeItem(OS_RASCUNHO_KEY);
-
-                  await carregarProximoCodigo();
-                  setRascunhoCarregado(true);
-
-                  toast.info('Rascunho descartado.');
-                  closeToast();
-                }}
-              >
-                Descartar
-              </button>
+                  }}
+                >
+                  Descartar
+                </button>
+              </div>
             </div>
-          </div>
-        ),
-        {
-          toastId: OS_RASCUNHO_TOAST_ID,
-          autoClose: false,
-          closeOnClick: false,
-          draggable: false,
-        }
-      );
+          ),
+          {
+            toastId: OS_RASCUNHO_TOAST_ID,
+            autoClose: false,
+            closeOnClick: false,
+            draggable: false,
+          }
+        );
 
-      return;
+        return;
+      }
+
+      await carregarProximoCodigo();
+      setRascunhoCarregado(true);
+    } catch (error) {
+      console.error('Erro ao iniciar tela da OS:', error);
+      setRascunhoCarregado(true);
+      toast.error('Erro ao iniciar a tela da ordem de serviço.');
     }
-
-    await carregarProximoCodigo();
-    setRascunhoCarregado(true);
-  } catch (error) {
-    console.error('Erro ao iniciar tela da OS:', error);
-    setRascunhoCarregado(true);
-    toast.error('Erro ao iniciar a tela da ordem de serviço.');
   }
-}
 
+  // Busca e aplica o próximo código sequencial de OS na tela atual.
   async function carregarProximoCodigo() {
     try {
       setCarregandoCodigo(true);
@@ -243,7 +260,7 @@ function OrdemServico() {
     }
   }
 
-
+  // Retorna o próximo código para montar ordens criadas por atalhos (ex.: agendamento).
   async function buscarProximoCodigoOrdem() {
     try {
       setCarregandoCodigo(true);
@@ -275,6 +292,58 @@ function OrdemServico() {
     return veiculo.km || veiculo.quilometragem || veiculo.kilometragem || '';
   }
 
+  // Busca campos do cliente mesmo quando o backend retorna nomes em padrões diferentes.
+  function obterCampoCliente(cliente = {}, ...campos) {
+    for (const campo of campos) {
+      const valor = cliente?.[campo];
+
+      if (valor !== undefined && valor !== null && valor !== '') {
+        return valor;
+      }
+    }
+
+    return '';
+  }
+
+  // Normaliza os dados completos do cliente para uso no WhatsApp e na impressão da OS.
+  function mapearClienteParaTela(cliente = {}) {
+    return {
+      id: obterCampoCliente(cliente, 'id'),
+      nome: obterCampoCliente(cliente, 'nome', 'Nome'),
+      cpf: obterCampoCliente(cliente, 'cpf', 'CPF', 'Cpf'),
+      dataNascimento: obterCampoCliente(
+        cliente,
+        'dataNascimento',
+        'DataNascimento',
+        'data_nascimento'
+      ),
+      celular: obterCampoCliente(cliente, 'celular', 'Celular'),
+      telefone: obterCampoCliente(cliente, 'telefone', 'Telefone'),
+      whatsapp: obterCampoCliente(cliente, 'whatsapp', 'Whatsapp', 'WhatsApp'),
+      email: obterCampoCliente(cliente, 'email', 'Email'),
+      cep: obterCampoCliente(cliente, 'cep', 'CEP', 'Cep'),
+      endereco: obterCampoCliente(cliente, 'endereco', 'Endereco', 'logradouro'),
+      numero: obterCampoCliente(cliente, 'numero', 'Numero', 'num'),
+      bairro: obterCampoCliente(cliente, 'bairro', 'Bairro'),
+      cidade: obterCampoCliente(cliente, 'cidade', 'Cidade'),
+      uf: obterCampoCliente(cliente, 'uf', 'UF', 'Uf'),
+      complemento: obterCampoCliente(cliente, 'complemento', 'Complemento'),
+    };
+  }
+
+  // Monta o endereço do cliente para impressão.
+  function montarEnderecoCliente() {
+    return [
+      ordem.cliente.endereco,
+      ordem.cliente.numero,
+      ordem.cliente.bairro,
+      ordem.cliente.cidade,
+      ordem.cliente.uf,
+    ]
+      .filter(Boolean)
+      .join(', ');
+  }
+
   // Prepara uma nova OS a partir de um agendamento já existente.
   async function prepararOrdemAPartirDoAgendamento({
     agendamento,
@@ -292,10 +361,7 @@ function OrdemServico() {
       ...ordemInicial,
       codigo,
       status: 'ABERTA',
-      cliente: {
-        id: cliente.id || '',
-        nome: cliente.nome || cliente.Nome || '',
-      },
+      cliente: mapearClienteParaTela(cliente),
       veiculo: {
         id: veiculo.id || agendamento.veiculoId || '',
         placa: veiculo.placa || '',
@@ -432,10 +498,7 @@ function OrdemServico() {
 
     setOrdem((prev) => ({
       ...prev,
-      cliente: {
-        id: cliente?.id || '',
-        nome: cliente?.nome || '',
-      },
+      cliente: mapearClienteParaTela(cliente),
       veiculo: {
         id: veiculo.id || '',
         placa: veiculo.placa || '',
@@ -1524,7 +1587,7 @@ function OrdemServico() {
   // Reconstrói o estado da tela a partir de uma OS carregada da API.
   function carregarOrdemNaTela(os) {
     const veiculo = os.veiculo || {};
-    const cliente = veiculo.cliente || {};
+    const cliente = veiculo.cliente || os.cliente || {};
 
     const diagnosticos = (os.diagnosticos || []).map((diagnostico) => ({
       id: diagnostico.id,
@@ -1548,10 +1611,7 @@ function OrdemServico() {
       id: os.id || null,
       codigo: os.codigo || '',
       status: os.status || 'ABERTA',
-      cliente: {
-        id: cliente.id || '',
-        nome: cliente.nome || '',
-      },
+      cliente: mapearClienteParaTela(cliente),
       veiculo: {
         id: veiculo.id || os.veiculoId || '',
         placa: veiculo.placa || '',
@@ -1996,6 +2056,799 @@ Pode me enviar os valores e disponibilidade, por favor?`;
       toast.error('Nenhuma cotação foi enviada. Cadastre telefone/celular nos fornecedores selecionados.');
     }
   }
+
+  // Retorna todos os serviços da OS para montar mensagens e impressão.
+  function obterTodosServicosOS() {
+    return [
+      ...ordem.diagnosticos.flatMap((diagnostico, diagnosticoIndex) =>
+        diagnostico.servicos.map((servico, servicoIndex) => ({
+          ...servico,
+          codigoVisual: `${letraDiagnostico(diagnosticoIndex)}.${servicoIndex + 1}`,
+          diagnostico: diagnostico.descricao || '',
+        }))
+      ),
+      ...ordem.servicosSemDiagnostico.map((servico, servicoIndex) => ({
+        ...servico,
+        codigoVisual: `S.${servicoIndex + 1}`,
+        diagnostico: '',
+      })),
+    ];
+  }
+
+  // Retorna todas as peças da OS para montar mensagens e impressão.
+  function obterTodasPecasOS() {
+    const pecasDosServicos = obterTodosServicosOS().flatMap((servico) =>
+      (servico.pecas || []).map((peca, pecaIndex) => ({
+        ...peca,
+        codigoVisual: `${servico.codigoVisual}.${pecaIndex + 1}`,
+        servico: servico.descricao || '',
+        diagnostico: servico.diagnostico || '',
+      }))
+    );
+
+    const pecasAvulsas = ordem.pecasAvulsas.map((peca, pecaIndex) => ({
+      ...peca,
+      codigoVisual: `P.${pecaIndex + 1}`,
+      servico: '',
+      diagnostico: '',
+    }));
+
+    return [...pecasDosServicos, ...pecasAvulsas];
+  }
+
+  // Monta a mensagem que será enviada para o cliente pelo WhatsApp.
+  function montarMensagemOSCliente() {
+    const diagnosticos = ordem.diagnosticos.filter((diagnostico) =>
+      String(diagnostico.descricao || '').trim()
+    );
+
+    const servicos = obterTodosServicosOS().filter((servico) =>
+      String(servico.descricao || '').trim()
+    );
+
+    const pecas = obterTodasPecasOS().filter((peca) =>
+      String(peca.descricao || '').trim()
+    );
+
+    const linhasDiagnosticos = diagnosticos.length
+      ? diagnosticos
+          .map(
+            (diagnostico, index) =>
+              `${letraDiagnostico(index)} - ${diagnostico.descricao}`
+          )
+          .join('\n')
+      : 'Nenhum diagnóstico informado.';
+
+    const linhasServicos = servicos.length
+      ? servicos
+          .map((servico) => {
+            const valor = formatarMoeda(
+              Math.max(
+                Number(servico.precoVenda || 0) - Number(servico.desconto || 0),
+                0
+              )
+            );
+
+            return `${servico.codigoVisual} - ${servico.descricao} | ${valor}`;
+          })
+          .join('\n')
+      : 'Nenhum serviço informado.';
+
+    const linhasPecas = pecas.length
+      ? pecas
+          .map((peca) => {
+            const quantidade = Number(peca.quantidade || 1);
+            const total = formatarMoeda(
+              Math.max(
+                quantidade * Number(peca.custoUnitario || 0) -
+                  Number(peca.desconto || 0),
+                0
+              )
+            );
+
+            return `${peca.codigoVisual} - ${peca.descricao} | Qtd: ${quantidade} | ${total}`;
+          })
+          .join('\n')
+      : 'Nenhuma peça informada.';
+
+    return `Olá, ${ordem.cliente.nome || 'cliente'}!
+
+Segue o resumo da sua Ordem de Serviço.
+
+OS: ${ordem.codigo || '-'}
+Status: ${ordem.status || '-'}
+
+Cliente: ${ordem.cliente.nome || '-'}
+Veículo: ${[ordem.veiculo.marca, ordem.veiculo.modelo, ordem.veiculo.ano]
+      .filter(Boolean)
+      .join(' ') || '-'}
+Placa: ${ordem.veiculo.placa || '-'}
+Motor: ${ordem.veiculo.motor || '-'}
+Câmbio: ${ordem.veiculo.cambio || '-'}
+KM: ${ordem.veiculo.km || '-'}
+
+Diagnósticos:
+${linhasDiagnosticos}
+
+Serviços:
+${linhasServicos}
+
+Peças:
+${linhasPecas}
+
+Total de serviços: ${formatarMoeda(totais.totalServicos)}
+Total de peças: ${formatarMoeda(totais.totalPecas)}
+Total geral: ${formatarMoeda(totais.totalGeral)}
+
+Observações:
+${ordem.observacoes || '-'}`;
+
+  }
+
+  // Abre o WhatsApp do cliente com o resumo da OS preenchido.
+  function enviarOSParaCliente() {
+    if (!ordem.cliente.nome || !ordem.veiculo.id) {
+      toast.warning('Selecione um cliente/veículo antes de enviar a OS.');
+      return;
+    }
+
+    const telefoneCliente =
+      ordem.cliente.whatsapp || ordem.cliente.celular || ordem.cliente.telefone || '';
+
+    const telefoneWhatsApp = normalizarTelefoneWhatsApp(telefoneCliente);
+
+    if (!telefoneWhatsApp) {
+      toast.warning('O cliente não possui telefone/celular cadastrado.');
+      return;
+    }
+
+    const mensagem = montarMensagemOSCliente();
+    const url = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(
+      mensagem
+    )}`;
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+    toast.success('OS aberta no WhatsApp do cliente.');
+  }
+
+  // Abre a janela de impressão do navegador para imprimir a OS.
+  function imprimirOrdemServico() {
+  if (!ordem.cliente.nome || !ordem.veiculo.placa) {
+    toast.warning('Selecione um cliente/veículo antes de imprimir a OS.');
+    return;
+  }
+
+  const listarDiagnosticos = ordem.diagnosticos
+    .map((diagnostico, diagnosticoIndex) => {
+      const letra = letraDiagnostico(diagnosticoIndex);
+
+      const servicosHtml = diagnostico.servicos
+        .map((servico, servicoIndex) => {
+          const codigoServico = `${letra}.${servicoIndex + 1}`;
+
+          const pecasHtml = servico.pecas
+            .map((peca, pecaIndex) => {
+              const totalPeca =
+                Number(peca.quantidade || 0) *
+                  Number(peca.custoUnitario || 0) -
+                Number(peca.desconto || 0);
+
+              return `
+                <tr>
+                  <td>${codigoServico}.${pecaIndex + 1}</td>
+                  <td>${peca.descricao || '-'}</td>
+                  <td>${peca.quantidade || 0}</td>
+                  <td>${formatarMoeda(peca.custoUnitario || 0)}</td>
+                  <td>${formatarMoeda(peca.desconto || 0)}</td>
+                  <td>${formatarMoeda(totalPeca)}</td>
+                </tr>
+              `;
+            })
+            .join('');
+
+          return `
+            <div class="item-bloco">
+              <h4>Serviço ${codigoServico}</h4>
+
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Descrição</th>
+                    <td>${servico.descricao || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th>Responsável</th>
+                    <td>${servico.responsavel || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th>Tipo</th>
+                    <td>${servico.tipo || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th>Valor</th>
+                    <td>${formatarMoeda(servico.precoVenda || 0)}</td>
+                  </tr>
+                  <tr>
+                    <th>Desconto</th>
+                    <td>${formatarMoeda(servico.desconto || 0)}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              ${
+                servico.pecas.length > 0
+                  ? `
+                    <h5>Peças vinculadas</h5>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Cód.</th>
+                          <th>Peça</th>
+                          <th>Qtd.</th>
+                          <th>Valor unit.</th>
+                          <th>Desc.</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${pecasHtml}
+                      </tbody>
+                    </table>
+                  `
+                  : ''
+              }
+            </div>
+          `;
+        })
+        .join('');
+
+      return `
+        <section class="secao">
+          <h3>Diagnóstico ${letra}</h3>
+
+          <table>
+            <tbody>
+              <tr>
+                <th>Descrição</th>
+                <td>${diagnostico.descricao || '-'}</td>
+              </tr>
+              <tr>
+                <th>Observação</th>
+                <td>${diagnostico.observacao || '-'}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          ${servicosHtml || '<p class="vazio">Nenhum serviço vinculado.</p>'}
+        </section>
+      `;
+    })
+    .join('');
+
+  const listarServicosSemDiagnostico = ordem.servicosSemDiagnostico
+    .map((servico, index) => {
+      return `
+        <tr>
+          <td>S.${index + 1}</td>
+          <td>${servico.descricao || '-'}</td>
+          <td>${servico.responsavel || '-'}</td>
+          <td>${servico.tipo || '-'}</td>
+          <td>${formatarMoeda(servico.precoVenda || 0)}</td>
+          <td>${formatarMoeda(servico.desconto || 0)}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  const listarPecasAvulsas = ordem.pecasAvulsas
+    .map((peca, index) => {
+      const totalPeca =
+        Number(peca.quantidade || 0) * Number(peca.custoUnitario || 0) -
+        Number(peca.desconto || 0);
+
+      return `
+        <tr>
+          <td>P.${index + 1}</td>
+          <td>${peca.descricao || '-'}</td>
+          <td>${peca.fornecedorNome || '-'}</td>
+          <td>${peca.quantidade || 0}</td>
+          <td>${formatarMoeda(peca.custoUnitario || 0)}</td>
+          <td>${formatarMoeda(peca.desconto || 0)}</td>
+          <td>${formatarMoeda(totalPeca)}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  const conteudoImpressao = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Ordem de Serviço ${ordem.codigo || ''}</title>
+
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+
+          body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #1d1d1b;
+            background: #ffffff;
+            font-size: 12px;
+          }
+
+          .documento {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+          }
+
+          .cabecalho {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #0e352d;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+          }
+
+          .empresa h1 {
+            margin: 0;
+            color: #0e352d;
+            font-size: 26px;
+            letter-spacing: 0.5px;
+          }
+
+          .empresa p {
+            margin: 4px 0 0;
+            color: #555;
+            font-size: 12px;
+          }
+
+          .os-info {
+            text-align: right;
+          }
+
+          .os-info strong {
+            display: block;
+            font-size: 18px;
+            color: #0e352d;
+          }
+
+          .os-info span {
+            display: block;
+            margin-top: 4px;
+          }
+
+          .box {
+            border: 1px solid #d6d6d6;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 14px;
+            page-break-inside: avoid;
+          }
+
+          .box-title {
+            margin: 0 0 10px;
+            font-size: 15px;
+            color: #0e352d;
+            border-bottom: 1px solid #eeeeee;
+            padding-bottom: 6px;
+          }
+
+          .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px 14px;
+          }
+
+          .campo {
+            min-height: 34px;
+          }
+
+          .campo label {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 3px;
+          }
+
+          .campo span {
+            display: block;
+            font-weight: 600;
+            color: #1d1d1b;
+          }
+
+          .span-2 {
+            grid-column: span 2;
+          }
+
+          .span-4 {
+            grid-column: span 4;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            margin-bottom: 12px;
+          }
+
+          th,
+          td {
+            border: 1px solid #dcdcdc;
+            padding: 7px;
+            text-align: left;
+            vertical-align: top;
+          }
+
+          th {
+            background: #f3f5f4;
+            color: #0e352d;
+            font-size: 11px;
+          }
+
+          td {
+            font-size: 11px;
+          }
+
+          .secao {
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+          }
+
+          .secao h3 {
+            margin: 0 0 8px;
+            background: #0e352d;
+            color: #ffffff;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+          }
+
+          .item-bloco {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #e2e2e2;
+            border-radius: 6px;
+            page-break-inside: avoid;
+          }
+
+          .item-bloco h4 {
+            margin: 0 0 8px;
+            color: #1d1d1b;
+            font-size: 13px;
+          }
+
+          .item-bloco h5 {
+            margin: 10px 0 4px;
+            color: #0e352d;
+            font-size: 12px;
+          }
+
+          .vazio {
+            color: #777;
+            font-style: italic;
+          }
+
+          .totais {
+            margin-left: auto;
+            width: 320px;
+            border: 1px solid #d6d6d6;
+            border-radius: 8px;
+            overflow: hidden;
+            page-break-inside: avoid;
+          }
+
+          .total-linha {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 12px;
+            border-bottom: 1px solid #e5e5e5;
+          }
+
+          .total-linha:last-child {
+            border-bottom: none;
+          }
+
+          .total-geral {
+            background: #0e352d;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: bold;
+          }
+
+          .assinaturas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            margin-top: 56px;
+            page-break-inside: avoid;
+          }
+
+          .assinatura {
+            border-top: 1px solid #1d1d1b;
+            text-align: center;
+            padding-top: 8px;
+            font-size: 11px;
+          }
+
+          .rodape {
+            margin-top: 28px;
+            padding-top: 12px;
+            border-top: 1px solid #d6d6d6;
+            text-align: center;
+            color: #666;
+            font-size: 10px;
+          }
+
+          @page {
+            size: A4;
+            margin: 12mm;
+          }
+
+          @media print {
+            body {
+              padding: 0;
+            }
+
+            .documento {
+              max-width: 100%;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="documento">
+          <header class="cabecalho">
+            <div class="empresa">
+              <h1>MotorMind</h1>
+              <p>Sistema de Gestão para Oficinas Mecânicas</p>
+            </div>
+
+            <div class="os-info">
+              <strong>Ordem de Serviço</strong>
+              <span>Nº ${ordem.codigo || '-'}</span>
+              <span>Status: ${ordem.status || '-'}</span>
+              <span>Data: ${new Date().toLocaleDateString('pt-BR')}</span>
+            </div>
+          </header>
+
+          <section class="box">
+            <h2 class="box-title">Dados do cliente</h2>
+
+            <div class="grid">
+              <div class="campo span-2">
+                <label>Cliente</label>
+                <span>${ordem.cliente.nome || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>CPF</label>
+                <span>${ordem.cliente.cpf || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Data de nascimento</label>
+                <span>${formatarData(ordem.cliente.dataNascimento)}</span>
+              </div>
+
+              <div class="campo">
+                <label>Celular</label>
+                <span>${ordem.cliente.celular || ordem.cliente.whatsapp || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Telefone</label>
+                <span>${ordem.cliente.telefone || '-'}</span>
+              </div>
+
+              <div class="campo span-2">
+                <label>E-mail</label>
+                <span>${ordem.cliente.email || '-'}</span>
+              </div>
+
+              <div class="campo span-2">
+                <label>Endereço</label>
+                <span>${montarEnderecoCliente() || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>CEP</label>
+                <span>${ordem.cliente.cep || '-'}</span>
+              </div>
+
+              <div class="campo span-2">
+                <label>Complemento</label>
+                <span>${ordem.cliente.complemento || '-'}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="box">
+            <h2 class="box-title">Dados do veículo</h2>
+
+            <div class="grid">
+              <div class="campo">
+                <label>Placa</label>
+                <span>${ordem.veiculo.placa || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Marca</label>
+                <span>${ordem.veiculo.marca || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Modelo</label>
+                <span>${ordem.veiculo.modelo || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Ano</label>
+                <span>${ordem.veiculo.ano || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Motor</label>
+                <span>${ordem.veiculo.motor || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Câmbio</label>
+                <span>${ordem.veiculo.cambio || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Cor</label>
+                <span>${ordem.veiculo.cor || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>KM</label>
+                <span>${ordem.veiculo.km || '-'}</span>
+              </div>
+
+              <div class="campo span-2">
+                <label>Chassi</label>
+                <span>${ordem.veiculo.chassi || '-'}</span>
+              </div>
+
+              <div class="campo">
+                <label>Ar-condicionado</label>
+                <span>${ordem.veiculo.possuiAr ? 'Sim' : 'Não'}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="box">
+            <h2 class="box-title">Diagnósticos e serviços</h2>
+
+            ${
+              listarDiagnosticos ||
+              '<p class="vazio">Nenhum diagnóstico informado.</p>'
+            }
+          </section>
+
+          ${
+            ordem.servicosSemDiagnostico.length > 0
+              ? `
+                <section class="box">
+                  <h2 class="box-title">Serviços sem diagnóstico</h2>
+
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Cód.</th>
+                        <th>Descrição</th>
+                        <th>Responsável</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Desconto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${listarServicosSemDiagnostico}
+                    </tbody>
+                  </table>
+                </section>
+              `
+              : ''
+          }
+
+          ${
+            ordem.pecasAvulsas.length > 0
+              ? `
+                <section class="box">
+                  <h2 class="box-title">Peças avulsas</h2>
+
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Cód.</th>
+                        <th>Peça</th>
+                        <th>Fornecedor</th>
+                        <th>Qtd.</th>
+                        <th>Valor unit.</th>
+                        <th>Desc.</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${listarPecasAvulsas}
+                    </tbody>
+                  </table>
+                </section>
+              `
+              : ''
+          }
+
+          <section class="box">
+            <h2 class="box-title">Observações</h2>
+            <p>${ordem.observacoes || 'Nenhuma observação informada.'}</p>
+          </section>
+
+          <section class="totais">
+            <div class="total-linha">
+              <span>Total de serviços</span>
+              <strong>${formatarMoeda(totais.totalServicos)}</strong>
+            </div>
+
+            <div class="total-linha">
+              <span>Total de peças</span>
+              <strong>${formatarMoeda(totais.totalPecas)}</strong>
+            </div>
+
+            <div class="total-linha total-geral">
+              <span>Total geral</span>
+              <strong>${formatarMoeda(totais.totalGeral)}</strong>
+            </div>
+          </section>
+
+          <section class="assinaturas">
+            <div class="assinatura">
+              Assinatura do cliente
+            </div>
+
+            <div class="assinatura">
+              Responsável da oficina
+            </div>
+          </section>
+
+          <footer class="rodape">
+            Documento gerado pelo MotorMind.
+          </footer>
+        </div>
+
+        <script>
+          window.onload = function () {
+            window.print();
+            window.onafterprint = function () {
+              window.close();
+            };
+          };
+        </script>
+      </body>
+    </html>
+  `;
+
+  const janelaImpressao = window.open('', '_blank');
+
+  if (!janelaImpressao) {
+    toast.error('Não foi possível abrir a janela de impressão.');
+    return;
+  }
+
+  janelaImpressao.document.open();
+  janelaImpressao.document.write(conteudoImpressao);
+  janelaImpressao.document.close();
+}
 
   // Renderiza uma linha de peça reutilizada nos blocos da OS.
   function renderPeca({
@@ -2954,6 +3807,24 @@ Pode me enviar os valores e disponibilidade, por favor?`;
         </section>
 
         <section className="os-final-actions">
+          <button
+            type="button"
+            className="os-action os-action-green"
+            onClick={enviarOSParaCliente}
+            disabled={!ordem.veiculo.id}
+          >
+            Enviar OS para o cliente
+          </button>
+
+          <button
+            type="button"
+            className="os-action os-action-blue"
+            onClick={imprimirOrdemServico}
+            disabled={!ordem.veiculo.id}
+          >
+            Imprimir OS
+          </button>
+
           <button
             type="button"
             className="os-action os-action-red"

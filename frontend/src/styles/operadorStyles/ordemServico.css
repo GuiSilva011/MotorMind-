@@ -1156,3 +1156,94 @@
   border-color: #14a8e8;
   box-shadow: 0 0 0 3px rgba(20, 168, 232, 0.14);
 }
+
+.os-action-green {
+  background: #0e352d;
+  color: #fff;
+}
+
+.os-action-blue {
+  background: #1d1d1b;
+  color: #fff;
+}
+
+.os-action-green:hover,
+.os-action-blue:hover {
+  filter: brightness(0.95);
+}
+
+.os-action:disabled,
+.os-quote-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .sidebar,
+  .navbar,
+  .os-top-actions,
+  .os-final-actions,
+  .os-quote-btn,
+  .os-modal-overlay,
+  .Toastify,
+  button {
+    display: none !important;
+  }
+
+  .os-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .os-top,
+  .os-panel,
+  .os-bottom,
+  .os-summary-card,
+  .os-diagnosis-card,
+  .os-service-card,
+  .os-piece-row {
+    box-shadow: none !important;
+    background: #fff !important;
+    border-color: #cfcfcf !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .os-bottom {
+    display: block !important;
+  }
+
+  input,
+  select,
+  textarea {
+    border: none !important;
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  label,
+  span,
+  strong,
+  small,
+  p {
+    color: #000 !important;
+  }
+}

@@ -88,11 +88,6 @@ function CadastrarFuncionarios() {
       return false;
     }
 
-    if (!funcionario.Cpf.trim()) {
-      toast.warning('Informe o CPF do funcionário.');
-      return false;
-    }
-
     if (!funcionario.Email.trim()) {
       toast.warning('Informe o email do funcionário.');
       return false;
@@ -126,7 +121,7 @@ function CadastrarFuncionarios() {
         Senha: funcionario.Senha.trim(),
         Role: funcionario.Role,
 
-        Cpf: funcionario.Cpf.trim(),
+        Cpf: funcionario.Cpf.trim() || null,
         Rg: funcionario.Rg.trim(),
         DataNascimento: funcionario.DataNascimento || null,
         Celular: funcionario.Celular.trim(),
