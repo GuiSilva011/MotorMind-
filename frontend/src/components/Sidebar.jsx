@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
+/**
+ * Menu lateral responsivo que adapta as opções ao perfil do usuário.
+ *
+ * @returns {JSX.Element}
+ */
 function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -18,6 +23,7 @@ function Sidebar() {
   const isOperador = role === 'OPERADOR';
   const isTecnico = role === 'TECNICO';
 
+  /** Mantém o submenu visível quando a navegação já está dentro de uma seção relacionada. */
   // Mantém os submenus abertos quando o usuário navega por páginas relacionadas.
   useEffect(() => {
     if (location.pathname.startsWith('/operador/agendamentos')) {
@@ -44,15 +50,18 @@ function Sidebar() {
     location.pathname.startsWith('/operador/servicos') ||
     location.pathname.startsWith('/operador/pecas');
 
+  /** Indica se o perfil atual pode acessar a área do operador. */
   // Helpers simples para decidir quais menus aparecem para cada perfil.
   function podeVerOperador() {
     return isOperador;
   }
 
+  /** Indica se o perfil atual pode acessar a área do técnico. */
   function podeVerTecnico() {
     return isTecnico;
   }
 
+  /** Alterna o estado de expansão da sidebar e limpa os submenus quando ela fecha. */
   // Recolhe ou expande a sidebar e fecha os submenus quando necessário.
   function alternarSidebar() {
     setSidebarAberta((prevState) => {
@@ -67,6 +76,7 @@ function Sidebar() {
     });
   }
 
+    /** Alterna a visibilidade do submenu de agendamentos. */
   // Abre/fecha o submenu de agendamentos.
   function alternarAgendamento() {
     if (!sidebarAberta) {
@@ -78,6 +88,7 @@ function Sidebar() {
     setOpenAgendamento((prevState) => !prevState);
   }
 
+  /** Alterna a visibilidade do submenu de ordem de serviço. */
   // Abre/fecha o submenu de ordem de serviço.
   function alternarOrdemServico() {
     if (!sidebarAberta) {
@@ -89,6 +100,7 @@ function Sidebar() {
     setOpenOrdemServico((prevState) => !prevState);
   }
 
+  /** Limpa os dados de sessão e redireciona o usuário para a tela de login. */
   // Encerra a sessão removendo os dados salvos localmente.
   function sair() {
     localStorage.removeItem('motormind_usuario');

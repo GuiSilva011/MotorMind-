@@ -1,5 +1,12 @@
 import prisma from '../config/prisma.js';
 
+/**
+ * Autentica o usuário com base em email e senha armazenados no banco.
+ *
+ * @param {import('express').Request} req - Requisição HTTP com Email e Senha no body.
+ * @param {import('express').Response} res - Resposta HTTP enviada ao cliente.
+ * @returns {Promise<void>}
+ */
 // Faz a autenticação simples do usuário usando email e senha.
 export async function login(req, res) {
   try {
@@ -48,6 +55,13 @@ export async function login(req, res) {
   }
 }
 
+/**
+ * Lista usuários de teste com os campos mínimos usados na validação manual.
+ *
+ * @param {import('express').Request} req - Requisição HTTP.
+ * @param {import('express').Response} res - Resposta HTTP com a lista de usuários.
+ * @returns {Promise<void>}
+ */
 // Retorna uma lista de usuários de teste para facilitar validação manual.
 export async function listarUsuariosTeste(req, res) {
   try {

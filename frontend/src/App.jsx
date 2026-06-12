@@ -27,6 +27,11 @@ import CadastrarFuncionarios from './pages/admin/cadastrarFuncionarios';
 import VisualizarFuncionarios from './pages/admin/visualizarFuncionarios';
 import Relatorios from './pages/admin/relatorios';
 
+/**
+ * Define as rotas principais da aplicação e aplica proteção por perfil.
+ *
+ * @returns {JSX.Element}
+ */
 function App() {
   return (
     <>
