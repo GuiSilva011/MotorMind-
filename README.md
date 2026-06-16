@@ -12,54 +12,6 @@ O sistema permite controlar clientes, veículos, funcionários, fornecedores, ag
 
 ---
 
-## ✅ FUNCIONALIDADES DO SISTEMA
-
-Atualmente o sistema possui:
-
-- Login com controle de perfil
-- Perfil de Administrador
-- Perfil de Operador
-- Perfil de Técnico
-- Cadastro de clientes
-- Listagem de clientes
-- Edição de clientes
-- Exclusão de clientes
-- Cadastro de veículos vinculados ao cliente
-- Busca de clientes por nome
-- Busca de clientes por placa do veículo
-- Cadastro de funcionários
-- Listagem de funcionários
-- Edição de funcionários
-- Exclusão de funcionários
-- Cadastro de fornecedores
-- Listagem de fornecedores
-- Edição de fornecedores
-- Exclusão de fornecedores
-- Cadastro de agendamentos
-- Calendário de agendamentos
-- Exclusão de agendamentos
-- Criação de ordem de serviço a partir de agendamento
-- Criação manual de ordem de serviço
-- Busca de ordens de serviço existentes
-- Edição de ordem de serviço
-- Diagnósticos dentro da ordem de serviço
-- Serviços dentro da ordem de serviço
-- Peças dentro da ordem de serviço
-- Peças avulsas dentro da ordem de serviço
-- Serviços avulsos dentro da ordem de serviço
-- Catálogo de diagnósticos
-- Catálogo de serviços
-- Catálogo de peças
-- Grupos de peças
-- Cotação de peças via WhatsApp
-- Checklist técnico do veículo
-- Upload de fotos no checklist
-- Visualização de checklists do veículo
-- Histórico veicular
-- Relatórios administrativos
-
----
-
 ## 🧱 TECNOLOGIAS UTILIZADAS
 
 ### Backend
