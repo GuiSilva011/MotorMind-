@@ -4,6 +4,15 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/tecnicoStyles/painel.css';
 
+/**
+ * Painel responsável por listar e pesquisar veículos,
+ * permitindo acessar novas checklists, checklists anteriores
+ * e o histórico veicular.
+ *
+ * @component
+ * @function Painel
+ * @returns {JSX.Element} Painel principal do técnico.
+ */
 function Painel() {
   const navigate = useNavigate();
 
@@ -17,7 +26,12 @@ function Painel() {
     carregarVeiculos();
   }, []);
 
-  // Busca os veiculos cadastrados para exibir na lista.
+/**
+ * Busca na API todos os veículos cadastrados.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarVeiculos() {
     try {
       setCarregando(true);
@@ -33,7 +47,13 @@ function Painel() {
     }
   }
 
-  // Monta o texto do ano combinando fabricacao e modelo.
+/**
+ * Monta o ano do veículo combinando o ano de fabricação
+ * e o ano do modelo quando ambos estiverem disponíveis.
+ *
+ * @param {Object} veiculo - Veículo que será formatado.
+ * @returns {string} Ano do veículo ou hífen quando não informado.
+ */
   function montarAnoVeiculo(veiculo) {
     if (veiculo.ano_fabricacao && veiculo.ano_modelo) {
       return `${veiculo.ano_fabricacao}/${veiculo.ano_modelo}`;
@@ -42,7 +62,12 @@ function Painel() {
     return veiculo.ano_modelo || veiculo.ano_fabricacao || '-';
   }
 
-  // Monta o nome exibido para o veiculo no card.
+/**
+ * Monta o nome do veículo usando fabricante e modelo.
+ *
+ * @param {Object} veiculo - Veículo que será formatado.
+ * @returns {string} Nome do veículo ou uma descrição padrão.
+ */
   function montarNomeVeiculo(veiculo) {
     const fabricante = veiculo.fabricante || '';
     const modelo = veiculo.modelo || '';
@@ -50,7 +75,13 @@ function Painel() {
     return `${fabricante} ${modelo}`.trim() || 'Veículo sem descrição';
   }
 
-  // Leva o usuario para a tela de nova checklist.
+/**
+ * Redireciona o técnico para a tela de criação de checklist,
+ * enviando o veículo selecionado pela navegação.
+ *
+ * @param {Object} veiculo - Veículo que receberá a nova checklist.
+ * @returns {void}
+ */
   function abrirNovaChecklist(veiculo) {
     navigate('/tecnico/checklist', {
       state: {
@@ -59,7 +90,13 @@ function Painel() {
     });
   }
 
-  // Leva o usuario para o historico de checklists do veiculo.
+/**
+ * Redireciona o técnico para a tela de checklists
+ * vinculadas ao veículo selecionado.
+ *
+ * @param {Object} veiculo - Veículo cujas checklists serão consultadas.
+ * @returns {void}
+ */
   function abrirChecklists(veiculo) {
     navigate('/tecnico/checklists', {
       state: {
@@ -68,7 +105,13 @@ function Painel() {
     });
   }
 
-  // Leva o usuario para o historico veicular completo.
+/**
+ * Redireciona o técnico para o histórico completo
+ * do veículo selecionado.
+ *
+ * @param {Object} veiculo - Veículo cujo histórico será consultado.
+ * @returns {void}
+ */
   function abrirHistorico(veiculo) {
     navigate('/tecnico/historico-veicular', {
       state: {
@@ -77,7 +120,12 @@ function Painel() {
     });
   }
 
-  // Filtra os veiculos pelo texto e pelo tipo de vinculo com cliente.
+/**
+ * Lista de veículos filtrada pelo termo de pesquisa
+ * e pelo vínculo com cliente.
+ *
+ * @type {Array<Object>}
+ */
   const veiculosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 

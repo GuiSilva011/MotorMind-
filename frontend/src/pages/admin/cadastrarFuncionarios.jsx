@@ -4,6 +4,12 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/adminStyles/cadastrarFuncionarios.css';
 
+/**
+ * Dados iniciais utilizados no formulário de cadastro de funcionários.
+ *
+ * @constant
+ * @type {FuncionarioFormData}
+ */
 const funcionarioInicial = {
   Nome: '',
   Cpf: '',
@@ -23,7 +29,35 @@ const funcionarioInicial = {
   Role: 'OPERADOR',
 };
 
-// As seções abaixo são de formtação de input
+/**
+ * Representa os dados manipulados no formulário de funcionário.
+ *
+ * @typedef {Object} FuncionarioFormData
+ * @property {string} Nome - Nome completo do funcionário.
+ * @property {string} Cpf - CPF do funcionário.
+ * @property {string} Rg - RG do funcionário.
+ * @property {string} DataNascimento - Data de nascimento do funcionário.
+ * @property {string} Email - Email usado para contato e login.
+ * @property {string} Celular - Número de celular do funcionário.
+ * @property {string} Cep - CEP do endereço.
+ * @property {string} Endereco - Endereço do funcionário.
+ * @property {string} Numero - Número do endereço.
+ * @property {string} Uf - Unidade federativa do endereço.
+ * @property {string} Bairro - Bairro do endereço.
+ * @property {string} Cidade - Cidade do endereço.
+ * @property {string} Complemento - Complemento do endereço.
+ * @property {string} DataAdmissao - Data de admissão do funcionário.
+ * @property {string} Senha - Senha de acesso ao sistema.
+ * @property {string} Role - Perfil de acesso do funcionário.
+ */
+
+/**
+ * Formata o CPF informado pelo usuário no padrão 000.000.000-00.
+ *
+ * @function formatarCpf
+ * @param {string} valor - Valor digitado no campo de CPF.
+ * @returns {string} CPF formatado.
+ */
 function formatarCpf(valor) {
   return valor
     .replace(/\D/g, '')
@@ -33,6 +67,13 @@ function formatarCpf(valor) {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
+/**
+ * Formata o RG informado pelo usuário no padrão 00.000.000-0.
+ *
+ * @function formatarRg
+ * @param {string} valor - Valor digitado no campo de RG.
+ * @returns {string} RG formatado.
+ */
 function formatarRg(valor) {
   return valor
     .replace(/\D/g, '')
@@ -42,6 +83,13 @@ function formatarRg(valor) {
     .replace(/(\d{3})(\d{1})$/, '$1-$2');
 }
 
+/**
+ * Formata o número de celular no padrão (00) 00000-0000.
+ *
+ * @function formatarCelular
+ * @param {string} valor - Valor digitado no campo de celular.
+ * @returns {string} Celular formatado.
+ */
 function formatarCelular(valor) {
   return valor
     .replace(/\D/g, '')
@@ -50,6 +98,13 @@ function formatarCelular(valor) {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata o CEP informado pelo usuário no padrão 00000-000.
+ *
+ * @function formatarCep
+ * @param {string} valor - Valor digitado no campo de CEP.
+ * @returns {string} CEP formatado.
+ */
 function formatarCep(valor) {
   return valor
     .replace(/\D/g, '')
@@ -57,6 +112,13 @@ function formatarCep(valor) {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata a UF, mantendo apenas letras e convertendo para maiúsculas.
+ *
+ * @function formatarUf
+ * @param {string} valor - Valor digitado no campo de UF.
+ * @returns {string} UF formatada com até dois caracteres.
+ */
 function formatarUf(valor) {
   return valor
     .replace(/[^a-zA-Z]/g, '')
@@ -64,11 +126,29 @@ function formatarUf(valor) {
     .toUpperCase();
 }
 
+/**
+ * Exibe e controla a tela de cadastro de funcionários do MotorMind.
+ *
+ * O componente gerencia os dados pessoais, endereço e informações de acesso
+ * do funcionário, aplica máscaras nos campos, valida os dados obrigatórios
+ * e envia o cadastro para a API.
+ *
+ * @component
+ * @function CadastrarFuncionarios
+ * @returns {JSX.Element} Tela de cadastro de funcionários.
+ */
 function CadastrarFuncionarios() {
   const [funcionario, setFuncionario] = useState(funcionarioInicial);
   const [carregando, setCarregando] = useState(false);
 
-  // Atualiza um campo do formulario do funcionario.
+  /**
+   * Atualiza um campo específico do formulário de funcionário.
+   *
+   * @function atualizarCampo
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {string} valor - Novo valor do campo.
+   * @returns {void}
+   */
   function atualizarCampo(campo, valor) {
     setFuncionario((prev) => ({
       ...prev,
@@ -76,12 +156,22 @@ function CadastrarFuncionarios() {
     }));
   }
 
-  // Limpa o formulario e devolve os valores iniciais.
+  /**
+   * Limpa o formulário e restaura os valores iniciais.
+   *
+   * @function limparFormulario
+   * @returns {void}
+   */
   function limparFormulario() {
     setFuncionario(funcionarioInicial);
   }
 
-  // Valida os campos obrigatorios antes do cadastro.
+  /**
+   * Valida os campos obrigatórios antes de enviar o cadastro.
+   *
+   * @function validarFormulario
+   * @returns {boolean} Retorna true quando o formulário está válido.
+   */
   function validarFormulario() {
     if (!funcionario.Nome.trim()) {
       toast.warning('Informe o nome do funcionário.');
@@ -106,7 +196,14 @@ function CadastrarFuncionarios() {
     return true;
   }
 
-  // Envia o funcionario e o usuario associado para a API.
+  /**
+   * Envia os dados do funcionário para a API e cadastra seu acesso ao sistema.
+   *
+   * @async
+   * @function cadastrarFuncionario
+   * @param {Object} event - Evento de envio do formulário.
+   * @returns {Promise<void>}
+   */
   async function cadastrarFuncionario(event) {
     event.preventDefault();
 

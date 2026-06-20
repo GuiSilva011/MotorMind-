@@ -4,6 +4,16 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/adminStyles/relatorios.css';
 
+
+/**
+ * Tela responsável pela exibição de relatórios gerenciais,
+ * rankings de peças, serviços, veículos e marcas mais recorrentes
+ * nas ordens de serviço cadastradas no sistema.
+ *
+ * @component
+ * @function Relatorios
+ * @returns {JSX.Element}
+ */
 function Relatorios() {
   const [ordensServico, setOrdensServico] = useState([]);
   const [carregando, setCarregando] = useState(false);
@@ -33,8 +43,13 @@ function Relatorios() {
       setCarregando(false);
     }
   }
-
-  // Soma uma ocorrencia dentro de um ranking dinamico.
+/**
+ * Incrementa a quantidade de ocorrências de uma chave dentro de um ranking.
+ *
+ * @param {Object} ranking - Objeto que armazena as contagens.
+ * @param {string} chave - Chave que terá sua quantidade incrementada.
+ * @returns {void}
+ */
   function incrementarRanking(ranking, chave) {
     if (!chave) return;
 
@@ -45,7 +60,13 @@ function Relatorios() {
     ranking[chaveTratada] = (ranking[chaveTratada] || 0) + 1;
   }
 
-  // Converte o objeto de ranking em uma lista ordenada e limitada.
+
+/**
+ * Converte um objeto de ranking em uma lista ordenada por quantidade.
+ *
+ * @param {Object} ranking - Objeto contendo os dados do ranking.
+ * @returns {Array<Object>} Lista ordenada com nome e quantidade.
+ */
   function transformarRankingEmLista(ranking) {
     return Object.entries(ranking)
       .map(([nome, quantidade]) => ({
@@ -56,7 +77,17 @@ function Relatorios() {
       .slice(0, 5);
   }
 
-  // Processa as ordens e extrai os indicadores exibidos na pagina.
+
+/**
+ * Dados processados para exibição dos relatórios e rankings da oficina.
+ *
+ * @type {{
+ *   pecas: Array<Object>,
+ *   servicos: Array<Object>,
+ *   veiculos: Array<Object>,
+ *   marcas: Array<Object>
+ * }}
+ */
   const relatorios = useMemo(() => {
     const pecas = {};
     const servicos = {};
@@ -109,7 +140,16 @@ function Relatorios() {
     };
   }, [ordensServico]);
 
-  // Renderiza uma tabela simples de ranking.
+
+/**
+ * Renderiza uma tabela de ranking.
+ *
+ * @param {string} titulo - Título do relatório.
+ * @param {string} subtitulo - Descrição resumida do relatório.
+ * @param {Array<Object>} dados - Dados que serão exibidos.
+ * @param {string} colunaNome - Nome da coluna principal.
+ * @returns {JSX.Element}
+ */
   function renderTabela(titulo, subtitulo, dados, colunaNome) {
     return (
       <article className="relatorio-card">
@@ -145,7 +185,14 @@ function Relatorios() {
     );
   }
 
-  // Renderiza o ranking visual com barras verticais.
+/**
+ * Renderiza um ranking visual em formato de barras.
+ *
+ * @param {string} titulo - Título do ranking.
+ * @param {string} subtitulo - Descrição resumida do ranking.
+ * @param {Array<Object>} dados - Dados utilizados para gerar o ranking.
+ * @returns {JSX.Element}
+ */
   function renderRanking(titulo, subtitulo, dados) {
     const maiorValor = dados[0]?.quantidade || 1;
 

@@ -1,6 +1,23 @@
 import prisma from '../config/prisma.js';
 
-// Converte campos JSON que chegam como texto em array/objeto utilizável.
+/**
+ * Controlador responsável pelo cadastro, consulta e exclusão
+ * de checklists vinculadas aos veículos.
+ *
+ * @module controllers/checklistController
+ */
+
+/**
+ * Converte um campo JSON recebido como texto para um valor utilizável.
+ *
+ * Caso o valor já seja um array, ele é retornado diretamente.
+ * Se a conversão falhar, o valor padrão é retornado.
+ *
+ * @function parseJsonField
+ * @param {string|Array<Object>|null|undefined} value - Valor que será convertido.
+ * @param {Array<Object>} [fallback=[]] - Valor retornado em caso de falha.
+ * @returns {Array<Object>|Object} Conteúdo convertido ou valor padrão.
+ */
 function parseJsonField(value, fallback = []) {
   if (!value) return fallback;
 
@@ -15,7 +32,15 @@ function parseJsonField(value, fallback = []) {
   }
 }
 
-// Recupera o caminho do arquivo enviado para uma foto da checklist.
+/**
+ * Recupera o caminho de uma imagem enviada na requisição.
+ *
+ * @function pegarArquivo
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} [req.files] - Arquivos enviados na requisição.
+ * @param {string} campo - Nome do campo que contém o arquivo.
+ * @returns {string|null} Caminho público do arquivo ou null.
+ */
 function pegarArquivo(req, campo) {
   const arquivo = req.files?.[campo]?.[0];
 
@@ -24,7 +49,25 @@ function pegarArquivo(req, campo) {
   return `/uploads/checklists/${arquivo.filename}`;
 }
 
-// Cria uma checklist com observações, itens e fotos vinculadas ao veículo.
+/**
+ * Cria uma checklist vinculada a um veículo.
+ *
+ * Processa os itens de entrada e diagnóstico, registra observações
+ * e armazena os caminhos das fotos enviadas.
+ *
+ * @async
+ * @function criarChecklist
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {number|string} req.body.veiculoId - Identificador do veículo.
+ * @param {string|Array<Object>} [req.body.itensEntrada] - Itens da inspeção de entrada.
+ * @param {string|Array<Object>} [req.body.itensDiagnostico] - Itens da etapa de diagnóstico.
+ * @param {string} [req.body.observacoesEntrada] - Observações da inspeção de entrada.
+ * @param {string} [req.body.observacoesDiagnostico] - Observações do diagnóstico.
+ * @param {Object} [req.files] - Fotos enviadas no formulário.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a checklist criada ou mensagem de erro.
+ */
 export async function criarChecklist(req, res) {
   try {
     const {
@@ -88,7 +131,20 @@ export async function criarChecklist(req, res) {
   }
 }
 
-// Lista todas as checklists de um veículo específico.
+/**
+ * Lista todas as checklists vinculadas a um veículo.
+ *
+ * Os registros são retornados com os dados do veículo e do cliente,
+ * ordenados da checklist mais recente para a mais antiga.
+ *
+ * @async
+ * @function listarChecklistsPorVeiculo
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.veiculoId - Identificador do veículo.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de checklists ou mensagem de erro.
+ */
 export async function listarChecklistsPorVeiculo(req, res) {
   try {
     const { veiculoId } = req.params;
@@ -126,7 +182,19 @@ export async function listarChecklistsPorVeiculo(req, res) {
   }
 }
 
-// Busca uma checklist única com os dados do veículo e do cliente.
+/**
+ * Busca uma checklist pelo identificador informado.
+ *
+ * A resposta inclui os dados do veículo e do cliente vinculados.
+ *
+ * @async
+ * @function buscarChecklistPorId
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador da checklist.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a checklist encontrada ou mensagem de erro.
+ */
 export async function buscarChecklistPorId(req, res) {
   try {
     const { id } = req.params;
@@ -161,7 +229,19 @@ export async function buscarChecklistPorId(req, res) {
   }
 }
 
-// Remove uma checklist existente.
+/**
+ * Exclui uma checklist existente pelo identificador informado.
+ *
+ * Antes da exclusão, verifica se a checklist está cadastrada.
+ *
+ * @async
+ * @function deletarChecklist
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador da checklist.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
+ */
 export async function deletarChecklist(req, res) {
   try {
     const { id } = req.params;

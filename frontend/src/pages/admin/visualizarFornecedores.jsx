@@ -4,6 +4,12 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/adminStyles/visualizarFornecedores.css';
 
+
+/**
+ * Estado inicial usado no modal de edição de fornecedores.
+ *
+ * @constant {Object}
+ */
 const fornecedorInicial = {
   id: null,
   codigo: '',
@@ -25,6 +31,12 @@ const fornecedorInicial = {
   observacoes: '',
 };
 
+/**
+ * Formata um valor como CNPJ.
+ *
+ * @param {string} valor - Valor digitado no campo.
+ * @returns {string} CNPJ formatado.
+ */
 function formatarCnpj(valor) {
   return valor
     .replace(/\D/g, '')
@@ -35,6 +47,12 @@ function formatarCnpj(valor) {
     .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata um valor como telefone fixo.
+ *
+ * @param {string} valor - Valor digitado no campo.
+ * @returns {string} Telefone formatado.
+ */
 function formatarTelefone(valor) {
   return valor
     .replace(/\D/g, '')
@@ -43,6 +61,12 @@ function formatarTelefone(valor) {
     .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata um valor como número de celular.
+ *
+ * @param {string} valor - Valor digitado no campo.
+ * @returns {string} Celular formatado.
+ */
 function formatarCelular(valor) {
   return valor
     .replace(/\D/g, '')
@@ -51,6 +75,12 @@ function formatarCelular(valor) {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata um valor como CEP.
+ *
+ * @param {string} valor - Valor digitado no campo.
+ * @returns {string} CEP formatado.
+ */
 function formatarCep(valor) {
   return valor
     .replace(/\D/g, '')
@@ -58,6 +88,12 @@ function formatarCep(valor) {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata a sigla da UF, permitindo apenas letras maiúsculas.
+ *
+ * @param {string} valor - Valor digitado no campo.
+ * @returns {string} UF formatada.
+ */
 function formatarUf(valor) {
   return valor
     .replace(/[^a-zA-Z]/g, '')
@@ -65,6 +101,13 @@ function formatarUf(valor) {
     .toUpperCase();
 }
 
+/**
+ * Tela responsável por visualizar, pesquisar, editar e excluir fornecedores.
+ *
+ * @component
+ * @function VisualizarFornecedor
+ * @returns {JSX.Element} Tela de gerenciamento de fornecedores.
+ */
 function VisualizarFornecedor() {
   const [fornecedores, setFornecedores] = useState([]);
   const [busca, setBusca] = useState('');
@@ -78,7 +121,12 @@ function VisualizarFornecedor() {
     carregarFornecedores();
   }, []);
 
-  // Busca a lista completa de fornecedores na API.
+/**
+ * Busca a lista completa de fornecedores cadastrados na API.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarFornecedores() {
     try {
       setCarregando(true);
@@ -99,7 +147,12 @@ function VisualizarFornecedor() {
     }
   }
 
-  // Normaliza os dados para abrir o modal em modo edicao.
+/**
+ * Normaliza os dados de um fornecedor para preencher o formulário de edição.
+ *
+ * @param {Object} fornecedor - Fornecedor selecionado na listagem.
+ * @returns {Object} Dados do fornecedor preparados para edição.
+ */
   function montarFornecedorParaEditar(fornecedor) {
     return {
       id: fornecedor.id,
@@ -123,19 +176,34 @@ function VisualizarFornecedor() {
     };
   }
 
-  // Abre o modal de edicao com os dados do fornecedor selecionado.
+ /**
+ * Abre o modal de edição com os dados do fornecedor selecionado.
+ *
+ * @param {Object} fornecedor - Fornecedor que será editado.
+ * @returns {void}
+ */
   function abrirEdicao(fornecedor) {
     setFornecedorEditando(montarFornecedorParaEditar(fornecedor));
     setEditando(true);
   }
 
-  // Fecha o modal e volta para o estado limpo.
+/**
+ * Fecha o modal de edição e limpa os dados do fornecedor em edição.
+ *
+ * @returns {void}
+ */
   function fecharEdicao() {
     setEditando(false);
     setFornecedorEditando(fornecedorInicial);
   }
 
-  // Atualiza um campo do formulario de edicao.
+ /**
+ * Atualiza um campo específico do formulário de edição.
+ *
+ * @param {string} campo - Nome do campo que será atualizado.
+ * @param {*} valor - Novo valor do campo.
+ * @returns {void}
+ */
   function atualizarCampo(campo, valor) {
     setFornecedorEditando((prev) => ({
       ...prev,
@@ -143,7 +211,11 @@ function VisualizarFornecedor() {
     }));
   }
 
-  // Valida os campos obrigatorios antes de salvar a edicao.
+  /**
+ * Valida os campos obrigatórios antes de salvar a edição.
+ *
+ * @returns {boolean} Retorna true se os dados estiverem válidos.
+ */
   function validarEdicao() {
     if (!fornecedorEditando.nome.trim()) {
       toast.warning('Informe o nome do fornecedor.');
@@ -161,7 +233,13 @@ function VisualizarFornecedor() {
     return true;
   }
 
-  // Envia as alteracoes do fornecedor para o backend.
+/**
+ * Envia as alterações do fornecedor para a API.
+ *
+ * @async
+ * @param {Object} event - Evento de envio do formulário.
+ * @returns {Promise<void>}
+ */
   async function salvarEdicao(event) {
     event.preventDefault();
 
@@ -206,7 +284,13 @@ function VisualizarFornecedor() {
     }
   }
 
-  // Exclui um fornecedor apos confirmacao do usuario.
+ /**
+ * Exclui um fornecedor após confirmação do usuário.
+ *
+ * @async
+ * @param {Object} fornecedor - Fornecedor que será excluído.
+ * @returns {Promise<void>}
+ */
   async function excluirFornecedor(fornecedor) {
     const confirmar = window.confirm(
       `Deseja realmente excluir ${fornecedor.nome || 'este fornecedor'}?`
@@ -230,7 +314,11 @@ function VisualizarFornecedor() {
     }
   }
 
-  // Filtra os fornecedores por codigo, nome, documento ou cidade.
+/**
+ * Lista de fornecedores filtrada de acordo com o termo pesquisado.
+ *
+ * @type {Array<Object>}
+ */
   const fornecedoresFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
@@ -259,7 +347,12 @@ function VisualizarFornecedor() {
     });
   }, [fornecedores, busca]);
 
-  // Retorna o texto que resume o tipo de fornecedor.
+/**
+ * Retorna uma descrição textual do tipo de fornecimento.
+ *
+ * @param {Object} fornecedor - Fornecedor usado na verificação.
+ * @returns {string} Tipo de fornecimento do fornecedor.
+ */
   function renderTipoFornecedor(fornecedor) {
     if (fornecedor.fornecePecas && fornecedor.forneceServicos) {
       return 'Peças e serviços';
@@ -276,7 +369,11 @@ function VisualizarFornecedor() {
     return '-';
   }
 
-  // Renderiza o modal de edicao somente quando a tela esta aberta.
+/**
+ * Renderiza o modal de edição de fornecedor quando ele estiver aberto.
+ *
+ * @returns {JSX.Element|null} Modal de edição ou null.
+ */
   function renderModalEdicao() {
     if (!editando) return null;
 

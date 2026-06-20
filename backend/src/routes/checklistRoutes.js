@@ -38,6 +38,9 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
 });
+/**
+ * Rotas de checklist, incluindo upload de imagens e consultas por veículo.
+ */
 
 // Rotas de checklist, incluindo upload de imagens em múltiplos campos.
 router.post(

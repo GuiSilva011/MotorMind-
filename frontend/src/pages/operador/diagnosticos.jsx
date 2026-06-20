@@ -3,6 +3,12 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/operadorStyles/diagnosticos.css';
 
+/**
+ * Gera um código automático usando prefixo, data atual e número aleatório.
+ *
+ * @param {string} prefixo - Prefixo usado no código gerado.
+ * @returns {string} Código gerado.
+ */
 function gerarCodigo(prefixo) {
   const data = new Date();
 
@@ -14,6 +20,11 @@ function gerarCodigo(prefixo) {
   return `${prefixo}-${ano}${mes}${dia}-${aleatorio}`;
 }
 
+/**
+ * Cria o estado inicial do formulário de diagnóstico.
+ *
+ * @returns {Object} Dados iniciais do diagnóstico.
+ */
 function criarDiagnosticoInicial() {
   return {
     codigo: gerarCodigo('DIAG'),
@@ -22,6 +33,13 @@ function criarDiagnosticoInicial() {
   };
 }
 
+/**
+ * Tela responsável pelo cadastro, edição, listagem e exclusão de diagnósticos.
+ *
+ * @component
+ * @function Diagnosticos
+ * @returns {JSX.Element} Tela de manutenção de diagnósticos.
+ */
 function Diagnosticos() {
   const [diagnosticos, setDiagnosticos] = useState([]);
   const [form, setForm] = useState(criarDiagnosticoInicial());
@@ -35,7 +53,12 @@ function Diagnosticos() {
     carregarDiagnosticos();
   }, []);
 
-  // Busca todos os diagnosticos cadastrados na API.
+/**
+ * Busca todos os diagnósticos cadastrados na API.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarDiagnosticos() {
     try {
       setCarregando(true);
@@ -51,7 +74,13 @@ function Diagnosticos() {
     }
   }
 
-  // Atualiza um campo simples do formulario.
+/**
+ * Atualiza um campo específico do formulário de diagnóstico.
+ *
+ * @param {string} campo - Nome do campo que será atualizado.
+ * @param {string} valor - Novo valor do campo.
+ * @returns {void}
+ */
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -59,13 +88,22 @@ function Diagnosticos() {
     }));
   }
 
-  // Restaura o formulario para o estado inicial.
+/**
+ * Limpa o formulário e encerra o modo de edição.
+ *
+ * @returns {void}
+ */
   function limparFormulario() {
     setForm(criarDiagnosticoInicial());
     setEditandoId(null);
   }
 
-  // Preenche o formulario com os dados de um diagnostico para edicao.
+/**
+ * Preenche o formulário com os dados de um diagnóstico para edição.
+ *
+ * @param {Object} diagnostico - Diagnóstico selecionado na tabela.
+ * @returns {void}
+ */
   function editarDiagnostico(diagnostico) {
     setEditandoId(diagnostico.id);
 
@@ -81,7 +119,13 @@ function Diagnosticos() {
     });
   }
 
-  // Valida, cria ou atualiza um diagnostico no backend.
+/**
+ * Valida os campos e envia o diagnóstico para cadastro ou atualização na API.
+ *
+ * @async
+ * @param {Object} event - Evento de envio do formulário.
+ * @returns {Promise<void>}
+ */
   async function salvarDiagnostico(event) {
     event.preventDefault();
 
@@ -127,7 +171,13 @@ function Diagnosticos() {
     }
   }
 
-  // Remove um diagnostico apos confirmacao do usuario.
+/**
+ * Exclui um diagnóstico após confirmação do usuário.
+ *
+ * @async
+ * @param {number} id - Identificador do diagnóstico.
+ * @returns {Promise<void>}
+ */
   async function excluirDiagnostico(id) {
     const confirmar = window.confirm(
       'Deseja realmente excluir este diagnóstico?'
@@ -150,8 +200,11 @@ function Diagnosticos() {
       );
     }
   }
-
-  // Filtra a lista conforme codigo, nome ou descricao.
+/**
+ * Lista de diagnósticos filtrada por código, nome ou descrição.
+ *
+ * @type {Array<Object>}
+ */
   const diagnosticosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 

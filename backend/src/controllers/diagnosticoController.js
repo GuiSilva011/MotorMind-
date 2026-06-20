@@ -1,6 +1,24 @@
 import prisma from '../config/prisma.js';
 
-// Lista os diagnósticos cadastrados no catálogo.
+/**
+ * Controlador responsável pelas operações de listagem, busca,
+ * cadastro, atualização e exclusão de diagnósticos do catálogo.
+ *
+ * @module controllers/diagnosticoController
+ */
+
+
+/**
+ * Lista todos os diagnósticos cadastrados no catálogo.
+ *
+ * Os registros são retornados em ordem alfabética pelo nome.
+ *
+ * @async
+ * @function listarDiagnosticos
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de diagnósticos ou mensagem de erro.
+ */
 export async function listarDiagnosticos(req, res) {
   try {
     const diagnosticos = await prisma.diagnosticoCatalogo.findMany({
@@ -16,7 +34,19 @@ export async function listarDiagnosticos(req, res) {
   }
 }
 
-// Procura diagnósticos por nome, código ou descrição.
+/**
+ * Busca diagnósticos pelo nome, código ou descrição.
+ *
+ * A pesquisa não diferencia letras maiúsculas e minúsculas.
+ *
+ * @async
+ * @function buscarDiagnosticoPorNome
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.query - Parâmetros enviados na URL.
+ * @param {string} req.query.nome - Termo utilizado na pesquisa.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com os diagnósticos encontrados ou mensagem de erro.
+ */
 export async function buscarDiagnosticoPorNome(req, res) {
   try {
     const { nome } = req.query;
@@ -60,7 +90,22 @@ export async function buscarDiagnosticoPorNome(req, res) {
   }
 }
 
-// Cria um novo diagnóstico no catálogo.
+/**
+ * Cria um novo diagnóstico no catálogo.
+ *
+ * Antes do cadastro, verifica se já existe outro diagnóstico
+ * com o mesmo código ou nome.
+ *
+ * @async
+ * @function criarDiagnostico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {string} req.body.codigo - Código único do diagnóstico.
+ * @param {string} req.body.nome - Nome do diagnóstico.
+ * @param {string} [req.body.descricao] - Descrição complementar do diagnóstico.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o diagnóstico criado ou mensagem de erro.
+ */
 export async function criarDiagnostico(req, res) {
   try {
     const { codigo, nome, descricao } = req.body;
@@ -99,7 +144,24 @@ export async function criarDiagnostico(req, res) {
   }
 }
 
-// Atualiza um diagnóstico existente, evitando duplicidade de código ou nome.
+/**
+ * Atualiza os dados de um diagnóstico existente.
+ *
+ * Verifica a existência do registro e impede a duplicidade
+ * de código ou nome em outros diagnósticos.
+ *
+ * @async
+ * @function editarDiagnostico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do diagnóstico.
+ * @param {Object} req.body - Dados que serão atualizados.
+ * @param {string} [req.body.codigo] - Novo código do diagnóstico.
+ * @param {string} [req.body.nome] - Novo nome do diagnóstico.
+ * @param {string|null} [req.body.descricao] - Nova descrição do diagnóstico.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o diagnóstico atualizado ou mensagem de erro.
+ */
 export async function editarDiagnostico(req, res) {
   try {
     const { id } = req.params;
@@ -154,7 +216,20 @@ export async function editarDiagnostico(req, res) {
   }
 }
 
-// Remove um diagnóstico do catálogo.
+/**
+ * Exclui um diagnóstico do catálogo.
+ *
+ * A exclusão é impedida quando o diagnóstico estiver vinculado
+ * a uma ordem de serviço.
+ *
+ * @async
+ * @function deletarDiagnostico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do diagnóstico.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
+ */
 export async function deletarDiagnostico(req, res) {
   try {
     const { id } = req.params;

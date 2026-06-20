@@ -7,6 +7,12 @@ import Layout from '../../components/Layout';
 import '../../styles/operadorStyles/agendamento.css';
 import '../../styles/operadorStyles/layout.css';
 
+
+/**
+ * Estado inicial do formulário de cadastro de agendamento.
+ *
+ * @constant {Object}
+ */
 const agendamentoInicial = {
   clienteId: '',
   veiculoId: '',
@@ -17,6 +23,13 @@ const agendamentoInicial = {
   servico: '',
 };
 
+/**
+ * Tela responsável pelo cadastro de agendamentos realizados pelo operador.
+ *
+ * @component
+ * @function CadastroAgendamento
+ * @returns {JSX.Element} Tela de cadastro de agendamento.
+ */
 function CadastroAgendamento() {
   const [clientes, setClientes] = useState([]);
   const [tecnicos, setTecnicos] = useState([]);
@@ -31,13 +44,23 @@ function CadastroAgendamento() {
   const [carregandoClientes, setCarregandoClientes] = useState(false);
   const [carregandoTecnicos, setCarregandoTecnicos] = useState(false);
 
-  // Carrega listas iniciais de clientes e tecnicos ao abrir a tela.
+ /**
+ * Busca todos os clientes cadastrados para uso no autocomplete.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   useEffect(() => {
     carregarClientes();
     carregarTecnicos();
   }, []);
 
-  // Busca todos os clientes cadastrados para o autocomplete da tela.
+/**
+ * Busca todos os clientes cadastrados para uso no autocomplete.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarClientes() {
     try {
       setCarregandoClientes(true);
@@ -53,7 +76,12 @@ function CadastroAgendamento() {
     }
   }
 
-  // Busca funcionarios e filtra apenas os tecnicos.
+/**
+ * Busca os funcionários cadastrados e mantém apenas os técnicos.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarTecnicos() {
     try {
       setCarregandoTecnicos(true);
@@ -73,7 +101,11 @@ function CadastroAgendamento() {
     }
   }
 
-  // Filtra os clientes conforme o texto digitado no campo de busca.
+ /**
+ * Lista de clientes filtrada pelo nome, CPF ou placa digitada.
+ *
+ * @type {Array<Object>}
+ */
   const resultados = useMemo(() => {
     const termo = buscaCliente.trim().toLowerCase();
 
@@ -95,7 +127,12 @@ function CadastroAgendamento() {
       .slice(0, 8);
   }, [buscaCliente, clientes, clienteSelecionado]);
 
-  // Marca o cliente escolhido e libera a selecao de veiculo.
+/**
+ * Seleciona um cliente e carrega seus veículos no formulário.
+ *
+ * @param {Object} cliente - Cliente selecionado na busca.
+ * @returns {void}
+ */
   function selecionarCliente(cliente) {
     setClienteSelecionado(cliente);
     setBuscaCliente(cliente.nome || '');
@@ -108,7 +145,11 @@ function CadastroAgendamento() {
     }));
   }
 
-  // Remove o cliente selecionado e limpa os campos dependentes.
+/**
+ * Remove o cliente selecionado e limpa os campos dependentes.
+ *
+ * @returns {void}
+ */
   function removerClienteSelecionado() {
     setClienteSelecionado(null);
     setBuscaCliente('');
@@ -121,7 +162,12 @@ function CadastroAgendamento() {
     }));
   }
 
-  // Atualiza os campos simples do formulario de agendamento.
+/**
+ * Atualiza os campos simples do formulário de agendamento.
+ *
+ * @param {Object} event - Evento de alteração do campo.
+ * @returns {void}
+ */
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -131,7 +177,11 @@ function CadastroAgendamento() {
     }));
   }
 
-  // Limpa o formulario apos salvar ou quando o usuario quer recomeçar.
+/**
+ * Limpa o formulário e restaura os valores iniciais.
+ *
+ * @returns {void}
+ */
   function limparFormulario() {
     setFormData(agendamentoInicial);
     setBuscaCliente('');
@@ -139,7 +189,11 @@ function CadastroAgendamento() {
     setVeiculosCliente([]);
   }
 
-  // Valida os campos obrigatorios antes de enviar o agendamento.
+/**
+ * Valida os campos obrigatórios antes de cadastrar o agendamento.
+ *
+ * @returns {boolean} Retorna true se o formulário estiver válido.
+ */
   function validarFormulario() {
     if (!formData.clienteId) {
       toast.warning('Selecione um cliente.');
@@ -174,7 +228,13 @@ function CadastroAgendamento() {
     return true;
   }
 
-  // Monta o payload e envia o novo agendamento para o backend.
+/**
+ * Envia os dados do agendamento para a API.
+ *
+ * @async
+ * @param {Object} event - Evento de envio do formulário.
+ * @returns {Promise<void>}
+ */
   async function handleSubmit(event) {
     event.preventDefault();
 

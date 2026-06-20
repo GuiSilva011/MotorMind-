@@ -4,6 +4,14 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/tecnicoStyles/historicoVeicular.css';
 
+/**
+ * Tela responsável pela consulta do histórico veicular,
+ * exibindo ordens de serviço, diagnósticos, serviços e peças relacionados.
+ *
+ * @component
+ * @function HistoricoVeicular
+ * @returns {JSX.Element} Tela de histórico veicular.
+ */
 function HistoricoVeicular() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,7 +33,15 @@ function HistoricoVeicular() {
     }
   }, []);
 
-  // Soma os totais usados no resumo superior do historico.
+ /**
+ * Totais consolidados de diagnósticos, serviços e peças encontrados no histórico.
+ *
+ * @type {{
+ *   totalDiagnosticos: number,
+ *   totalServicos: number,
+ *   totalPecas: number
+ * }}
+ */
   const totaisHistorico = useMemo(() => {
     return historico.reduce(
       (acc, ordem) => {
@@ -43,7 +59,13 @@ function HistoricoVeicular() {
     );
   }, [historico]);
 
-  // Busca ordens de servico pelo termo informado.
+/**
+ * Busca ordens de serviço com base em uma placa, cliente ou veículo.
+ *
+ * @async
+ * @param {string} termoBusca - Termo utilizado na pesquisa.
+ * @returns {Promise<void>}
+ */
   async function buscarHistoricoPorTermo(termoBusca) {
     try {
       if (!termoBusca.trim()) {
@@ -70,12 +92,22 @@ function HistoricoVeicular() {
     }
   }
 
-  // Dispara a busca usando o valor digitado na tela.
+/**
+ * Executa a busca do histórico usando o valor digitado no campo de pesquisa.
+ *
+ * @returns {void}
+ */
   function buscarHistorico() {
     buscarHistoricoPorTermo(busca);
   }
 
-  // Abre os detalhes completos de uma ordem de servico.
+/**
+ * Busca e abre os detalhes completos de uma ordem de serviço.
+ *
+ * @async
+ * @param {number|string} ordemId - Identificador da ordem de serviço.
+ * @returns {Promise<void>}
+ */
   async function abrirDetalhesOrdem(ordemId) {
     try {
       setCarregandoDetalhes(true);
@@ -91,26 +123,46 @@ function HistoricoVeicular() {
     }
   }
 
-  // Fecha o painel de detalhes da ordem.
+/**
+ * Fecha o painel de detalhes da ordem de serviço.
+ *
+ * @returns {void}
+ */
   function fecharDetalhes() {
     setOrdemDetalhada(null);
   }
 
-  // Formata datas para exibição amigavel.
+/**
+ * Formata uma data para exibição no padrão brasileiro.
+ *
+ * @param {string|Date|null|undefined} data - Data que será formatada.
+ * @returns {string} Data formatada ou hífen.
+ */
   function formatarData(data) {
     if (!data) return '-';
 
     return new Date(data).toLocaleDateString('pt-BR');
   }
 
-  // Monta o nome do veiculo com fabricante e modelo.
+/**
+ * Monta o nome do veículo usando fabricante e modelo.
+ *
+ * @param {Object|null|undefined} veiculo - Veículo que será formatado.
+ * @returns {string} Nome do veículo ou hífen.
+ */
   function montarNomeVeiculo(veiculo) {
     if (!veiculo) return '-';
 
     return `${veiculo.fabricante || ''} ${veiculo.modelo || ''}`.trim() || '-';
   }
 
-  // Conta quantos servicos existem na ordem, inclusive nos diagnósticos.
+/**
+ * Conta a quantidade total de serviços de uma ordem,
+ * incluindo serviços vinculados e não vinculados a diagnósticos.
+ *
+ * @param {Object} ordem - Ordem de serviço analisada.
+ * @returns {number} Quantidade total de serviços.
+ */
   function contarServicos(ordem) {
     const servicosDiagnostico =
       ordem?.diagnosticos?.reduce((acc, diagnostico) => {
@@ -122,7 +174,13 @@ function HistoricoVeicular() {
     return servicosDiagnostico + servicosSoltos;
   }
 
-  // Conta quantas peças existem na ordem, inclusive nas estruturas filhas.
+/**
+ * Conta a quantidade total de peças de uma ordem,
+ * incluindo peças vinculadas a serviços e peças avulsas.
+ *
+ * @param {Object} ordem - Ordem de serviço analisada.
+ * @returns {number} Quantidade total de peças.
+ */
   function contarPecas(ordem) {
     const pecasDiagnostico =
       ordem?.diagnosticos?.reduce((accDiagnostico, diagnostico) => {
@@ -139,7 +197,12 @@ function HistoricoVeicular() {
     return pecasDiagnostico + pecasSoltas;
   }
 
-  // Escolhe a classe visual conforme o status da ordem.
+/**
+ * Retorna a classe CSS correspondente ao status da ordem de serviço.
+ *
+ * @param {string|null|undefined} status - Status da ordem.
+ * @returns {string} Classe CSS usada na exibição do status.
+ */
   function obterClasseStatus(status) {
     const statusNormalizado = String(status || '').toLowerCase();
 
@@ -166,7 +229,12 @@ function HistoricoVeicular() {
     return 'historico-status-gray';
   }
 
-  // Renderiza um card resumido de uma ordem encontrada.
+/**
+ * Renderiza um card resumido de uma ordem de serviço encontrada.
+ *
+ * @param {Object} ordem - Ordem de serviço que será exibida.
+ * @returns {JSX.Element} Card resumido da ordem.
+ */
   function renderResumoOrdem(ordem) {
     return (
       <article className="historico-item" key={ordem.id}>
@@ -225,7 +293,11 @@ function HistoricoVeicular() {
     );
   }
 
-  // Renderiza o modal com os detalhes completos da ordem.
+/**
+ * Renderiza o modal com os detalhes completos da ordem selecionada.
+ *
+ * @returns {JSX.Element|null} Modal de detalhes ou null.
+ */
   function renderDetalhesOrdem() {
     if (!ordemDetalhada) return null;
 

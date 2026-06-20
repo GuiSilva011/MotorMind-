@@ -3,11 +3,26 @@ import prisma from '../config/prisma.js';
 /**
  * Autentica o usuário com base em email e senha armazenados no banco.
  *
- * @param {import('express').Request} req - Requisição HTTP com Email e Senha no body.
- * @param {import('express').Response} res - Resposta HTTP enviada ao cliente.
+ * @param {object} req - Requisição HTTP com Email e Senha no body.
+ * @param {object} res - Resposta HTTP enviada ao cliente.
  * @returns {Promise<void>}
  */
-// Faz a autenticação simples do usuário usando email e senha.
+
+/**
+ * Autentica um usuário utilizando o e-mail e a senha informados.
+ *
+ * Busca o usuário pelo e-mail, valida as credenciais e retorna
+ * os dados necessários para identificação e controle de acesso.
+ *
+ * @async
+ * @function login
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {string} req.body.Email - E-mail utilizado na autenticação.
+ * @param {string} req.body.Senha - Senha utilizada na autenticação.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com os dados do usuário autenticado ou mensagem de erro.
+ */
 export async function login(req, res) {
   try {
     const { Email, Senha } = req.body;
@@ -56,13 +71,17 @@ export async function login(req, res) {
 }
 
 /**
- * Lista usuários de teste com os campos mínimos usados na validação manual.
+ * Lista os usuários cadastrados com os campos utilizados
+ * nos testes e na validação manual do sistema.
  *
- * @param {import('express').Request} req - Requisição HTTP.
- * @param {import('express').Response} res - Resposta HTTP com a lista de usuários.
- * @returns {Promise<void>}
+ * A senha dos usuários não é incluída na resposta.
+ *
+ * @async
+ * @function listarUsuariosTeste
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de usuários ou mensagem de erro.
  */
-// Retorna uma lista de usuários de teste para facilitar validação manual.
 export async function listarUsuariosTeste(req, res) {
   try {
     const usuarios = await prisma.usuario.findMany({

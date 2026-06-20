@@ -13,10 +13,20 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../../styles/operadorStyles/calendarioAgendamentos.css';
 import '../../styles/operadorStyles/layout.css';
 
+/**
+ * Lista de idiomas utilizada pelo calendário.
+ *
+ * @constant {Object}
+ */
 const locales = {
   'pt-BR': ptBR,
 };
 
+/**
+ * Configuração de localização do calendário usando date-fns.
+ *
+ * @constant {Object}
+ */
 const localizer = dateFnsLocalizer({
   format,
   parse,
@@ -25,6 +35,14 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+/**
+ * Tela responsável por exibir os agendamentos em formato de calendário,
+ * permitindo visualizar detalhes, gerar ordem de serviço e excluir agendamentos.
+ *
+ * @component
+ * @function CalendarioAgendamento
+ * @returns {JSX.Element} Tela de calendário de agendamentos.
+ */
 function CalendarioAgendamento() {
   const navigate = useNavigate();
 
@@ -32,12 +50,17 @@ function CalendarioAgendamento() {
   const [carregando, setCarregando] = useState(false);
   const [eventoSelecionado, setEventoSelecionado] = useState(null);
 
-  // Carrega os agendamentos assim que a tela abre.
+
   useEffect(() => {
     carregarAgendamentos();
   }, []);
 
-  // Busca os agendamentos e converte cada um em evento do calendario.
+/**
+ * Busca os agendamentos cadastrados e converte cada registro em evento do calendário.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarAgendamentos() {
     try {
       setCarregando(true);
@@ -68,7 +91,12 @@ function CalendarioAgendamento() {
     }
   }
 
-  // Monta o titulo curto exibido no evento do calendario.
+/**
+ * Monta o título exibido no evento do calendário.
+ *
+ * @param {Object} agendamento - Agendamento usado para montar o título.
+ * @returns {string} Título resumido do evento.
+ */
   function montarTituloEvento(agendamento) {
     const servico = agendamento.tipo_servico || agendamento.servico || 'Serviço';
     const cliente = agendamento.cliente?.nome || 'Cliente';
@@ -76,7 +104,12 @@ function CalendarioAgendamento() {
     return `${servico} - ${cliente}`;
   }
 
-  // Formata a data/hora para exibicao no modal.
+/**
+ * Formata uma data e hora para exibição no padrão brasileiro.
+ *
+ * @param {string|Date} data - Data que será formatada.
+ * @returns {string} Data e hora formatadas ou hífen.
+ */
   function formatarDataHora(data) {
     if (!data) return '-';
 
@@ -86,17 +119,31 @@ function CalendarioAgendamento() {
     });
   }
 
-  // Abre o modal com os detalhes do evento selecionado.
+/**
+ * Abre o modal de detalhes do agendamento selecionado.
+ *
+ * @param {Object} evento - Evento selecionado no calendário.
+ * @returns {void}
+ */
   function abrirDetalhes(evento) {
     setEventoSelecionado(evento);
   }
 
-  // Fecha o modal de detalhes.
+/**
+ * Fecha o modal de detalhes do agendamento.
+ *
+ * @returns {void}
+ */
   function fecharDetalhes() {
     setEventoSelecionado(null);
   }
 
-  // Leva o usuario para a tela de ordem de servico usando o agendamento atual.
+/**
+ * Redireciona o usuário para a tela de ordem de serviço
+ * utilizando os dados do agendamento selecionado.
+ *
+ * @returns {void}
+ */
   function gerarOrdemServico() {
     if (!eventoSelecionado?.resource) {
       toast.warning('Selecione um agendamento válido.');
@@ -119,7 +166,12 @@ function CalendarioAgendamento() {
     });
   }
 
-  // Remove o agendamento selecionado e atualiza o calendario.
+/**
+ * Exclui o agendamento selecionado e atualiza os eventos do calendário.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function excluirAgendamento() {
     try {
       if (!eventoSelecionado?.id) return;
@@ -139,8 +191,12 @@ function CalendarioAgendamento() {
       );
     }
   }
-
-  // Renderiza o modal de detalhes somente quando ha um evento selecionado.
+  
+/**
+ * Renderiza o modal de detalhes do agendamento quando houver um evento selecionado.
+ *
+ * @returns {JSX.Element|null} Modal de detalhes ou null.
+ */
   function renderModalDetalhes() {
     if (!eventoSelecionado) return null;
 

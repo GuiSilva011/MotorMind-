@@ -5,6 +5,12 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/tecnicoStyles/checklist.css';
 
+
+/**
+ * Lista de itens verificados durante a inspeção de entrada do veículo.
+ *
+ * @constant {string[]}
+ */
 const itensEntrada = [
   'Veículo tem documento',
   'Teste alternador',
@@ -38,6 +44,11 @@ const itensEntrada = [
   'Embreagem trepida/patina',
 ];
 
+/**
+ * Lista de itens verificados durante a etapa de diagnóstico.
+ *
+ * @constant {string[]}
+ */
 const itensDiagnostico = [
   'Alinhamento',
   'Fluido de freio',
@@ -70,6 +81,11 @@ const itensDiagnostico = [
   'Rolamentos das rodas',
 ];
 
+/**
+ * Estado inicial das fotos do veículo.
+ *
+ * @constant {Object}
+ */
 const fotosIniciais = {
   frente: null,
   traseira: null,
@@ -77,6 +93,15 @@ const fotosIniciais = {
   direita: null,
 };
 
+/**
+ * Cria um objeto de controle para os itens da checklist.
+ *
+ * Cada item recebe inicialmente o valor null, indicando que ainda
+ * não foi preenchido.
+ *
+ * @param {string[]} lista - Lista de itens da checklist.
+ * @returns {Object} Objeto contendo os itens e seus valores iniciais.
+ */
 function criarEstadoItens(lista) {
   return lista.reduce((acc, item) => {
     acc[item] = null;
@@ -84,7 +109,12 @@ function criarEstadoItens(lista) {
   }, {});
 }
 
-// Converte os itens em um formato simples para envio ao backend.
+/**
+ * Converte os itens da checklist para o formato enviado ao backend.
+ *
+ * @param {Object} itens - Objeto contendo o nome e o valor de cada item.
+ * @returns {Array<Object>} Lista de itens preparada para envio.
+ */
 function converterItensParaEnvio(itens) {
   return Object.entries(itens).map(([nome, valor]) => ({
     nome,
@@ -92,6 +122,14 @@ function converterItensParaEnvio(itens) {
   }));
 }
 
+/**
+ * Tela responsável pelo preenchimento da checklist técnica do veículo,
+ * incluindo inspeção de entrada, diagnóstico, observações e fotos.
+ *
+ * @component
+ * @function Checklist
+ * @returns {JSX.Element} Tela de preenchimento da checklist.
+ */
 function Checklist() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -107,7 +145,14 @@ function Checklist() {
   const [observacoesDiagnostico, setObservacoesDiagnostico] = useState('');
   const [fotos, setFotos] = useState(fotosIniciais);
 
-  // Calcula quantos itens foram preenchidos em cada etapa da checklist.
+/**
+ * Totais de itens preenchidos nas etapas de entrada e diagnóstico.
+ *
+ * @type {{
+ *   entradaPreenchidos: number,
+ *   diagnosticoPreenchidos: number
+ * }}
+ */
   const totais = useMemo(() => {
     const entradaPreenchidos = Object.values(entrada).filter(
       (valor) => valor !== null
@@ -123,7 +168,11 @@ function Checklist() {
     };
   }, [entrada, diagnostico]);
 
-  // Monta o nome exibido do veiculo selecionado.
+/**
+ * Monta o nome completo do veículo selecionado.
+ *
+ * @returns {string} Nome do veículo ou mensagem indicando ausência de seleção.
+ */
   function montarNomeVeiculo() {
     if (!veiculoSelecionado) return 'Nenhum veículo selecionado';
 
@@ -133,14 +182,27 @@ function Checklist() {
     return `${fabricante} ${modelo}`.trim() || 'Veículo sem descrição';
   }
 
-  // Faz o ciclo entre vazio, true e false ao clicar em um item.
+/**
+ * Retorna o próximo valor do ciclo de preenchimento de um item.
+ *
+ * O ciclo utilizado é: null, true, false e novamente null.
+ *
+ * @param {boolean|null} valorAtual - Valor atual do item.
+ * @returns {boolean|null} Próximo valor do ciclo.
+ */
   function obterProximoValor(valorAtual) {
     if (valorAtual === null) return true;
     if (valorAtual === true) return false;
     return null;
   }
 
-  // Alterna o estado de um item da inspeção ou do diagnóstico.
+/**
+ * Alterna o valor de um item da inspeção de entrada ou do diagnóstico.
+ *
+ * @param {string} tipo - Tipo da checklist: entrada ou diagnóstico.
+ * @param {string} item - Nome do item que será alterado.
+ * @returns {void}
+ */
   function alternarItem(tipo, item) {
     if (tipo === 'entrada') {
       setEntrada((prev) => ({
@@ -157,7 +219,13 @@ function Checklist() {
     }));
   }
 
-  // Registra uma imagem escolhida pelo usuario para o campo informado.
+/**
+ * Registra uma imagem selecionada e cria sua URL temporária de visualização.
+ *
+ * @param {string} campo - Campo da foto que será atualizado.
+ * @param {File} arquivo - Arquivo de imagem selecionado.
+ * @returns {void}
+ */
   function alterarFoto(campo, arquivo) {
     if (!arquivo) return;
 
@@ -172,7 +240,12 @@ function Checklist() {
     }));
   }
 
-  // Remove a foto selecionada e limpa a preview.
+/**
+ * Remove uma foto selecionada do estado da checklist.
+ *
+ * @param {string} campo - Campo da foto que será removido.
+ * @returns {void}
+ */
   function removerFoto(campo) {
     setFotos((prev) => ({
       ...prev,
@@ -180,7 +253,12 @@ function Checklist() {
     }));
   }
 
-  // Monta o formulario multipart e envia a checklist para a API.
+/**
+ * Monta o formulário multipart e envia a checklist para a API.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function salvarChecklist() {
     try {
       if (!veiculoSelecionado?.id) {
@@ -242,7 +320,12 @@ function Checklist() {
     }
   }
 
-  // Cancela a checklist e descarta os dados nao salvos.
+/**
+ * Cancela o preenchimento da checklist, limpa os dados temporários
+ * e retorna para a tela de checklists.
+ *
+ * @returns {void}
+ */
   function cancelarChecklist() {
     const confirmar = window.confirm(
       'Deseja cancelar esta checklist? As informações preenchidas serão perdidas.'
@@ -274,21 +357,37 @@ function Checklist() {
     });
   }
 
-  // Escolhe a classe CSS usada para cada valor possível do item.
+/**
+ * Retorna a classe CSS correspondente ao valor de um item.
+ *
+ * @param {boolean|null} valor - Valor atual do item.
+ * @returns {string} Classe CSS usada na apresentação do item.
+ */
   function obterClasseValor(valor) {
     if (valor === true) return 'checklist-status-ok';
     if (valor === false) return 'checklist-status-no';
     return '';
   }
 
-  // Converte o valor booleano em um simbolo visual.
+/**
+ * Converte o valor de um item em um símbolo visual.
+ *
+ * @param {boolean|null} valor - Valor atual do item.
+ * @returns {string} Símbolo de confirmação, reprovação ou string vazia.
+ */
   function obterTextoValor(valor) {
     if (valor === true) return '✓';
     if (valor === false) return 'X';
     return '';
   }
 
-  // Renderiza uma lista de itens alternaveis em forma de botoes.
+/**
+ * Renderiza os itens da checklist como botões alternáveis.
+ *
+ * @param {string[]} lista - Lista de itens que será renderizada.
+ * @param {string} tipo - Tipo da checklist: entrada ou diagnóstico.
+ * @returns {JSX.Element[]} Lista de elementos da checklist.
+ */
   function renderItens(lista, tipo) {
     const itens = tipo === 'entrada' ? entrada : diagnostico;
 
@@ -313,7 +412,14 @@ function Checklist() {
     });
   }
 
-  // Renderiza uma foto com preview ou o estado vazio.
+/**
+ * Renderiza o campo de foto com visualização da imagem ou estado vazio.
+ *
+ * @param {string} campo - Identificador do campo da foto.
+ * @param {string} titulo - Texto alternativo da imagem.
+ * @param {string} subtitulo - Texto exibido quando não houver foto.
+ * @returns {JSX.Element} Campo de seleção e visualização da foto.
+ */
   function renderFoto(campo, titulo, subtitulo) {
     const foto = fotos[campo];
 

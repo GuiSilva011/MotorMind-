@@ -1,6 +1,28 @@
 import prisma from '../config/prisma.js';
 
-// Cria um agendamento ligando cliente, veículo e serviço em uma data específica.
+/**
+ * Controlador responsável pelas operações de criação, consulta,
+ * atualização e exclusão de agendamentos.
+ *
+ * @module controllers/agendamentoController
+ */
+/**
+ * Cria um novo agendamento vinculando cliente, veículo e serviço.
+ *
+ * @async
+ * @function criarAgendamento
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {number|string} req.body.clienteId - Identificador do cliente.
+ * @param {number|string} req.body.veiculoId - Identificador do veículo.
+ * @param {string|Date} req.body.dataHora - Data e hora do agendamento.
+ * @param {string} [req.body.mecanico] - Nome do mecânico responsável.
+ * @param {string} [req.body.tipo_servico] - Tipo do serviço agendado.
+ * @param {string} req.body.servico - Descrição do serviço.
+ * @param {string} [req.body.status='AGENDADO'] - Status do agendamento.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta HTTP com o agendamento criado ou mensagem de erro.
+ */
 export async function criarAgendamento(req, res) {
   try {
     const {
@@ -42,7 +64,18 @@ export async function criarAgendamento(req, res) {
   }
 }
 
-// Lista todos os agendamentos com cliente e veículo para montar agenda/calendário.
+/**
+ * Lista todos os agendamentos cadastrados.
+ *
+ * Os registros são retornados com os dados do cliente e do veículo,
+ * ordenados pela data e hora em ordem crescente.
+ *
+ * @async
+ * @function listarAgendamentos
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta HTTP com a lista de agendamentos ou mensagem de erro.
+ */
 export async function listarAgendamentos(req, res) {
   try {
     const agendamentos = await prisma.agendamento.findMany({
@@ -62,7 +95,17 @@ export async function listarAgendamentos(req, res) {
   }
 }
 
-// Busca um agendamento único para detalhes ou edição.
+/**
+ * Busca um agendamento pelo identificador informado.
+ *
+ * @async
+ * @function buscarAgendamentoPorId
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do agendamento.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta HTTP com o agendamento encontrado ou mensagem de erro.
+ */
 export async function buscarAgendamentoPorId(req, res) {
   try {
     const { id } = req.params;
@@ -88,7 +131,27 @@ export async function buscarAgendamentoPorId(req, res) {
   }
 }
 
-// Atualiza os dados de um agendamento já existente.
+/**
+ * Atualiza os dados de um agendamento existente.
+ *
+ * Apenas os campos enviados no corpo da requisição são modificados.
+ *
+ * @async
+ * @function editarAgendamento
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do agendamento.
+ * @param {Object} req.body - Dados que serão atualizados.
+ * @param {number|string} [req.body.clienteId] - Identificador do cliente.
+ * @param {number|string} [req.body.veiculoId] - Identificador do veículo.
+ * @param {string|Date} [req.body.dataHora] - Nova data e hora do agendamento.
+ * @param {string|null} [req.body.mecanico] - Mecânico responsável.
+ * @param {string|null} [req.body.tipo_servico] - Tipo do serviço.
+ * @param {string} [req.body.servico] - Descrição do serviço.
+ * @param {string} [req.body.status] - Status do agendamento.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta HTTP com o agendamento atualizado ou mensagem de erro.
+ */
 export async function editarAgendamento(req, res) {
   try {
     const { id } = req.params;
@@ -129,7 +192,17 @@ export async function editarAgendamento(req, res) {
   }
 }
 
-// Exclui um agendamento pelo ID.
+/**
+ * Exclui um agendamento pelo identificador informado.
+ *
+ * @async
+ * @function deletarAgendamento
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do agendamento.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta HTTP com mensagem de sucesso ou erro.
+ */
 export async function deletarAgendamento(req, res) {
   try {
     const { id } = req.params;

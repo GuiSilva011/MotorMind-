@@ -1,6 +1,23 @@
 import prisma from '../config/prisma.js';
 
-// Lista os serviços cadastrados no catálogo.
+/**
+ * Controlador responsável pelas operações de listagem, busca,
+ * cadastro, atualização e exclusão de serviços do catálogo.
+ *
+ * @module controllers/servicoController
+ */
+
+/**
+ * Lista todos os serviços cadastrados no catálogo.
+ *
+ * Os registros são retornados em ordem alfabética pelo nome.
+ *
+ * @async
+ * @function listarServicos
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de serviços ou mensagem de erro.
+ */
 export async function listarServicos(req, res) {
   try {
     const servicos = await prisma.servicoCatalogo.findMany({
@@ -16,7 +33,19 @@ export async function listarServicos(req, res) {
   }
 }
 
-// Pesquisa serviços por nome, código ou categoria.
+/**
+ * Busca serviços pelo nome, código ou categoria.
+ *
+ * A pesquisa não diferencia letras maiúsculas e minúsculas.
+ *
+ * @async
+ * @function buscarServicoPorNome
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.query - Parâmetros enviados na URL.
+ * @param {string} req.query.nome - Termo utilizado na pesquisa.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com os serviços encontrados ou mensagem de erro.
+ */
 export async function buscarServicoPorNome(req, res) {
   try {
     const { nome } = req.query;
@@ -60,7 +89,23 @@ export async function buscarServicoPorNome(req, res) {
   }
 }
 
-// Cria um novo serviço no catálogo.
+/**
+ * Cria um novo serviço no catálogo.
+ *
+ * Valida os campos obrigatórios e impede a duplicidade
+ * de código ou nome.
+ *
+ * @async
+ * @function criarServico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {string} req.body.codigo - Código único do serviço.
+ * @param {string} req.body.nome - Nome do serviço.
+ * @param {string} [req.body.categoria] - Categoria do serviço.
+ * @param {number|string} [req.body.valorPadrao] - Valor padrão do serviço.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o serviço criado ou mensagem de erro.
+ */
 export async function criarServico(req, res) {
   try {
     const { codigo, nome, categoria, valorPadrao } = req.body;
@@ -103,7 +148,25 @@ export async function criarServico(req, res) {
   }
 }
 
-// Atualiza um serviço já cadastrado.
+/**
+ * Atualiza os dados de um serviço existente.
+ *
+ * Verifica se o serviço está cadastrado e impede a duplicidade
+ * de código ou nome em outros registros.
+ *
+ * @async
+ * @function editarServico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do serviço.
+ * @param {Object} req.body - Dados que serão atualizados.
+ * @param {string} [req.body.codigo] - Novo código do serviço.
+ * @param {string} [req.body.nome] - Novo nome do serviço.
+ * @param {string|null} [req.body.categoria] - Nova categoria do serviço.
+ * @param {number|string|null} [req.body.valorPadrao] - Novo valor padrão.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o serviço atualizado ou mensagem de erro.
+ */
 export async function editarServico(req, res) {
   try {
     const { id } = req.params;
@@ -164,7 +227,20 @@ export async function editarServico(req, res) {
   }
 }
 
-// Exclui um serviço do catálogo.
+/**
+ * Exclui um serviço do catálogo pelo identificador informado.
+ *
+ * A exclusão é impedida quando o serviço estiver vinculado
+ * a uma ordem de serviço.
+ *
+ * @async
+ * @function deletarServico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do serviço.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
+ */
 export async function deletarServico(req, res) {
   try {
     const { id } = req.params;

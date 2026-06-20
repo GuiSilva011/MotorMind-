@@ -5,9 +5,25 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/operadorStyles/ordemServico.css';
 
+/**
+ * Chave usada para armazenar o rascunho da ordem de serviço no localStorage.
+ *
+ * @constant {string}
+ */
 const OS_RASCUNHO_KEY = 'motormind_ordem_servico_rascunho';
+
+/**
+ * Identificador do aviso exibido ao encontrar um rascunho de ordem de serviço.
+ *
+ * @constant {string}
+ */
 const OS_RASCUNHO_TOAST_ID = 'motormind_ordem_servico_rascunho_toast';
 
+/**
+ * Estrutura inicial usada para criar e limpar uma ordem de serviço.
+ *
+ * @constant {Object}
+ */
 const ordemInicial = {
   id: null,
   codigo: '',
@@ -48,6 +64,11 @@ const ordemInicial = {
   pecasAvulsas: [],
 };
 
+/**
+ * Estado inicial dos filtros usados na pesquisa de ordens de serviço antigas.
+ *
+ * @constant {Object}
+ */
 const filtrosBuscaOSInicial = {
   termo: '',
   status: '',
@@ -55,6 +76,16 @@ const filtrosBuscaOSInicial = {
   dataFim: '',
 };
 
+/**
+ * Tela principal de ordem de serviço do operador.
+ *
+ * Permite criar, editar, consultar, imprimir e enviar ordens de serviço,
+ * além de gerenciar diagnósticos, serviços, peças, fornecedores e cotações.
+ *
+ * @component
+ * @function OrdemServico
+ * @returns {JSX.Element} Tela de gerenciamento de ordens de serviço.
+ */
 function OrdemServico() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -108,7 +139,10 @@ function OrdemServico() {
   const podeEditar = modoTela === 'nova' || modoTela === 'edicao';
   const estaVisualizando = modoTela === 'visualizacao';
 
-  // Evita inicialização duplicada da tela em re-renderizações.
+  /**
+   * Inicializa a tela apenas uma vez e evita execuções duplicadas durante
+   * re-renderizações do componente.
+   */
   useEffect(() => {
     if (iniciouTelaRef.current) return;
 
@@ -116,7 +150,10 @@ function OrdemServico() {
     iniciarTelaOrdemServico();
   }, []);
 
-  // Salva automaticamente o rascunho da OS enquanto houver progresso de preenchimento.
+  /**
+   * Salva automaticamente o rascunho da ordem de serviço enquanto houver
+   * progresso de preenchimento e a tela estiver em modo editável.
+   */
   useEffect(() => {
     if (!rascunhoCarregado) return;
     if (modoTela === 'visualizacao') return;
@@ -142,7 +179,12 @@ function OrdemServico() {
     localStorage.setItem(OS_RASCUNHO_KEY, JSON.stringify(dados));
   }, [ordem, modoTela, busca, fornecedoresCotacao, rascunhoCarregado]);
 
-  // Inicializa catálogos, tenta recuperar rascunho e define código para nova OS.
+  /**
+   * Inicializa catálogos, tenta recuperar rascunho e define código para nova OS.
+   *
+   * @async
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function iniciarTelaOrdemServico() {
     try {
       await carregarCatalogos();
@@ -241,7 +283,12 @@ function OrdemServico() {
     }
   }
 
-  // Busca e aplica o próximo código sequencial de OS na tela atual.
+  /**
+   * Busca e aplica o próximo código sequencial de OS na tela atual.
+   *
+   * @async
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function carregarProximoCodigo() {
     try {
       setCarregandoCodigo(true);
@@ -260,7 +307,12 @@ function OrdemServico() {
     }
   }
 
-  // Retorna o próximo código para montar ordens criadas por atalhos (ex.: agendamento).
+  /**
+   * Retorna o próximo código para montar ordens criadas por atalhos (ex.: agendamento).
+   *
+   * @async
+   * @returns {Promise<string>} Código da próxima ordem de serviço.
+   */
   async function buscarProximoCodigoOrdem() {
     try {
       setCarregandoCodigo(true);
@@ -277,22 +329,43 @@ function OrdemServico() {
     }
   }
 
-  // Normaliza o fabricante quando o cadastro usa nomes diferentes para a marca.
+  /**
+   * Normaliza o fabricante quando o cadastro usa nomes diferentes para a marca.
+   *
+   * @param {Object} veiculo - Veículo utilizado na operação.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterFabricanteVeiculo(veiculo) {
     return veiculo.fabricante || veiculo.marca || veiculo.modeloMarca || '';
   }
 
-  // Normaliza o modelo do veículo para usar na tela e na cotação.
+  /**
+   * Normaliza o modelo do veículo para usar na tela e na cotação.
+   *
+   * @param {Object} veiculo - Veículo utilizado na operação.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterModeloVeiculo(veiculo) {
     return veiculo.modelo || veiculo.nomeModelo || '';
   }
 
-  // Normaliza a quilometragem exibida no cabeçalho da OS.
+  /**
+   * Normaliza a quilometragem exibida no cabeçalho da OS.
+   *
+   * @param {Object} veiculo - Veículo utilizado na operação.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterKmVeiculo(veiculo) {
     return veiculo.km || veiculo.quilometragem || veiculo.kilometragem || '';
   }
 
-  // Busca campos do cliente mesmo quando o backend retorna nomes em padrões diferentes.
+  /**
+   * Busca campos do cliente mesmo quando o backend retorna nomes em padrões diferentes.
+   *
+   * @param {Object} cliente - Cliente utilizado na operação.
+   * @param {string[]} campos - Nomes de campos alternativos que serão consultados.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterCampoCliente(cliente = {}, ...campos) {
     for (const campo of campos) {
       const valor = cliente?.[campo];
@@ -305,7 +378,12 @@ function OrdemServico() {
     return '';
   }
 
-  // Normaliza os dados completos do cliente para uso no WhatsApp e na impressão da OS.
+  /**
+   * Normaliza os dados completos do cliente para uso no WhatsApp e na impressão da OS.
+   *
+   * @param {Object} cliente - Cliente utilizado na operação.
+   * @returns {Object} Objeto resultante da operação.
+   */
   function mapearClienteParaTela(cliente = {}) {
     return {
       id: obterCampoCliente(cliente, 'id'),
@@ -331,7 +409,10 @@ function OrdemServico() {
     };
   }
 
-  // Monta o endereço do cliente para impressão.
+  /**
+   * Monta o endereço do cliente para impressão.
+   * @returns {string} Texto resultante da operação.
+   */
   function montarEnderecoCliente() {
     return [
       ordem.cliente.endereco,
@@ -344,7 +425,17 @@ function OrdemServico() {
       .join(', ');
   }
 
-  // Prepara uma nova OS a partir de um agendamento já existente.
+  /**
+   * Prepara uma nova OS a partir de um agendamento já existente.
+   *
+   * @async
+   *
+   * @param {Object} dados - Dados utilizados para iniciar a ordem de serviço.
+   * @param {Object} dados.agendamento - Agendamento de origem.
+   * @param {Object} dados.cliente - Cliente vinculado ao agendamento.
+   * @param {Object} dados.veiculo - Veículo vinculado ao agendamento.
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function prepararOrdemAPartirDoAgendamento({
     agendamento,
     cliente,
@@ -404,7 +495,12 @@ function OrdemServico() {
     toast.success('Nova ordem de serviço iniciada a partir do agendamento.');
   }
 
-  // Carrega catálogos auxiliares usados nos selects e buscas da tela.
+  /**
+   * Carrega catálogos auxiliares usados nos selects e buscas da tela.
+   *
+   * @async
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function carregarCatalogos() {
     try {
       setCarregandoCatalogos(true);
@@ -452,7 +548,12 @@ function OrdemServico() {
     }
   }
 
-  // Busca cliente ou veículo para preencher a OS a partir de texto livre.
+  /**
+   * Busca cliente ou veículo para preencher a OS a partir de texto livre.
+   *
+   * @async
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function buscarClienteOuVeiculo() {
     try {
       const termo = busca.trim();
@@ -492,7 +593,12 @@ function OrdemServico() {
     }
   }
 
-  // Copia o veículo selecionado para o estado principal da ordem.
+  /**
+   * Copia o veículo selecionado para o estado principal da ordem.
+   *
+   * @param {Object} veiculo - Veículo utilizado na operação.
+   * @returns {void} Não possui retorno.
+   */
   function selecionarVeiculo(veiculo) {
     const cliente = veiculo.cliente;
 
@@ -519,7 +625,12 @@ function OrdemServico() {
     setClienteNaoEncontrado(false);
   }
 
-  // Formata ano de fabricação/modelo para exibição compacta.
+  /**
+   * Formata ano de fabricação/modelo para exibição compacta.
+   *
+   * @param {Object} veiculo - Veículo utilizado na operação.
+   * @returns {string} Texto resultante da operação.
+   */
   function montarAnoVeiculo(veiculo) {
     if (veiculo.ano_fabricacao && veiculo.ano_modelo) {
       return `${veiculo.ano_fabricacao}/${veiculo.ano_modelo}`;
@@ -528,7 +639,13 @@ function OrdemServico() {
     return veiculo.ano_modelo || veiculo.ano_fabricacao || '';
   }
 
-  // Atualiza campos simples da ordem enquanto a tela está editável.
+  /**
+   * Atualiza campos simples da ordem enquanto a tela está editável.
+   *
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {*} valor - Novo valor do campo.
+   * @returns {void} Não possui retorno.
+   */
   function atualizarCampoOrdem(campo, valor) {
     if (!podeEditar) return;
 
@@ -538,12 +655,22 @@ function OrdemServico() {
     }));
   }
 
-  // Gera o identificador hierárquico dos diagnósticos.
+  /**
+   * Gera o identificador hierárquico dos diagnósticos.
+   *
+   * @param {number} index - Índice do elemento.
+   * @returns {string} Texto resultante da operação.
+   */
   function letraDiagnostico(index) {
     return String.fromCharCode(65 + index);
   }
 
-  // Formata valores monetários para o padrão brasileiro.
+  /**
+   * Formata valores monetários para o padrão brasileiro.
+   *
+   * @param {*} valor - Novo valor do campo.
+   * @returns {string} Texto resultante da operação.
+   */
   function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString('pt-BR', {
       style: 'currency',
@@ -551,14 +678,22 @@ function OrdemServico() {
     });
   }
 
-  // Formata datas simples para a apresentação da OS.
+  /**
+   * Formata datas simples para a apresentação da OS.
+   *
+   * @param {string} data - Data que será formatada.
+   * @returns {string} Texto resultante da operação.
+   */
   function formatarData(data) {
     if (!data) return '-';
 
     return new Date(data).toLocaleDateString('pt-BR');
   }
 
-  // Cria um novo diagnóstico vazio para a estrutura da ordem.
+  /**
+   * Cria um novo diagnóstico vazio para a estrutura da ordem.
+   * @returns {Object} Objeto resultante da operação.
+   */
   function criarDiagnostico() {
     return {
       id: crypto.randomUUID(),
@@ -569,7 +704,10 @@ function OrdemServico() {
     };
   }
 
-  // Cria um novo serviço vazio para ser encaixado em um diagnóstico.
+  /**
+   * Cria um novo serviço vazio para ser encaixado em um diagnóstico.
+   * @returns {Object} Objeto resultante da operação.
+   */
   function criarServico() {
     return {
       id: crypto.randomUUID(),
@@ -584,7 +722,10 @@ function OrdemServico() {
     };
   }
 
-  // Cria uma nova peça vazia para os serviços ou peças avulsas.
+  /**
+   * Cria uma nova peça vazia para os serviços ou peças avulsas.
+   * @returns {Object} Objeto resultante da operação.
+   */
   function criarPeca() {
     return {
       id: crypto.randomUUID(),
@@ -599,7 +740,10 @@ function OrdemServico() {
     };
   }
 
-  // Adiciona um novo diagnóstico à estrutura da OS.
+  /**
+   * Adiciona um novo diagnóstico à estrutura da OS.
+   * @returns {void} Não possui retorno.
+   */
   function adicionarDiagnostico() {
     if (!podeEditar) return;
 
@@ -609,7 +753,14 @@ function OrdemServico() {
     }));
   }
 
-  // Atualiza um campo do diagnóstico selecionado.
+  /**
+   * Atualiza um campo do diagnóstico selecionado.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {*} valor - Novo valor do campo.
+   * @returns {void} Não possui retorno.
+   */
   function atualizarDiagnostico(diagnosticoId, campo, valor) {
     if (!podeEditar) return;
 
@@ -623,7 +774,13 @@ function OrdemServico() {
     }));
   }
 
-  // Aplica um diagnóstico vindo do catálogo à linha selecionada.
+  /**
+   * Aplica um diagnóstico vindo do catálogo à linha selecionada.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} diagnosticoCatalogoId - Identificador do diagnóstico no catálogo.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarDiagnosticoCatalogo(diagnosticoId, diagnosticoCatalogoId) {
     const diagnosticoCatalogo = catalogos.diagnosticos.find(
       (item) => Number(item.id) === Number(diagnosticoCatalogoId)
@@ -643,7 +800,12 @@ function OrdemServico() {
     atualizarDiagnostico(diagnosticoId, 'descricao', diagnosticoCatalogo.nome);
   }
 
-  // Remove um diagnóstico da OS.
+  /**
+   * Remove um diagnóstico da OS.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @returns {void} Não possui retorno.
+   */
   function removerDiagnostico(diagnosticoId) {
     if (!podeEditar) return;
 
@@ -655,7 +817,12 @@ function OrdemServico() {
     }));
   }
 
-  // Adiciona um novo serviço dentro de um diagnóstico.
+  /**
+   * Adiciona um novo serviço dentro de um diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @returns {void} Não possui retorno.
+   */
   function adicionarServicoAoDiagnostico(diagnosticoId) {
     if (!podeEditar) return;
 
@@ -672,7 +839,10 @@ function OrdemServico() {
     }));
   }
 
-  // Adiciona um serviço que fica fora da hierarquia de diagnóstico.
+  /**
+   * Adiciona um serviço que fica fora da hierarquia de diagnóstico.
+   * @returns {void} Não possui retorno.
+   */
   function adicionarServicoSemDiagnostico() {
     if (!podeEditar) return;
 
@@ -685,7 +855,15 @@ function OrdemServico() {
     }));
   }
 
-  // Atualiza um campo de um serviço vinculado a diagnóstico.
+  /**
+   * Atualiza um campo de um serviço vinculado a diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {*} valor - Novo valor do campo.
+   * @returns {void} Não possui retorno.
+   */
   function atualizarServicoDiagnostico(
     diagnosticoId,
     servicoId,
@@ -711,7 +889,14 @@ function OrdemServico() {
     }));
   }
 
-  // Atualiza um campo de um serviço sem diagnóstico.
+  /**
+   * Atualiza um campo de um serviço sem diagnóstico.
+   *
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {*} valor - Novo valor do campo.
+   * @returns {void} Não possui retorno.
+   */
   function atualizarServicoSemDiagnostico(servicoId, campo, valor) {
     if (!podeEditar) return;
 
@@ -723,7 +908,14 @@ function OrdemServico() {
     }));
   }
 
-  // Aplica um item do catálogo ao serviço de dentro de um diagnóstico.
+  /**
+   * Aplica um item do catálogo ao serviço de dentro de um diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} servicoCatalogoId - Identificador do serviço no catálogo.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarServicoCatalogo(diagnosticoId, servicoId, servicoCatalogoId) {
     const servicoCatalogo = catalogos.servicos.find(
       (item) => Number(item.id) === Number(servicoCatalogoId)
@@ -775,7 +967,13 @@ function OrdemServico() {
     );
   }
 
-  // Aplica um item do catálogo ao serviço que não pertence a diagnóstico.
+  /**
+   * Aplica um item do catálogo ao serviço que não pertence a diagnóstico.
+   *
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} servicoCatalogoId - Identificador do serviço no catálogo.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarServicoCatalogoSemDiagnostico(
     servicoId,
     servicoCatalogoId
@@ -820,7 +1018,13 @@ function OrdemServico() {
     );
   }
 
-  // Remove um serviço da árvore de um diagnóstico.
+  /**
+   * Remove um serviço da árvore de um diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @returns {void} Não possui retorno.
+   */
   function removerServicoDiagnostico(diagnosticoId, servicoId) {
     if (!podeEditar) return;
 
@@ -839,7 +1043,12 @@ function OrdemServico() {
     }));
   }
 
-  // Remove um serviço que não está ligado a diagnóstico.
+  /**
+   * Remove um serviço que não está ligado a diagnóstico.
+   *
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @returns {void} Não possui retorno.
+   */
   function removerServicoSemDiagnostico(servicoId) {
     if (!podeEditar) return;
 
@@ -851,7 +1060,13 @@ function OrdemServico() {
     }));
   }
 
-  // Adiciona uma nova peça dentro de um serviço de diagnóstico.
+  /**
+   * Adiciona uma nova peça dentro de um serviço de diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @returns {void} Não possui retorno.
+   */
   function adicionarPecaDiagnostico(diagnosticoId, servicoId) {
     if (!podeEditar) return;
 
@@ -875,7 +1090,12 @@ function OrdemServico() {
     }));
   }
 
-  // Adiciona uma peça em um serviço fora de diagnóstico.
+  /**
+   * Adiciona uma peça em um serviço fora de diagnóstico.
+   *
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @returns {void} Não possui retorno.
+   */
   function adicionarPecaSemDiagnostico(servicoId) {
     if (!podeEditar) return;
 
@@ -892,7 +1112,10 @@ function OrdemServico() {
     }));
   }
 
-  // Adiciona uma peça avulsa, sem vínculo com serviço.
+  /**
+   * Adiciona uma peça avulsa, sem vínculo com serviço.
+   * @returns {void} Não possui retorno.
+   */
   function adicionarPecaAvulsa() {
     if (!podeEditar) return;
 
@@ -902,7 +1125,16 @@ function OrdemServico() {
     }));
   }
 
-  // Atualiza um campo de uma peça dentro do diagnóstico.
+  /**
+   * Atualiza um campo de uma peça dentro do diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {*} valor - Novo valor do campo.
+   * @returns {void} Não possui retorno.
+   */
   function atualizarPecaDiagnostico(
     diagnosticoId,
     servicoId,
@@ -934,7 +1166,15 @@ function OrdemServico() {
     }));
   }
 
-  // Atualiza um campo de uma peça fora do diagnóstico.
+  /**
+   * Atualiza um campo de uma peça fora do diagnóstico.
+   *
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {*} valor - Novo valor do campo.
+   * @returns {void} Não possui retorno.
+   */
   function atualizarPecaSemDiagnostico(servicoId, pecaId, campo, valor) {
     if (!podeEditar) return;
 
@@ -953,7 +1193,14 @@ function OrdemServico() {
     }));
   }
 
-  // Atualiza um campo de uma peça avulsa.
+  /**
+   * Atualiza um campo de uma peça avulsa.
+   *
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {*} valor - Novo valor do campo.
+   * @returns {void} Não possui retorno.
+   */
   function atualizarPecaAvulsa(pecaId, campo, valor) {
     if (!podeEditar) return;
 
@@ -965,7 +1212,15 @@ function OrdemServico() {
     }));
   }
 
-  // Vincula um item do catálogo de peças a uma peça de diagnóstico.
+  /**
+   * Vincula um item do catálogo de peças a uma peça de diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string|number} pecaCatalogoId - Identificador da peça no catálogo.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarPecaCatalogo(
     diagnosticoId,
     servicoId,
@@ -1012,7 +1267,14 @@ function OrdemServico() {
     );
   }
 
-  // Vincula um item do catálogo de peças a uma peça sem diagnóstico.
+  /**
+   * Vincula um item do catálogo de peças a uma peça sem diagnóstico.
+   *
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string|number} pecaCatalogoId - Identificador da peça no catálogo.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarPecaCatalogoSemDiagnostico(
     servicoId,
     pecaId,
@@ -1049,7 +1311,13 @@ function OrdemServico() {
     );
   }
 
-  // Vincula um item do catálogo de peças a uma peça avulsa.
+  /**
+   * Vincula um item do catálogo de peças a uma peça avulsa.
+   *
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string|number} pecaCatalogoId - Identificador da peça no catálogo.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarPecaCatalogoAvulsa(pecaId, pecaCatalogoId) {
     const pecaCatalogo = catalogos.pecas.find(
       (item) => Number(item.id) === Number(pecaCatalogoId)
@@ -1065,7 +1333,15 @@ function OrdemServico() {
     atualizarPecaAvulsa(pecaId, 'descricao', pecaCatalogo.nome || '');
   }
 
-  // Define o fornecedor de uma peça dentro do diagnóstico.
+  /**
+   * Define o fornecedor de uma peça dentro do diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string|number} fornecedorId - Identificador do fornecedor.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarFornecedorPecaDiagnostico(
     diagnosticoId,
     servicoId,
@@ -1093,7 +1369,14 @@ function OrdemServico() {
     );
   }
 
-  // Define o fornecedor de uma peça fora do diagnóstico.
+  /**
+   * Define o fornecedor de uma peça fora do diagnóstico.
+   *
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string|number} fornecedorId - Identificador do fornecedor.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarFornecedorPecaSemDiagnostico(servicoId, pecaId, fornecedorId) {
     const fornecedor = catalogos.fornecedores.find(
       (item) => Number(item.id) === Number(fornecedorId)
@@ -1114,7 +1397,13 @@ function OrdemServico() {
     );
   }
 
-  // Define o fornecedor de uma peça avulsa.
+  /**
+   * Define o fornecedor de uma peça avulsa.
+   *
+   * @param {string|number} pecaId - Identificador da peça.
+   * @param {string|number} fornecedorId - Identificador do fornecedor.
+   * @returns {void} Não possui retorno.
+   */
   function aplicarFornecedorPecaAvulsa(pecaId, fornecedorId) {
     const fornecedor = catalogos.fornecedores.find(
       (item) => Number(item.id) === Number(fornecedorId)
@@ -1124,7 +1413,14 @@ function OrdemServico() {
     atualizarPecaAvulsa(pecaId, 'fornecedorNome', fornecedor?.nome || '');
   }
 
-  // Remove uma peça vinculada a diagnóstico.
+  /**
+   * Remove uma peça vinculada a diagnóstico.
+   *
+   * @param {string|number} diagnosticoId - Identificador do diagnóstico.
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} pecaId - Identificador da peça.
+   * @returns {void} Não possui retorno.
+   */
   function removerPecaDiagnostico(diagnosticoId, servicoId, pecaId) {
     if (!podeEditar) return;
 
@@ -1148,7 +1444,13 @@ function OrdemServico() {
     }));
   }
 
-  // Remove uma peça de um serviço sem diagnóstico.
+  /**
+   * Remove uma peça de um serviço sem diagnóstico.
+   *
+   * @param {string|number} servicoId - Identificador do serviço.
+   * @param {string|number} pecaId - Identificador da peça.
+   * @returns {void} Não possui retorno.
+   */
   function removerPecaSemDiagnostico(servicoId, pecaId) {
     if (!podeEditar) return;
 
@@ -1165,7 +1467,12 @@ function OrdemServico() {
     }));
   }
 
-  // Remove uma peça avulsa.
+  /**
+   * Remove uma peça avulsa.
+   *
+   * @param {string|number} pecaId - Identificador da peça.
+   * @returns {void} Não possui retorno.
+   */
   function removerPecaAvulsa(pecaId) {
     if (!podeEditar) return;
 
@@ -1175,7 +1482,17 @@ function OrdemServico() {
     }));
   }
 
-  // Abre o modal genérico para escolher diagnóstico, serviço ou peça do catálogo.
+  /**
+   * Abre o modal genérico para escolher diagnóstico, serviço ou peça do catálogo.
+   *
+   * @param {Object} configuracao - Configuração do modal de catálogo.
+   * @param {string} configuracao.tipo - Tipo de item que será selecionado.
+   * @param {string|number|null} configuracao.diagnosticoId - Identificador do diagnóstico relacionado.
+   * @param {string|number|null} configuracao.servicoId - Identificador do serviço relacionado.
+   * @param {string|number|null} configuracao.pecaId - Identificador da peça relacionada.
+   * @param {string} configuracao.origem - Origem da solicitação de seleção.
+   * @returns {void} Não possui retorno.
+   */
   function abrirModalCatalogo({
     tipo,
     diagnosticoId = null,
@@ -1197,7 +1514,10 @@ function OrdemServico() {
     });
   }
 
-  // Fecha o modal de catálogo e limpa a busca interna.
+  /**
+   * Fecha o modal de catálogo e limpa a busca interna.
+   * @returns {void} Não possui retorno.
+   */
   function fecharModalCatalogo() {
     setBuscaCatalogo('');
 
@@ -1211,7 +1531,10 @@ function OrdemServico() {
     });
   }
 
-  // Retorna a lista base conforme o tipo de cadastro selecionado.
+  /**
+   * Retorna a lista base conforme o tipo de cadastro selecionado.
+   * @returns {Object[]} Lista resultante da operação.
+   */
   function obterItensBaseModalCatalogo() {
     if (modalCatalogo.tipo === 'diagnostico') return catalogos.diagnosticos;
     if (modalCatalogo.tipo === 'servico') return catalogos.servicos;
@@ -1220,7 +1543,10 @@ function OrdemServico() {
     return [];
   }
 
-  // Filtra os itens do catálogo pelo texto digitado no modal.
+  /**
+   * Filtra os itens do catálogo pelo texto digitado no modal.
+   * @returns {Object[]} Lista resultante da operação.
+   */
   function obterItensModalCatalogo() {
     const itens = obterItensBaseModalCatalogo();
     const termo = buscaCatalogo.trim().toLowerCase();
@@ -1248,12 +1574,22 @@ function OrdemServico() {
     });
   }
 
-  // Identifica o grupo de uma peça para organizar a tabela.
+  /**
+   * Identifica o grupo de uma peça para organizar a tabela.
+   *
+   * @param {Object} peca - Peça utilizada na operação.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterGrupoPeca(peca) {
     return peca.grupo?.trim() || 'Sem grupo';
   }
 
-  // Agrupa as peças por grupo para exibição em blocos.
+  /**
+   * Agrupa as peças por grupo para exibição em blocos.
+   *
+   * @param {Object[]} pecas - Lista de peças que será processada.
+   * @returns {Object} Objeto resultante da operação.
+   */
   function agruparPecasPorGrupo(pecas) {
     return pecas.reduce((grupos, peca) => {
       const grupo = obterGrupoPeca(peca);
@@ -1268,7 +1604,10 @@ function OrdemServico() {
     }, {});
   }
 
-  // Define o título do modal de acordo com o tipo de cadastro.
+  /**
+   * Define o título do modal de acordo com o tipo de cadastro.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterTituloModalCatalogo() {
     if (modalCatalogo.tipo === 'diagnostico') return 'Selecionar diagnóstico';
     if (modalCatalogo.tipo === 'servico') return 'Selecionar serviço';
@@ -1277,7 +1616,10 @@ function OrdemServico() {
     return 'Selecionar cadastro';
   }
 
-  // Define a mensagem de vazio do modal de catálogo.
+  /**
+   * Define a mensagem de vazio do modal de catálogo.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterTextoVazioModalCatalogo() {
     if (modalCatalogo.tipo === 'diagnostico') {
       return 'Nenhum diagnóstico encontrado.';
@@ -1294,7 +1636,10 @@ function OrdemServico() {
     return 'Nenhum cadastro encontrado.';
   }
 
-  // Escolhe a rota para abrir o cadastro em uma nova aba.
+  /**
+   * Escolhe a rota para abrir o cadastro em uma nova aba.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterRotaCadastroCatalogo() {
     if (modalCatalogo.tipo === 'diagnostico') {
       return '/diagnosticos/cadastro';
@@ -1311,7 +1656,10 @@ function OrdemServico() {
     return '/';
   }
 
-  // Define o texto do botão de cadastro conforme o tipo selecionado.
+  /**
+   * Define o texto do botão de cadastro conforme o tipo selecionado.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterTextoBotaoCadastroCatalogo() {
     if (modalCatalogo.tipo === 'diagnostico') {
       return '+ Cadastrar novo diagnóstico';
@@ -1328,20 +1676,33 @@ function OrdemServico() {
     return '+ Cadastrar novo';
   }
 
-  // Abre a tela de cadastro do catálogo em uma nova aba do navegador.
+  /**
+   * Abre a tela de cadastro do catálogo em uma nova aba do navegador.
+   * @returns {void} Não possui retorno.
+   */
   function abrirCadastroCatalogoNovaAba() {
     const rota = obterRotaCadastroCatalogo();
 
     window.open(rota, '_blank', 'noopener,noreferrer');
   }
 
-  // Recarrega catálogos e sinaliza sucesso no feedback.
+  /**
+   * Recarrega catálogos e sinaliza sucesso no feedback.
+   *
+   * @async
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function atualizarListaCatalogoModal() {
     await carregarCatalogos();
     toast.success('Lista atualizada.');
   }
 
-  // Aplica o item selecionado no modal ao ponto da OS correspondente.
+  /**
+   * Aplica o item selecionado no modal ao ponto da OS correspondente.
+   *
+   * @param {Object} item - Item selecionado no catálogo.
+   * @returns {void} Não possui retorno.
+   */
   function selecionarItemCatalogo(item) {
     if (modalCatalogo.tipo === 'diagnostico') {
       aplicarDiagnosticoCatalogo(modalCatalogo.diagnosticoId, item.id);
@@ -1386,7 +1747,12 @@ function OrdemServico() {
     }
   }
 
-  // Gera uma linha resumida do catálogo com detalhes contextuais.
+  /**
+   * Gera uma linha resumida do catálogo com detalhes contextuais.
+   *
+   * @param {Object} item - Item selecionado no catálogo.
+   * @returns {string} Texto resultante da operação.
+   */
   function obterDetalheCatalogo(item) {
     if (modalCatalogo.tipo === 'diagnostico') {
       return item.descricao || '-';
@@ -1414,7 +1780,12 @@ function OrdemServico() {
     return '-';
   }
 
-  // Renderiza a tabela reutilizável para os modais de seleção.
+  /**
+   * Renderiza a tabela reutilizável para os modais de seleção.
+   *
+   * @param {Object[]} itens - Itens que serão processados ou exibidos.
+   * @returns {JSX.Element} Elemento JSX renderizado.
+   */
   function renderTabelaCatalogo(itens) {
     return (
       <div className="os-catalog-table-wrap">
@@ -1452,7 +1823,10 @@ function OrdemServico() {
     );
   }
 
-  // Renderiza o conteúdo do modal de catálogo conforme o tipo pesquisado.
+  /**
+   * Renderiza o conteúdo do modal de catálogo conforme o tipo pesquisado.
+   * @returns {JSX.Element} Elemento JSX renderizado.
+   */
   function renderConteudoModalCatalogo() {
     const itens = obterItensModalCatalogo();
 
@@ -1496,18 +1870,30 @@ function OrdemServico() {
     );
   }
 
-  // Abre a busca de ordens de servico antigas.
+  /**
+   * Abre a busca de ordens de servico antigas.
+   * @returns {void} Não possui retorno.
+   */
   function abrirModalBuscarOS() {
     setModalBuscarOSAberto(true);
     buscarOrdensAntigas();
   }
 
-  // Fecha a modal de busca de OS antigas.
+  /**
+   * Fecha a modal de busca de OS antigas.
+   * @returns {void} Não possui retorno.
+   */
   function fecharModalBuscarOS() {
     setModalBuscarOSAberto(false);
   }
 
-  // Atualiza um filtro da busca de ordens antigas.
+  /**
+   * Atualiza um filtro da busca de ordens antigas.
+   *
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {*} valor - Novo valor do campo.
+   * @returns {void} Não possui retorno.
+   */
   function atualizarFiltroBuscaOS(campo, valor) {
     setFiltrosBuscaOS((prev) => ({
       ...prev,
@@ -1515,7 +1901,12 @@ function OrdemServico() {
     }));
   }
 
-  // Consulta ordens antigas usando os filtros informados.
+  /**
+   * Consulta ordens antigas usando os filtros informados.
+   *
+   * @async
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function buscarOrdensAntigas() {
     try {
       setBuscandoOrdens(true);
@@ -1551,13 +1942,23 @@ function OrdemServico() {
     }
   }
 
-  // Limpa os filtros e o resultado da busca de OS.
+  /**
+   * Limpa os filtros e o resultado da busca de OS.
+   * @returns {void} Não possui retorno.
+   */
   function limparFiltrosBuscaOS() {
     setFiltrosBuscaOS(filtrosBuscaOSInicial);
     setOrdensEncontradas([]);
   }
 
-  // Abre uma ordem já existente para visualizacao ou edicao.
+  /**
+   * Abre uma ordem já existente para visualizacao ou edicao.
+   *
+   * @async
+   *
+   * @param {string|number} ordemId - Identificador da ordem de serviço.
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function abrirOrdemExistente(ordemId) {
     try {
       setCarregandoOrdem(true);
@@ -1584,7 +1985,12 @@ function OrdemServico() {
     }
   }
 
-  // Reconstrói o estado da tela a partir de uma OS carregada da API.
+  /**
+   * Reconstrói o estado da tela a partir de uma OS carregada da API.
+   *
+   * @param {Object} os - Ordem de serviço retornada pela API.
+   * @returns {void} Não possui retorno.
+   */
   function carregarOrdemNaTela(os) {
     const veiculo = os.veiculo || {};
     const cliente = veiculo.cliente || os.cliente || {};
@@ -1636,7 +2042,12 @@ function OrdemServico() {
     );
   }
 
-  // Converte um serviço da API para o formato usado pela tela.
+  /**
+   * Converte um serviço da API para o formato usado pela tela.
+   *
+   * @param {Object} servico - Serviço utilizado na operação.
+   * @returns {Object} Objeto resultante da operação.
+   */
   function mapearServicoParaTela(servico) {
     return {
       id: servico.id,
@@ -1651,7 +2062,12 @@ function OrdemServico() {
     };
   }
 
-  // Converte uma peça da API para o formato usado pela tela.
+  /**
+   * Converte uma peça da API para o formato usado pela tela.
+   *
+   * @param {Object} peca - Peça utilizada na operação.
+   * @returns {Object} Objeto resultante da operação.
+   */
   function mapearPecaParaTela(peca) {
     return {
       id: peca.id,
@@ -1666,7 +2082,10 @@ function OrdemServico() {
     };
   }
 
-  // Inicia uma nova OS, descartando o rascunho atual com confirmação.
+  /**
+   * Inicia uma nova OS, descartando o rascunho atual com confirmação.
+   * @returns {void} Não possui retorno.
+   */
   function novaOrdemServico() {
     toast.warning(
       ({ closeToast }) => (
@@ -1710,12 +2129,19 @@ function OrdemServico() {
     );
   }
 
-  // Muda a tela atual para o modo de edicao da OS carregada.
+  /**
+   * Muda a tela atual para o modo de edicao da OS carregada.
+   * @returns {void} Não possui retorno.
+   */
   function editarOrdemAtual() {
     setModoTela('edicao');
   }
 
-  // Calcula os totais de servicos e peças usados no rodape da OS.
+  /**
+   * Calcula os totais de servicos e peças usados no rodape da OS.
+   *
+   * @type {Object}
+   */
   const totais = useMemo(() => {
     const todosServicos = [
       ...ordem.servicosSemDiagnostico,
@@ -1758,7 +2184,11 @@ function OrdemServico() {
     };
   }, [ordem]);
 
-  // Prepara a lista de peças para montar a cotação por WhatsApp.
+  /**
+   * Prepara a lista de peças para montar a cotação por WhatsApp.
+   *
+   * @type {Object[]}
+   */
   const pecasParaCotacao = useMemo(() => {
     const pecasComDiagnostico = ordem.diagnosticos.flatMap(
       (diagnostico, diagnosticoIndex) => {
@@ -1803,7 +2233,10 @@ function OrdemServico() {
     return [...pecasComDiagnostico, ...pecasSemDiagnostico, ...pecasAvulsas];
   }, [ordem]);
 
-  // Monta o payload final da ordem para criação ou atualização.
+  /**
+   * Monta o payload final da ordem para criação ou atualização.
+   * @returns {Object} Objeto resultante da operação.
+   */
   function montarPayloadOrdemServico() {
     return {
       codigo: ordem.codigo,
@@ -1881,7 +2314,12 @@ function OrdemServico() {
     };
   }
 
-  // Salva a OS no backend respeitando o modo atual da tela.
+  /**
+   * Salva a OS no backend respeitando o modo atual da tela.
+   *
+   * @async
+   * @returns {Promise<void>} Promessa concluída após a operação.
+   */
   async function salvarOrdemServico() {
     try {
       if (!ordem.codigo) {
@@ -1924,19 +2362,30 @@ function OrdemServico() {
     }
   }
 
-  // Volta para a tela anterior do navegador.
+  /**
+   * Volta para a tela anterior do navegador.
+   * @returns {void} Não possui retorno.
+   */
   function voltarPagina() {
     navigate(-1);
   }
 
-  // Marca ou desmarca um fornecedor para a cotação.
+  /**
+   * Marca ou desmarca um fornecedor para a cotação.
+   *
+   * @param {string|number} id - Identificador do registro.
+   * @returns {void} Não possui retorno.
+   */
   function alternarFornecedorCotacao(id) {
     setFornecedoresCotacao((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   }
 
-  // Retorna apenas peças com descrição e quantidade válidas para cotação.
+  /**
+   * Retorna apenas peças com descrição e quantidade válidas para cotação.
+   * @returns {Object[]} Lista resultante da operação.
+   */
   function obterPecasValidasParaCotacao() {
     return pecasParaCotacao.filter((peca) => {
       const descricao = String(peca.descricao || '').trim();
@@ -1946,7 +2395,12 @@ function OrdemServico() {
     });
   }
 
-  // Normaliza o telefone para abrir a URL do WhatsApp.
+  /**
+   * Normaliza o telefone para abrir a URL do WhatsApp.
+   *
+   * @param {string} telefone - Número de telefone que será normalizado.
+   * @returns {string} Texto resultante da operação.
+   */
   function normalizarTelefoneWhatsApp(telefone) {
     if (!telefone) return '';
 
@@ -1961,14 +2415,22 @@ function OrdemServico() {
     return `55${apenasNumeros}`;
   }
 
-  // Monta o nome do veículo para a mensagem de cotação.
+  /**
+   * Monta o nome do veículo para a mensagem de cotação.
+   * @returns {string} Texto resultante da operação.
+   */
   function montarNomeVeiculoCotacao() {
     return [ordem.veiculo.marca, ordem.veiculo.modelo, ordem.veiculo.ano]
       .filter(Boolean)
       .join(' ');
   }
 
-    // Gera a mensagem de texto usada no envio da cotação.
+    /**
+     * Gera a mensagem de texto usada no envio da cotação.
+     *
+     * @param {Object} fornecedor - Fornecedor utilizado na operação.
+     * @returns {string} Texto resultante da operação.
+     */
   function montarMensagemCotacao(fornecedor) {
     const pecasValidas = obterPecasValidasParaCotacao();
 
@@ -2000,7 +2462,10 @@ ${linhasPecas}
 Pode me enviar os valores e disponibilidade, por favor?`;
   }
 
-  // Abre as cotações no WhatsApp dos fornecedores selecionados.
+  /**
+   * Abre as cotações no WhatsApp dos fornecedores selecionados.
+   * @returns {void} Não possui retorno.
+   */
   function enviarCotacao() {
     const fornecedoresSelecionados = catalogos.fornecedores.filter(
       (fornecedor) => fornecedoresCotacao.includes(fornecedor.id)
@@ -2057,7 +2522,10 @@ Pode me enviar os valores e disponibilidade, por favor?`;
     }
   }
 
-  // Retorna todos os serviços da OS para montar mensagens e impressão.
+  /**
+   * Retorna todos os serviços da OS para montar mensagens e impressão.
+   * @returns {Object[]} Lista resultante da operação.
+   */
   function obterTodosServicosOS() {
     return [
       ...ordem.diagnosticos.flatMap((diagnostico, diagnosticoIndex) =>
@@ -2075,7 +2543,10 @@ Pode me enviar os valores e disponibilidade, por favor?`;
     ];
   }
 
-  // Retorna todas as peças da OS para montar mensagens e impressão.
+  /**
+   * Retorna todas as peças da OS para montar mensagens e impressão.
+   * @returns {Object[]} Lista resultante da operação.
+   */
   function obterTodasPecasOS() {
     const pecasDosServicos = obterTodosServicosOS().flatMap((servico) =>
       (servico.pecas || []).map((peca, pecaIndex) => ({
@@ -2096,7 +2567,10 @@ Pode me enviar os valores e disponibilidade, por favor?`;
     return [...pecasDosServicos, ...pecasAvulsas];
   }
 
-  // Monta a mensagem que será enviada para o cliente pelo WhatsApp.
+  /**
+   * Monta a mensagem que será enviada para o cliente pelo WhatsApp.
+   * @returns {string} Texto resultante da operação.
+   */
   function montarMensagemOSCliente() {
     const diagnosticos = ordem.diagnosticos.filter((diagnostico) =>
       String(diagnostico.descricao || '').trim()
@@ -2185,7 +2659,10 @@ ${ordem.observacoes || '-'}`;
 
   }
 
-  // Abre o WhatsApp do cliente com o resumo da OS preenchido.
+  /**
+   * Abre o WhatsApp do cliente com o resumo da OS preenchido.
+   * @returns {void} Não possui retorno.
+   */
   function enviarOSParaCliente() {
     if (!ordem.cliente.nome || !ordem.veiculo.id) {
       toast.warning('Selecione um cliente/veículo antes de enviar a OS.');
@@ -2211,7 +2688,10 @@ ${ordem.observacoes || '-'}`;
     toast.success('OS aberta no WhatsApp do cliente.');
   }
 
-  // Abre a janela de impressão do navegador para imprimir a OS.
+  /**
+   * Abre a janela de impressão do navegador para imprimir a OS.
+   * @returns {void} Não possui retorno.
+   */
   function imprimirOrdemServico() {
   if (!ordem.cliente.nome || !ordem.veiculo.placa) {
     toast.warning('Selecione um cliente/veículo antes de imprimir a OS.');
@@ -2850,7 +3330,12 @@ ${ordem.observacoes || '-'}`;
   janelaImpressao.document.close();
 }
 
-  // Renderiza uma linha de peça reutilizada nos blocos da OS.
+  /**
+   * Renderiza uma linha de peça reutilizada nos blocos da OS.
+   *
+   * @param {Object} configuracao - Dados usados para renderizar a linha de peça.
+   * @returns {JSX.Element} Elemento JSX renderizado.
+   */
   function renderPeca({
     peca,
     pecaIndex,

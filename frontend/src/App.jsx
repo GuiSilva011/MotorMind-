@@ -28,9 +28,15 @@ import VisualizarFuncionarios from './pages/admin/visualizarFuncionarios';
 import Relatorios from './pages/admin/relatorios';
 
 /**
- * Define as rotas principais da aplicação e aplica proteção por perfil.
+ * Componente principal responsável por configurar as rotas da aplicação.
  *
- * @returns {JSX.Element}
+ * Define as rotas públicas e protegidas dos perfis de administrador,
+ * operador e técnico, além dos redirecionamentos de rotas antigas e
+ * da configuração global das notificações.
+ *
+ * @component
+ * @function App
+ * @returns {JSX.Element} Estrutura principal de rotas e notificações da aplicação.
  */
 function App() {
   return (

@@ -3,6 +3,12 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/operadorStyles/servicos.css';
 
+/**
+ * Gera um código automático com prefixo, data atual e número aleatório.
+ *
+ * @param {string} prefixo - Prefixo usado no código.
+ * @returns {string} Código gerado.
+ */
 function gerarCodigo(prefixo) {
   const data = new Date();
 
@@ -14,6 +20,11 @@ function gerarCodigo(prefixo) {
   return `${prefixo}-${ano}${mes}${dia}-${aleatorio}`;
 }
 
+/**
+ * Cria o estado inicial do formulário de serviço.
+ *
+ * @returns {Object} Dados iniciais do serviço.
+ */
 function criarServicoInicial() {
   return {
     codigo: gerarCodigo('SERV'),
@@ -23,6 +34,13 @@ function criarServicoInicial() {
   };
 }
 
+/**
+ * Tela responsável pelo cadastro, edição, listagem e exclusão de serviços.
+ *
+ * @component
+ * @function Servicos
+ * @returns {JSX.Element} Tela de manutenção de serviços.
+ */
 function Servicos() {
   const [servicos, setServicos] = useState([]);
   const [form, setForm] = useState(criarServicoInicial());
@@ -36,7 +54,12 @@ function Servicos() {
     carregarServicos();
   }, []);
 
-  // Busca todos os servicos da API.
+/**
+ * Busca todos os serviços cadastrados na API.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarServicos() {
     try {
       setCarregando(true);
@@ -52,7 +75,13 @@ function Servicos() {
     }
   }
 
-  // Atualiza um campo do formulario.
+/**
+ * Atualiza um campo específico do formulário de serviço.
+ *
+ * @param {string} campo - Nome do campo que será atualizado.
+ * @param {string|number} valor - Novo valor do campo.
+ * @returns {void}
+ */
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -60,13 +89,21 @@ function Servicos() {
     }));
   }
 
-  // Volta o formulario ao estado inicial.
+/**
+ * Limpa o formulário e encerra o modo de edição.
+ *
+ * @returns {void}
+ */
   function limparFormulario() {
     setForm(criarServicoInicial());
     setEditandoId(null);
   }
-
-  // Coloca os dados de um servico no formulario para edicao.
+/**
+ * Preenche o formulário com os dados de um serviço para edição.
+ *
+ * @param {Object} servico - Serviço selecionado na tabela.
+ * @returns {void}
+ */
   function editarServico(servico) {
     setEditandoId(servico.id);
 
@@ -83,7 +120,13 @@ function Servicos() {
     });
   }
 
-  // Salva o servico novo ou atualizado.
+/**
+ * Valida os dados e envia o serviço para cadastro ou atualização na API.
+ *
+ * @async
+ * @param {Object} event - Evento de envio do formulário.
+ * @returns {Promise<void>}
+ */
   async function salvarServico(event) {
     event.preventDefault();
 
@@ -130,7 +173,13 @@ function Servicos() {
     }
   }
 
-  // Remove um servico apos confirmacao.
+/**
+ * Exclui um serviço após confirmação do usuário.
+ *
+ * @async
+ * @param {number} id - Identificador do serviço.
+ * @returns {Promise<void>}
+ */
   async function excluirServico(id) {
     const confirmar = window.confirm('Deseja realmente excluir este serviço?');
 
@@ -152,7 +201,12 @@ function Servicos() {
     }
   }
 
-  // Formata o valor padrao para exibicao em reais.
+ /**
+ * Formata um valor numérico para moeda brasileira.
+ *
+ * @param {number|string|null|undefined} valor - Valor que será formatado.
+ * @returns {string} Valor formatado em reais ou hífen.
+ */
   function formatarMoeda(valor) {
     if (valor === null || valor === undefined || valor === '') {
       return '-';
@@ -164,7 +218,11 @@ function Servicos() {
     });
   }
 
-  // Filtra os servicos por codigo, nome ou categoria.
+/**
+ * Lista de serviços filtrada por código, nome ou categoria.
+ *
+ * @type {Array<Object>}
+ */
   const servicosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 

@@ -1,18 +1,44 @@
 import prisma from '../config/prisma.js';
 
-// Garante que apenas perfis permitidos possam ser usados no cadastro.
+/**
+ * Controlador responsável pelas operações de cadastro, listagem,
+ * consulta, atualização e exclusão de funcionários.
+ *
+ * @module controllers/funcionarioController
+ */
+
+/**
+ * Verifica se o perfil informado é permitido para funcionários.
+ *
+ * @function validarRole
+ * @param {string} role - Perfil que será validado.
+ * @returns {boolean} Indica se o perfil é OPERADOR ou TECNICO.
+ */
 function validarRole(role) {
   return ['OPERADOR', 'TECNICO'].includes(role);
 }
 
-// Normaliza datas opcionais que chegam do frontend.
+/**
+ * Converte uma data opcional para uma instância de Date.
+ *
+ * @function converterData
+ * @param {string|Date|null|undefined} data - Data que será convertida.
+ * @returns {Date|null} Data convertida ou null quando não informada.
+ */
 function converterData(data) {
   if (!data) return null;
 
   return new Date(data);
 }
-
-// Monta o select usado para trazer funcionário e usuário juntos.
+/**
+ * Monta a configuração de seleção usada nas consultas de funcionários.
+ *
+ * Inclui os dados do funcionário e os dados básicos
+ * do usuário relacionado.
+ *
+ * @function montarSelectFuncionario
+ * @returns {Object} Objeto de seleção utilizado pelo Prisma.
+ */
 function montarSelectFuncionario() {
   return {
     id: true,
@@ -44,7 +70,36 @@ function montarSelectFuncionario() {
   };
 }
 
-// Cria o usuário e o registro de funcionário dentro da mesma transação.
+/**
+ * Cria um usuário e um funcionário dentro da mesma transação.
+ *
+ * Valida os campos obrigatórios, o perfil permitido e impede
+ * a duplicidade de e-mail ou CPF.
+ *
+ * @async
+ * @function criarFuncionario
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {string} req.body.Nome - Nome do funcionário.
+ * @param {string} req.body.Email - E-mail usado para acesso ao sistema.
+ * @param {string} req.body.Senha - Senha do usuário.
+ * @param {string} req.body.Role - Perfil do usuário.
+ * @param {string} [req.body.Cpf] - CPF do funcionário.
+ * @param {string} [req.body.Rg] - RG do funcionário.
+ * @param {string|Date} [req.body.DataNascimento] - Data de nascimento.
+ * @param {string} [req.body.Celular] - Celular do funcionário.
+ * @param {string} [req.body.Ctps] - Número da carteira de trabalho.
+ * @param {string} [req.body.Cep] - CEP do funcionário.
+ * @param {string} [req.body.Endereco] - Endereço do funcionário.
+ * @param {string} [req.body.Numero] - Número do endereço.
+ * @param {string} [req.body.Uf] - Unidade federativa.
+ * @param {string} [req.body.Bairro] - Bairro do funcionário.
+ * @param {string} [req.body.Cidade] - Cidade do funcionário.
+ * @param {string} [req.body.Complemento] - Complemento do endereço.
+ * @param {string|Date} [req.body.DataAdmissao] - Data de admissão.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o funcionário criado ou mensagem de erro.
+ */
 export async function criarFuncionario(req, res) {
   try {
     const {
@@ -154,7 +209,18 @@ export async function criarFuncionario(req, res) {
   }
 }
 
-// Lista os funcionários ligados aos perfis OPERADOR e TECNICO.
+/**
+ * Lista todos os funcionários vinculados aos perfis
+ * de operador e técnico.
+ *
+ * Os registros são retornados do mais recente para o mais antigo.
+ *
+ * @async
+ * @function listarFuncionarios
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de funcionários ou mensagem de erro.
+ */
 export async function listarFuncionarios(req, res) {
   try {
     const funcionarios = await prisma.funcionario.findMany({
@@ -181,8 +247,19 @@ export async function listarFuncionarios(req, res) {
     });
   }
 }
-
-// Busca um funcionário específico pelo ID.
+/**
+ * Busca um funcionário pelo identificador informado.
+ *
+ * A resposta inclui os dados do usuário relacionado.
+ *
+ * @async
+ * @function buscarFuncionarioPorId
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do funcionário.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o funcionário encontrado ou mensagem de erro.
+ */
 export async function buscarFuncionarioPorId(req, res) {
   try {
     const { id } = req.params;
@@ -211,7 +288,38 @@ export async function buscarFuncionarioPorId(req, res) {
   }
 }
 
-// Atualiza dados do usuário e do funcionário de forma sincronizada.
+/**
+ * Atualiza os dados do funcionário e do usuário associado.
+ *
+ * A operação é executada em uma transação e valida possíveis
+ * duplicidades de e-mail e CPF.
+ *
+ * @async
+ * @function atualizarFuncionario
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do funcionário.
+ * @param {Object} req.body - Dados que serão atualizados.
+ * @param {string} [req.body.Nome] - Nome do funcionário.
+ * @param {string} [req.body.Email] - E-mail do usuário.
+ * @param {string} [req.body.Senha] - Senha do usuário.
+ * @param {string} [req.body.Role] - Perfil do usuário.
+ * @param {string|null} [req.body.Cpf] - CPF do funcionário.
+ * @param {string|null} [req.body.Rg] - RG do funcionário.
+ * @param {string|Date|null} [req.body.DataNascimento] - Data de nascimento.
+ * @param {string|null} [req.body.Celular] - Celular do funcionário.
+ * @param {string|null} [req.body.Ctps] - Carteira de trabalho.
+ * @param {string|null} [req.body.Cep] - CEP do funcionário.
+ * @param {string|null} [req.body.Endereco] - Endereço do funcionário.
+ * @param {string|null} [req.body.Numero] - Número do endereço.
+ * @param {string|null} [req.body.Uf] - Unidade federativa.
+ * @param {string|null} [req.body.Bairro] - Bairro do funcionário.
+ * @param {string|null} [req.body.Cidade] - Cidade do funcionário.
+ * @param {string|null} [req.body.Complemento] - Complemento do endereço.
+ * @param {string|Date|null} [req.body.DataAdmissao] - Data de admissão.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o funcionário atualizado ou mensagem de erro.
+ */
 export async function atualizarFuncionario(req, res) {
   try {
     const { id } = req.params;
@@ -370,7 +478,19 @@ export async function atualizarFuncionario(req, res) {
   }
 }
 
-// Remove o funcionário e o usuário associado a ele.
+/**
+ * Exclui um funcionário e o usuário associado a ele.
+ *
+ * Antes da exclusão, verifica se o funcionário está cadastrado.
+ *
+ * @async
+ * @function deletarFuncionario
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do funcionário.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
+ */
 export async function deletarFuncionario(req, res) {
   try {
     const { id } = req.params;

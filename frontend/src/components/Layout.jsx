@@ -2,10 +2,12 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
 /**
- * Estrutura base das páginas internas, combinando menu lateral, topo e conteúdo.
+ * Layout principal utilizado nas páginas do sistema.
  *
- * @param {{ children: import('react').ReactNode }} props - Conteúdo principal da página.
- * @returns {JSX.Element}
+ * @function Layout
+ * @param {Object} props - Propriedades do componente.
+ * @param {*} props.children - Conteúdo principal da página.
+ * @returns {Object} Estrutura visual da página.
  */
 function Layout({ children }) {
   return (

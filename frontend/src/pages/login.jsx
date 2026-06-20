@@ -4,6 +4,13 @@ import { toast } from 'react-toastify';
 import api from '../services/api';
 import '../styles/login.css';
 
+
+/**
+ * Lista de usuários de teste disponíveis para preenchimento rápido
+ * das credenciais de acesso.
+ *
+ * @constant {Array<Object>}
+ */
 const usuariosTeste = [
   {
     perfil: 'Admin',
@@ -22,6 +29,14 @@ const usuariosTeste = [
   },
 ];
 
+/**
+ * Tela responsável pela autenticação dos usuários no sistema,
+ * com suporte a credenciais manuais e atalhos para usuários de teste.
+ *
+ * @component
+ * @function Login
+ * @returns {JSX.Element} Tela de login do sistema.
+ */
 function Login() {
   const navigate = useNavigate();
 
@@ -32,6 +47,13 @@ function Login() {
 
   const [carregando, setCarregando] = useState(false);
 
+/**
+ * Atualiza um campo específico do formulário de login.
+ *
+ * @param {string} campo - Nome do campo que será atualizado.
+ * @param {string} valor - Novo valor do campo.
+ * @returns {void}
+ */
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -39,6 +61,13 @@ function Login() {
     }));
   }
 
+/**
+ * Preenche o formulário com as credenciais de um usuário de teste.
+ *
+ * @param {string} email - E-mail do usuário.
+ * @param {string} senha - Senha do usuário.
+ * @returns {void}
+ */
   function preencherUsuario(email, senha) {
     setForm({
       Email: email,
@@ -46,6 +75,12 @@ function Login() {
     });
   }
 
+/**
+ * Retorna a rota inicial correspondente ao perfil do usuário autenticado.
+ *
+ * @param {string} role - Perfil de acesso do usuário.
+ * @returns {string} Rota inicial do perfil ou rota de login.
+ */
   function obterRotaInicialPorRole(role) {
     if (role === 'TECNICO') return '/tecnico/painel';
     if (role === 'ADMIN') return '/admin/relatorios';
@@ -54,6 +89,14 @@ function Login() {
     return '/login';
   }
 
+/**
+ * Valida as credenciais, realiza a autenticação na API
+ * e redireciona o usuário para o painel correspondente ao seu perfil.
+ *
+ * @async
+ * @param {Object} event - Evento de envio do formulário.
+ * @returns {Promise<void>}
+ */
   async function entrar(event) {
     event.preventDefault();
 

@@ -1,6 +1,23 @@
 import prisma from '../config/prisma.js'
 
-// Lista todos os fornecedores em ordem alfabética.
+/**
+ * Controlador responsável pelas operações de listagem, busca,
+ * cadastro, atualização e exclusão de fornecedores.
+ *
+ * @module controllers/fornecedorController
+ */
+
+/**
+ * Lista todos os fornecedores cadastrados.
+ *
+ * Os registros são retornados em ordem alfabética pelo nome.
+ *
+ * @async
+ * @function listarFornecedores
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de fornecedores ou mensagem de erro.
+ */
 export async function listarFornecedores(req, res) {
   try {
     const fornecedores = await prisma.fornecedor.findMany({
@@ -16,7 +33,19 @@ export async function listarFornecedores(req, res) {
   }
 }
 
-// Busca fornecedores por nome, código, CNPJ ou cidade.
+/**
+ * Busca fornecedores pelo nome, código, CNPJ ou cidade.
+ *
+ * A pesquisa não diferencia letras maiúsculas e minúsculas.
+ *
+ * @async
+ * @function buscarFornecedorPorNome
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.query - Parâmetros enviados na URL.
+ * @param {string} req.query.nome - Termo utilizado na pesquisa.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com os fornecedores encontrados ou mensagem de erro.
+ */
 export async function buscarFornecedorPorNome(req, res) {
   try {
     const { nome } = req.query
@@ -66,7 +95,36 @@ export async function buscarFornecedorPorNome(req, res) {
   }
 }
 
-// Cadastra um fornecedor novo validando os campos obrigatórios.
+/**
+ * Cria um novo fornecedor no sistema.
+ *
+ * Valida os campos obrigatórios, exige pelo menos um contato
+ * e impede a duplicidade de código ou CNPJ.
+ *
+ * @async
+ * @function criarFornecedor
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {string} req.body.codigo - Código único do fornecedor.
+ * @param {string} req.body.nome - Nome do fornecedor.
+ * @param {string} req.body.cnpj - CNPJ do fornecedor.
+ * @param {string} [req.body.email] - E-mail do fornecedor.
+ * @param {string} [req.body.telefone] - Telefone fixo do fornecedor.
+ * @param {string} [req.body.celular] - Celular ou WhatsApp do fornecedor.
+ * @param {string} [req.body.inscricao] - Inscrição estadual ou municipal.
+ * @param {string} [req.body.cep] - CEP do fornecedor.
+ * @param {string} [req.body.endereco] - Endereço do fornecedor.
+ * @param {string} [req.body.numero] - Número do endereço.
+ * @param {string} [req.body.uf] - Unidade federativa.
+ * @param {string} [req.body.bairro] - Bairro do fornecedor.
+ * @param {string} [req.body.cidade] - Cidade do fornecedor.
+ * @param {string} [req.body.complemento] - Complemento do endereço.
+ * @param {boolean} [req.body.fornecePecas=true] - Indica se fornece peças.
+ * @param {boolean} [req.body.forneceServicos=false] - Indica se fornece serviços.
+ * @param {string} [req.body.observacoes] - Observações adicionais.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o fornecedor criado ou mensagem de erro.
+ */
 export async function criarFornecedor(req, res) {
   try {
     const {
@@ -155,7 +213,38 @@ export async function criarFornecedor(req, res) {
   }
 }
 
-// Atualiza os dados do fornecedor selecionado.
+/**
+ * Atualiza os dados de um fornecedor existente.
+ *
+ * Verifica se o fornecedor está cadastrado e impede a duplicidade
+ * de código ou CNPJ em outros registros.
+ *
+ * @async
+ * @function editarFornecedor
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do fornecedor.
+ * @param {Object} req.body - Dados que serão atualizados.
+ * @param {string} [req.body.codigo] - Código do fornecedor.
+ * @param {string} [req.body.nome] - Nome do fornecedor.
+ * @param {string|null} [req.body.cnpj] - CNPJ do fornecedor.
+ * @param {string|null} [req.body.email] - E-mail do fornecedor.
+ * @param {string|null} [req.body.telefone] - Telefone do fornecedor.
+ * @param {string|null} [req.body.celular] - Celular do fornecedor.
+ * @param {string|null} [req.body.inscricao] - Inscrição estadual ou municipal.
+ * @param {string|null} [req.body.cep] - CEP do fornecedor.
+ * @param {string|null} [req.body.endereco] - Endereço do fornecedor.
+ * @param {string|null} [req.body.numero] - Número do endereço.
+ * @param {string|null} [req.body.uf] - Unidade federativa.
+ * @param {string|null} [req.body.bairro] - Bairro do fornecedor.
+ * @param {string|null} [req.body.cidade] - Cidade do fornecedor.
+ * @param {string|null} [req.body.complemento] - Complemento do endereço.
+ * @param {boolean} [req.body.fornecePecas] - Indica se fornece peças.
+ * @param {boolean} [req.body.forneceServicos] - Indica se fornece serviços.
+ * @param {string|null} [req.body.observacoes] - Observações adicionais.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o fornecedor atualizado ou mensagem de erro.
+ */
 export async function editarFornecedor(req, res) {
   try {
     const { id } = req.params
@@ -242,7 +331,19 @@ export async function editarFornecedor(req, res) {
   }
 }
 
-// Exclui um fornecedor depois de confirmar que ele existe.
+/**
+ * Exclui um fornecedor pelo identificador informado.
+ *
+ * Antes da exclusão, verifica se o fornecedor está cadastrado.
+ *
+ * @async
+ * @function deletarFornecedor
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do fornecedor.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
+ */
 export async function deletarFornecedor(req, res) {
   try {
     const { id } = req.params

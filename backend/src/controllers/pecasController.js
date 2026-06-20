@@ -1,6 +1,24 @@
 import prisma from '../config/prisma.js';
 
-// Lista as peças cadastradas no catálogo.
+/**
+ * Controlador responsável pelas operações de listagem, busca,
+ * cadastro, atualização e exclusão de peças do catálogo.
+ *
+ * @module controllers/pecaController
+ */
+
+
+/**
+ * Lista todas as peças cadastradas no catálogo.
+ *
+ * Os registros são retornados em ordem alfabética pelo nome.
+ *
+ * @async
+ * @function listarPecas
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de peças ou mensagem de erro.
+ */
 export async function listarPecas(req, res) {
   try {
     const pecas = await prisma.pecaCatalogo.findMany({
@@ -16,7 +34,19 @@ export async function listarPecas(req, res) {
   }
 }
 
-// Faz busca textual por peça usando nome, código, marca, aplicação ou grupo.
+/**
+ * Busca peças por nome, código, marca, aplicação ou grupo.
+ *
+ * A pesquisa não diferencia letras maiúsculas e minúsculas.
+ *
+ * @async
+ * @function buscarPecaPorNome
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.query - Parâmetros enviados na URL.
+ * @param {string} req.query.nome - Termo utilizado na pesquisa.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com as peças encontradas ou mensagem de erro.
+ */
 export async function buscarPecaPorNome(req, res) {
   try {
     const { nome } = req.query;
@@ -72,7 +102,25 @@ export async function buscarPecaPorNome(req, res) {
   }
 }
 
-// Cria uma peça nova no catálogo.
+/**
+ * Cria uma nova peça no catálogo.
+ *
+ * Valida os campos obrigatórios e impede a duplicidade
+ * de código ou nome.
+ *
+ * @async
+ * @function criarPeca
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {string} req.body.codigo - Código único da peça.
+ * @param {string} req.body.nome - Nome da peça.
+ * @param {string} [req.body.marca] - Marca da peça.
+ * @param {string} [req.body.aplicacao] - Aplicação da peça.
+ * @param {string} [req.body.grupo] - Grupo da peça.
+ * @param {string} [req.body.unidade='UN'] - Unidade de medida da peça.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a peça criada ou mensagem de erro.
+ */
 export async function criarPeca(req, res) {
   try {
     const { codigo, nome, marca, aplicacao, grupo, unidade } = req.body;
@@ -111,7 +159,27 @@ export async function criarPeca(req, res) {
   }
 }
 
-// Atualiza os dados da peça sem duplicar código ou nome.
+/**
+ * Atualiza os dados de uma peça existente.
+ *
+ * Verifica se a peça está cadastrada e impede a duplicidade
+ * de código ou nome em outros registros.
+ *
+ * @async
+ * @function editarPeca
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador da peça.
+ * @param {Object} req.body - Dados que serão atualizados.
+ * @param {string} [req.body.codigo] - Novo código da peça.
+ * @param {string} [req.body.nome] - Novo nome da peça.
+ * @param {string|null} [req.body.marca] - Nova marca da peça.
+ * @param {string|null} [req.body.aplicacao] - Nova aplicação da peça.
+ * @param {string|null} [req.body.grupo] - Novo grupo da peça.
+ * @param {string} [req.body.unidade] - Nova unidade de medida.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a peça atualizada ou mensagem de erro.
+ */
 export async function editarPeca(req, res) {
   try {
     const { id } = req.params;
@@ -167,7 +235,20 @@ export async function editarPeca(req, res) {
   }
 }
 
-// Remove uma peça do catálogo.
+/**
+ * Exclui uma peça do catálogo pelo identificador informado.
+ *
+ * A exclusão é impedida quando a peça estiver vinculada
+ * a uma ordem de serviço.
+ *
+ * @async
+ * @function deletarPeca
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador da peça.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
+ */
 export async function deletarPeca(req, res) {
   try {
     const { id } = req.params;

@@ -4,6 +4,12 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/adminStyles/visualizarFuncionarios.css';
 
+
+/**
+ * Estado inicial usado no modal de edição de funcionários.
+ *
+ * @constant {Object}
+ */
 const funcionarioInicial = {
   id: null,
   usuarioId: null,
@@ -25,6 +31,13 @@ const funcionarioInicial = {
   DataAdmissao: '',
 };
 
+/**
+ * Tela responsável por visualizar, pesquisar, editar e excluir funcionários.
+ *
+ * @component
+ * @function VisualizarFuncionarios
+ * @returns {JSX.Element} Tela de gerenciamento de funcionários.
+ */
 function VisualizarFuncionarios() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [busca, setBusca] = useState('');
@@ -38,7 +51,12 @@ function VisualizarFuncionarios() {
     carregarFuncionarios();
   }, []);
 
-  // Busca funcionarios e usuarios vinculados na API.
+/**
+ * Busca a lista de funcionários e seus usuários vinculados na API.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarFuncionarios() {
     try {
       setCarregando(true);
@@ -59,21 +77,36 @@ function VisualizarFuncionarios() {
     }
   }
 
-  // Formata data para exibir em um input do tipo date.
+/**
+ * Formata uma data para o padrão aceito por inputs do tipo date.
+ *
+ * @param {string|Date} data - Data que será formatada.
+ * @returns {string} Data no formato yyyy-mm-dd ou string vazia.
+ */
   function formatarDataParaInput(data) {
     if (!data) return '';
 
     return new Date(data).toISOString().split('T')[0];
   }
 
-  // Formata data para exibicao amigavel na tela.
+/**
+ * Formata uma data para exibição amigável na tela.
+ *
+ * @param {string|Date} data - Data que será formatada.
+ * @returns {string} Data formatada no padrão brasileiro ou hífen.
+ */
   function formatarDataTela(data) {
     if (!data) return '-';
 
     return new Date(data).toLocaleDateString('pt-BR');
   }
 
-  // Monta um objeto pronto para abrir no modal de edicao.
+/**
+ * Normaliza os dados de um funcionário para preencher o formulário de edição.
+ *
+ * @param {Object} funcionario - Funcionário selecionado na listagem.
+ * @returns {Object} Dados do funcionário preparados para edição.
+ */
   function montarFuncionarioParaEditar(funcionario) {
     return {
       id: funcionario.id,
@@ -97,19 +130,34 @@ function VisualizarFuncionarios() {
     };
   }
 
-  // Abre o modal de edicao com os dados do funcionario escolhido.
+/**
+ * Abre o modal de edição com os dados do funcionário selecionado.
+ *
+ * @param {Object} funcionario - Funcionário que será editado.
+ * @returns {void}
+ */
   function abrirEdicao(funcionario) {
     setFuncionarioEditando(montarFuncionarioParaEditar(funcionario));
     setEditando(true);
   }
 
-  // Fecha o modal e limpa o formulario temporario.
+/**
+ * Fecha o modal de edição e limpa os dados temporários do funcionário.
+ *
+ * @returns {void}
+ */
   function fecharEdicao() {
     setEditando(false);
     setFuncionarioEditando(funcionarioInicial);
   }
 
-  // Atualiza um campo do funcionario em edicao.
+/**
+ * Atualiza um campo específico do formulário de edição.
+ *
+ * @param {string} campo - Nome do campo que será atualizado.
+ * @param {*} valor - Novo valor do campo.
+ * @returns {void}
+ */
   function atualizarCampo(campo, valor) {
     setFuncionarioEditando((prev) => ({
       ...prev,
@@ -117,7 +165,11 @@ function VisualizarFuncionarios() {
     }));
   }
 
-  // Valida as informacoes basicas antes de salvar a edicao.
+/**
+ * Valida as informações obrigatórias antes de salvar a edição.
+ *
+ * @returns {boolean} Retorna true se os dados estiverem válidos.
+ */
   function validarEdicao() {
     if (!funcionarioEditando.Nome.trim()) {
       toast.warning('Informe o nome do funcionário.');
@@ -137,7 +189,13 @@ function VisualizarFuncionarios() {
     return true;
   }
 
-  // Envia a edicao do usuario e do funcionario para a API.
+/**
+ * Envia para a API as alterações do funcionário e do usuário vinculado.
+ *
+ * @async
+ * @param {Object} event - Evento de envio do formulário.
+ * @returns {Promise<void>}
+ */
   async function salvarEdicao(event) {
     event.preventDefault();
 
@@ -185,7 +243,13 @@ function VisualizarFuncionarios() {
     }
   }
 
-  // Exclui o funcionario e o acesso dele ao sistema.
+/**
+ * Exclui o funcionário e remove seu acesso ao sistema após confirmação.
+ *
+ * @async
+ * @param {Object} funcionario - Funcionário que será excluído.
+ * @returns {Promise<void>}
+ */
   async function excluirFuncionario(funcionario) {
     const nome = funcionario.usuario?.Nome || 'este funcionário';
 
@@ -211,7 +275,11 @@ function VisualizarFuncionarios() {
     }
   }
 
-  // Filtra os funcionarios por nome, email, perfil ou CPF.
+/**
+ * Lista de funcionários filtrada pelo termo pesquisado.
+ *
+ * @type {Array<Object>}
+ */
   const funcionariosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
@@ -234,7 +302,11 @@ function VisualizarFuncionarios() {
     });
   }, [funcionarios, busca]);
 
-  // Renderiza o modal de edicao apenas quando ele esta aberto.
+/**
+ * Renderiza o modal de edição de funcionário quando ele estiver aberto.
+ *
+ * @returns {JSX.Element|null} Modal de edição ou null.
+ */
   function renderModalEdicao() {
     if (!editando) return null;
 

@@ -3,6 +3,11 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/operadorStyles/pecas.css';
 
+/**
+ * Lista de grupos disponíveis para classificação das peças.
+ *
+ * @constant {string[]}
+ */
 const gruposPecas = [
   'Arrefecimento',
   'Freios',
@@ -20,6 +25,12 @@ const gruposPecas = [
   'Outros',
 ];
 
+/**
+ * Gera um código automático com prefixo, data atual e número aleatório.
+ *
+ * @param {string} prefixo - Prefixo usado no código.
+ * @returns {string} Código gerado.
+ */
 function gerarCodigo(prefixo) {
   const data = new Date();
 
@@ -31,6 +42,11 @@ function gerarCodigo(prefixo) {
   return `${prefixo}-${ano}${mes}${dia}-${aleatorio}`;
 }
 
+/**
+ * Cria o estado inicial do formulário de peça.
+ *
+ * @returns {Object} Dados iniciais da peça.
+ */
 function criarPecaInicial() {
   return {
     codigo: gerarCodigo('PECA'),
@@ -42,6 +58,13 @@ function criarPecaInicial() {
   };
 }
 
+/**
+ * Tela responsável pelo cadastro, edição, listagem e exclusão de peças.
+ *
+ * @component
+ * @function Pecas
+ * @returns {JSX.Element} Tela de manutenção de peças.
+ */
 function Pecas() {
   const [pecas, setPecas] = useState([]);
   const [form, setForm] = useState(criarPecaInicial());
@@ -55,7 +78,12 @@ function Pecas() {
     carregarPecas();
   }, []);
 
-  // Busca todas as pecas do catalogo.
+/**
+ * Busca todas as peças cadastradas na API.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarPecas() {
     try {
       setCarregando(true);
@@ -71,7 +99,13 @@ function Pecas() {
     }
   }
 
-  // Atualiza um campo simples do formulario.
+/**
+ * Atualiza um campo específico do formulário de peça.
+ *
+ * @param {string} campo - Nome do campo que será atualizado.
+ * @param {string} valor - Novo valor do campo.
+ * @returns {void}
+ */
   function atualizarCampo(campo, valor) {
     setForm((prev) => ({
       ...prev,
@@ -79,13 +113,22 @@ function Pecas() {
     }));
   }
 
-  // Restaura o formulario da tela.
+/**
+ * Limpa o formulário e encerra o modo de edição.
+ *
+ * @returns {void}
+ */
   function limparFormulario() {
     setForm(criarPecaInicial());
     setEditandoId(null);
   }
 
-  // Coloca uma peca existente em modo de edicao.
+/**
+ * Preenche o formulário com os dados de uma peça para edição.
+ *
+ * @param {Object} peca - Peça selecionada na tabela.
+ * @returns {void}
+ */
   function editarPeca(peca) {
     setEditandoId(peca.id);
 
@@ -104,7 +147,13 @@ function Pecas() {
     });
   }
 
-  // Salva a peca nova ou atualizada.
+/**
+ * Valida os dados e envia a peça para cadastro ou atualização na API.
+ *
+ * @async
+ * @param {Object} event - Evento de envio do formulário.
+ * @returns {Promise<void>}
+ */
   async function salvarPeca(event) {
     event.preventDefault();
 
@@ -158,7 +207,13 @@ function Pecas() {
     }
   }
 
-  // Exclui uma peca depois da confirmacao do usuario.
+/**
+ * Exclui uma peça após confirmação do usuário.
+ *
+ * @async
+ * @param {number} id - Identificador da peça.
+ * @returns {Promise<void>}
+ */
   async function excluirPeca(id) {
     const confirmar = window.confirm('Deseja realmente excluir esta peça?');
 
@@ -180,7 +235,11 @@ function Pecas() {
     }
   }
 
-  // Filtra as pecas por codigo, nome, marca, grupo ou aplicacao.
+/**
+ * Lista de peças filtrada por código, nome, marca, grupo ou aplicação.
+ *
+ * @type {Array<Object>}
+ */
   const pecasFiltradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 

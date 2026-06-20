@@ -1,6 +1,36 @@
 import prisma from '../config/prisma.js';
 
-// Cria um cliente e, se vierem veículos no body, cadastra os veículos vinculados.
+/**
+ * Controlador responsável pelas operações de cadastro, consulta,
+ * listagem, atualização e exclusão de clientes e seus veículos.
+ *
+ * @module controllers/clienteController
+ */
+
+
+/**
+ * Cria um novo cliente e cadastra os veículos enviados na requisição.
+ *
+ * @async
+ * @function criarCliente
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {string} req.body.nome - Nome do cliente.
+ * @param {string} req.body.cpf - CPF do cliente.
+ * @param {string} [req.body.email] - E-mail do cliente.
+ * @param {string|Date} [req.body.dataNascimento] - Data de nascimento.
+ * @param {string} [req.body.cep] - CEP do cliente.
+ * @param {string} [req.body.endereco] - Endereço do cliente.
+ * @param {string} [req.body.bairro] - Bairro do cliente.
+ * @param {string} [req.body.cidade] - Cidade do cliente.
+ * @param {string} [req.body.uf] - Unidade federativa.
+ * @param {string} [req.body.numero] - Número do endereço.
+ * @param {string} [req.body.complemento] - Complemento do endereço.
+ * @param {string} [req.body.celular] - Celular do cliente.
+ * @param {Array<Object>} [req.body.veiculos] - Veículos vinculados ao cliente.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o cliente criado ou mensagem de erro.
+ */
 export async function criarCliente(req, res) {
   try {
     const {
@@ -77,7 +107,20 @@ export async function criarCliente(req, res) {
   }
 }
 
-// Busca um cliente exato pelo nome informado na query e traz os veículos junto.
+/**
+ * Busca um cliente pelo nome informado na query.
+ *
+ * A pesquisa não diferencia letras maiúsculas e minúsculas
+ * e inclui os veículos vinculados ao cliente.
+ *
+ * @async
+ * @function buscarClientePorNome
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.query - Parâmetros enviados na URL.
+ * @param {string} req.query.nome - Nome exato do cliente.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o cliente encontrado ou mensagem de erro.
+ */
 export async function buscarClientePorNome(req, res) {
   try {
     const nome = req.query.nome?.trim();
@@ -109,7 +152,18 @@ export async function buscarClientePorNome(req, res) {
   }
 }
 
-// Lista todos os clientes com seus veículos, do mais recente para o mais antigo.
+/**
+ * Lista todos os clientes cadastrados com seus veículos.
+ *
+ * Os registros são ordenados do cliente mais recente
+ * para o mais antigo.
+ *
+ * @async
+ * @function listarClientes
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de clientes ou mensagem de erro.
+ */
 export async function listarClientes(req, res) {
   try {
     const clientes = await prisma.cliente.findMany({
@@ -128,6 +182,35 @@ export async function listarClientes(req, res) {
   }
 }
 
+/**
+ * Atualiza os dados de um cliente e gerencia seus veículos vinculados.
+ *
+ * A operação é executada em uma transação. Veículos existentes podem
+ * ser atualizados, novos veículos podem ser criados e veículos marcados
+ * para remoção podem ser excluídos.
+ *
+ * @async
+ * @function editarClientes
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do cliente.
+ * @param {Object} req.body - Dados atualizados do cliente.
+ * @param {string} req.body.nome - Nome do cliente.
+ * @param {string} req.body.cpf - CPF do cliente.
+ * @param {string} [req.body.email] - E-mail do cliente.
+ * @param {string|Date} [req.body.dataNascimento] - Data de nascimento.
+ * @param {string} [req.body.cep] - CEP do cliente.
+ * @param {string} [req.body.endereco] - Endereço do cliente.
+ * @param {string} [req.body.bairro] - Bairro do cliente.
+ * @param {string} [req.body.cidade] - Cidade do cliente.
+ * @param {string} [req.body.uf] - Unidade federativa.
+ * @param {string} [req.body.numero] - Número do endereço.
+ * @param {string} [req.body.complemento] - Complemento do endereço.
+ * @param {string} [req.body.celular] - Celular do cliente.
+ * @param {Array<Object>} [req.body.veiculos] - Veículos que serão atualizados, criados ou removidos.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o cliente atualizado e seus veículos ou mensagem de erro.
+ */
 export async function editarClientes(req, res) {
   try {
     const { id } = req.params;
@@ -358,7 +441,20 @@ export async function editarClientes(req, res) {
   }
 }
 
-// Remove o cliente e todos os veículos ligados a ele dentro de uma transação.
+/**
+ * Exclui um cliente e todos os veículos vinculados a ele.
+ *
+ * A exclusão é executada em uma transação para manter
+ * a consistência dos dados.
+ *
+ * @async
+ * @function deletarClientes
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador do cliente.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
+ */
 export async function deletarClientes(req, res) {
   try {
     const { id } = req.params;

@@ -2,6 +2,9 @@ import express from 'express'
 import {listarOrdensServico,buscarOrdensServico,buscarOrdemServicoPorId,criarOrdemServico,editarOrdemServico,deletarOrdemServico,gerarProximoCodigoOS} from '../controllers/ordemServicoController.js'
 
 const router = express.Router()
+/**
+ * Rotas de ordens de serviço com CRUD e consultas auxiliares.
+ */
 
 // Rotas principais da ordem de serviço, com listagem, busca e CRUD.
 router.get('/', listarOrdensServico)

@@ -4,6 +4,34 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/adminStyles/cadastrarFornecedores.css';
 
+/**
+ * Representa os dados preenchidos no formulário de fornecedor.
+ *
+ * @typedef {Object} FornecedorFormData
+ * @property {string} codigo - Código interno gerado para o fornecedor.
+ * @property {string} nome - Nome ou razão social do fornecedor.
+ * @property {string} cnpj - CNPJ formatado do fornecedor.
+ * @property {string} email - Endereço de e-mail do fornecedor.
+ * @property {string} telefone - Número de telefone fixo.
+ * @property {string} celular - Número de celular ou WhatsApp.
+ * @property {string} inscricao - Inscrição estadual do fornecedor.
+ * @property {string} cep - CEP do endereço.
+ * @property {string} endereco - Logradouro do fornecedor.
+ * @property {string} numero - Número do endereço.
+ * @property {string} uf - Sigla da unidade federativa.
+ * @property {string} bairro - Bairro do endereço.
+ * @property {string} cidade - Cidade do endereço.
+ * @property {string} complemento - Complemento do endereço.
+ * @property {boolean} fornecePecas - Indica se o fornecedor comercializa peças.
+ * @property {boolean} forneceServicos - Indica se o fornecedor presta serviços.
+ * @property {string} observacoes - Observações adicionais.
+ */
+
+/**
+ * Estado inicial utilizado no formulário de cadastro de fornecedor.
+ *
+ * @type {FornecedorFormData}
+ */
 const fornecedorInicial = {
   codigo: '',
   nome: '',
@@ -24,6 +52,15 @@ const fornecedorInicial = {
   observacoes: '',
 };
 
+/**
+ * Gera um código identificador para um fornecedor.
+ *
+ * O código contém o prefixo `FOR`, o ano atual e um número aleatório
+ * de quatro dígitos.
+ *
+ * @function gerarCodigoFornecedor
+ * @returns {string} Código no formato `FOR-AAAA-NNNN`.
+ */
 function gerarCodigoFornecedor() {
   const data = new Date();
   const ano = data.getFullYear();
@@ -32,7 +69,16 @@ function gerarCodigoFornecedor() {
   return `FOR-${ano}-${numero}`;
 }
 
-// As funcoes abaixo aplicam mascaras nos campos do formulario.
+/**
+ * Formata um valor como CNPJ.
+ *
+ * Remove caracteres não numéricos, limita o valor a 14 dígitos e
+ * aplica a máscara `00.000.000/0000-00`.
+ *
+ * @function formatarCnpj
+ * @param {string} valor - Valor informado no campo de CNPJ.
+ * @returns {string} CNPJ formatado.
+ */
 function formatarCnpj(valor) {
   return valor
     .replace(/\D/g, '')
@@ -43,6 +89,13 @@ function formatarCnpj(valor) {
     .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata um valor como telefone fixo.
+ *
+ * @function formatarTelefone
+ * @param {string} valor - Valor informado no campo de telefone.
+ * @returns {string} Telefone formatado no padrão `(00) 0000-0000`.
+ */
 function formatarTelefone(valor) {
   return valor
     .replace(/\D/g, '')
@@ -51,6 +104,13 @@ function formatarTelefone(valor) {
     .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata um valor como número de celular.
+ *
+ * @function formatarCelular
+ * @param {string} valor - Valor informado no campo de celular.
+ * @returns {string} Celular formatado no padrão `(00) 00000-0000`.
+ */
 function formatarCelular(valor) {
   return valor
     .replace(/\D/g, '')
@@ -59,6 +119,13 @@ function formatarCelular(valor) {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+/**
+ * Formata um valor como CEP.
+ *
+ * @function formatarCep
+ * @param {string} valor - Valor informado no campo de CEP.
+ * @returns {string} CEP formatado no padrão `00000-000`.
+ */
 function formatarCep(valor) {
   return valor
     .replace(/\D/g, '')
@@ -66,6 +133,16 @@ function formatarCep(valor) {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
+/**
+ * Normaliza a sigla de uma unidade federativa.
+ *
+ * Remove caracteres que não sejam letras, limita o valor a dois
+ * caracteres e converte o texto para letras maiúsculas.
+ *
+ * @function formatarUf
+ * @param {string} valor - Valor informado no campo de UF.
+ * @returns {string} Sigla da UF normalizada.
+ */
 function formatarUf(valor) {
   return valor
     .replace(/[^a-zA-Z]/g, '')
@@ -73,6 +150,16 @@ function formatarUf(valor) {
     .toUpperCase();
 }
 
+/**
+ * Exibe e controla a tela de cadastro de fornecedores do MotorMind.
+ *
+ * O componente gerencia os dados do formulário, aplica máscaras nos campos,
+ * valida as informações obrigatórias e envia o cadastro para a API.
+ *
+ * @component
+ * @function CadastrarFornecedor
+ * @returns {JSX.Element} Tela de cadastro de fornecedor.
+ */
 function CadastrarFornecedor() {
   const [fornecedor, setFornecedor] = useState({
     ...fornecedorInicial,
@@ -81,7 +168,14 @@ function CadastrarFornecedor() {
 
   const [carregando, setCarregando] = useState(false);
 
-  // Atualiza um campo do formulario de fornecedor.
+  /**
+   * Atualiza um campo específico do estado do formulário.
+   *
+   * @function atualizarCampo
+   * @param {string} campo - Nome do campo que será atualizado.
+   * @param {string|boolean} valor - Novo valor do campo.
+   * @returns {void}
+   */
   function atualizarCampo(campo, valor) {
     setFornecedor((prev) => ({
       ...prev,
@@ -89,7 +183,12 @@ function CadastrarFornecedor() {
     }));
   }
 
-  // Limpa o formulario e gera um novo codigo.
+  /**
+   * Limpa o formulário e gera um novo código para o próximo fornecedor.
+   *
+   * @function limparFormulario
+   * @returns {void}
+   */
   function limparFormulario() {
     setFornecedor({
       ...fornecedorInicial,
@@ -97,7 +196,15 @@ function CadastrarFornecedor() {
     });
   }
 
-  // Valida os campos obrigatorios antes do envio.
+  /**
+   * Valida os campos obrigatórios antes do envio do formulário.
+   *
+   * Verifica o nome, o CNPJ, a existência de pelo menos um contato e
+   * a seleção de ao menos um tipo de fornecimento.
+   *
+   * @function validarFormulario
+   * @returns {boolean} `true` quando os dados são válidos; caso contrário, `false`.
+   */
   function validarFormulario() {
     if (!fornecedor.nome.trim()) {
       toast.warning('Informe o nome do fornecedor.');
@@ -124,7 +231,18 @@ function CadastrarFornecedor() {
     return true;
   }
 
-  // Envia o cadastro do fornecedor para a API.
+  /**
+   * Envia os dados do fornecedor para a API.
+   *
+   * Impede o envio padrão do formulário, valida os dados, normaliza os
+   * campos e realiza uma requisição `POST` para `/fornecedores`.
+   *
+   * @async
+   * @function cadastrarFornecedor
+   * @param {Object} event - Evento de envio do formulário.
+   * @param {Function} event.preventDefault - Impede o comportamento padrão do formulário.
+   * @returns {Promise<void>}
+   */
   async function cadastrarFornecedor(event) {
     event.preventDefault();
 

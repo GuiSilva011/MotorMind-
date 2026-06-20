@@ -1,6 +1,21 @@
 import prisma from '../config/prisma.js'
 
-// Funções auxiliares para montar valores, códigos e relações da ordem de serviço.
+/**
+ * Controlador responsável pelas operações de criação, consulta,
+ * atualização, exclusão e busca de ordens de serviço.
+ *
+ * Também gerencia diagnósticos, serviços e peças vinculados à ordem.
+ *
+ * @module controllers/ordemServicoController
+ */
+
+/**
+ * Converte um valor para número ou retorna null quando estiver vazio.
+ *
+ * @function toNumberOrNull
+ * @param {*} valor - Valor que será convertido.
+ * @returns {number|null} Valor numérico ou null.
+ */
 function toNumberOrNull(valor) {
   if (valor === undefined || valor === null || valor === '') {
     return null
@@ -9,7 +24,13 @@ function toNumberOrNull(valor) {
   return Number(valor)
 }
 
-// Converte uma data opcional vinda do frontend em objeto Date.
+/**
+ * Converte um valor opcional para uma instância de Date.
+ *
+ * @function toDateOrNull
+ * @param {string|Date|null|undefined} valor - Data que será convertida.
+ * @returns {Date|null} Data convertida ou null.
+ */
 function toDateOrNull(valor) {
   if (!valor) {
     return null
@@ -18,7 +39,15 @@ function toDateOrNull(valor) {
   return new Date(valor)
 }
 
-// Calcula o total de um serviço já descontando abatimentos.
+/**
+ * Calcula o valor total de um serviço após aplicar o desconto.
+ *
+ * @function calcularTotalServico
+ * @param {Object} servico - Serviço que será calculado.
+ * @param {number|string} [servico.precoVenda] - Preço de venda do serviço.
+ * @param {number|string} [servico.desconto] - Desconto aplicado.
+ * @returns {number} Valor total do serviço.
+ */
 function calcularTotalServico(servico) {
   const preco = Number(servico.precoVenda || 0)
   const desconto = Number(servico.desconto || 0)
@@ -26,7 +55,17 @@ function calcularTotalServico(servico) {
   return Math.max(preco - desconto, 0)
 }
 
-// Calcula o total de uma peça considerando quantidade, custo e desconto.
+/**
+ * Calcula o valor total de uma peça considerando quantidade,
+ * custo unitário e desconto.
+ *
+ * @function calcularTotalPeca
+ * @param {Object} peca - Peça que será calculada.
+ * @param {number|string} [peca.quantidade] - Quantidade da peça.
+ * @param {number|string} [peca.custoUnitario] - Custo unitário.
+ * @param {number|string} [peca.desconto] - Desconto aplicado.
+ * @returns {number} Valor total da peça.
+ */
 function calcularTotalPeca(peca) {
   const quantidade = Number(peca.quantidade || 0)
   const custoUnitario = Number(peca.custoUnitario || 0)
@@ -35,12 +74,26 @@ function calcularTotalPeca(peca) {
   return Math.max(quantidade * custoUnitario - desconto, 0)
 }
 
-// Gera o identificador em letra para diagnóstico hierárquico.
+/**
+ * Gera uma letra identificadora para um diagnóstico hierárquico.
+ *
+ * @function letraDiagnostico
+ * @param {number} index - Posição do diagnóstico na lista.
+ * @returns {string} Letra correspondente ao índice.
+ */
 function letraDiagnostico(index) {
   return String.fromCharCode(65 + index)
 }
 
-// Define quais relações precisam ser carregadas junto da ordem completa.
+/**
+ * Monta a configuração de relacionamentos utilizada para carregar
+ * uma ordem de serviço completa.
+ *
+ * Inclui veículo, cliente, diagnósticos, serviços e peças.
+ *
+ * @function montarIncludeOrdemCompleta
+ * @returns {Object} Configuração de inclusão utilizada pelo Prisma.
+ */
 function montarIncludeOrdemCompleta() {
   return {
     veiculo: {
@@ -73,7 +126,15 @@ function montarIncludeOrdemCompleta() {
   }
 }
 
-// Busca um serviço do catálogo antes de copiar dados para a ordem.
+/**
+ * Busca um serviço no catálogo pelo identificador informado.
+ *
+ * @async
+ * @function buscarServicoCatalogo
+ * @param {Object} tx - Cliente Prisma ou transação ativa.
+ * @param {number|string|null} servicoCatalogoId - Identificador do serviço.
+ * @returns {Promise<Object|null>} Serviço encontrado ou null.
+ */
 async function buscarServicoCatalogo(tx, servicoCatalogoId) {
   if (!servicoCatalogoId) {
     return null
@@ -86,7 +147,15 @@ async function buscarServicoCatalogo(tx, servicoCatalogoId) {
   })
 }
 
-// Busca uma peça do catálogo antes de copiar dados para a ordem.
+/**
+ * Busca uma peça no catálogo pelo identificador informado.
+ *
+ * @async
+ * @function buscarPecaCatalogo
+ * @param {Object} tx - Cliente Prisma ou transação ativa.
+ * @param {number|string|null} pecaCatalogoId - Identificador da peça.
+ * @returns {Promise<Object|null>} Peça encontrada ou null.
+ */
 async function buscarPecaCatalogo(tx, pecaCatalogoId) {
   if (!pecaCatalogoId) {
     return null
@@ -99,7 +168,15 @@ async function buscarPecaCatalogo(tx, pecaCatalogoId) {
   })
 }
 
-// Busca um diagnóstico do catálogo antes de gerar os dados da ordem.
+/**
+ * Busca um diagnóstico no catálogo pelo identificador informado.
+ *
+ * @async
+ * @function buscarDiagnosticoCatalogo
+ * @param {Object} tx - Cliente Prisma ou transação ativa.
+ * @param {number|string|null} diagnosticoCatalogoId - Identificador do diagnóstico.
+ * @returns {Promise<Object|null>} Diagnóstico encontrado ou null.
+ */
 async function buscarDiagnosticoCatalogo(tx, diagnosticoCatalogoId) {
   if (!diagnosticoCatalogoId) {
     return null
@@ -112,7 +189,18 @@ async function buscarDiagnosticoCatalogo(tx, diagnosticoCatalogoId) {
   })
 }
 
-// Monta o payload de um diagnóstico da ordem, incluindo o código hierárquico.
+/**
+ * Monta os dados de um diagnóstico para cadastro na ordem de serviço.
+ *
+ * Também gera seu código visual e hierárquico.
+ *
+ * @async
+ * @function montarDadosDiagnostico
+ * @param {Object} tx - Cliente Prisma ou transação ativa.
+ * @param {Object} diagnostico - Dados do diagnóstico.
+ * @param {number} diagnosticoIndex - Posição do diagnóstico na ordem.
+ * @returns {Promise<Object>} Código hierárquico e dados preparados.
+ */
 async function montarDadosDiagnostico(tx, diagnostico, diagnosticoIndex) {
   const codigoDiagnostico = letraDiagnostico(diagnosticoIndex)
 
@@ -147,7 +235,20 @@ async function montarDadosDiagnostico(tx, diagnostico, diagnosticoIndex) {
   }
 }
 
-// Monta o payload de um serviço da ordem, com vínculo opcional ao diagnóstico.
+/**
+ * Monta os dados de um serviço para cadastro na ordem de serviço.
+ *
+ * O serviço pode estar vinculado a um diagnóstico ou diretamente à ordem.
+ *
+ * @async
+ * @function montarDadosServico
+ * @param {Object} parametros - Parâmetros da operação.
+ * @param {Object} parametros.tx - Cliente Prisma ou transação ativa.
+ * @param {Object} parametros.servico - Dados do serviço.
+ * @param {number} parametros.servicoIndex - Posição do serviço na lista.
+ * @param {string|null} [parametros.codigoDiagnostico=null] - Código do diagnóstico pai.
+ * @returns {Promise<Object>} Código hierárquico e dados preparados.
+ */
 async function montarDadosServico({
   tx,
   servico,
@@ -196,7 +297,20 @@ async function montarDadosServico({
   }
 }
 
-// Monta o payload de uma peça da ordem e define sua hierarquia.
+/**
+ * Monta os dados de uma peça para cadastro na ordem de serviço.
+ *
+ * Também define o código visual e a posição hierárquica da peça.
+ *
+ * @async
+ * @function montarDadosPeca
+ * @param {Object} parametros - Parâmetros da operação.
+ * @param {Object} parametros.tx - Cliente Prisma ou transação ativa.
+ * @param {Object} parametros.peca - Dados da peça.
+ * @param {number} parametros.pecaIndex - Posição da peça na lista.
+ * @param {string|null} [parametros.codigoHierarquiaPai=null] - Código do item pai.
+ * @returns {Promise<Object>} Dados preparados para criação da peça.
+ */
 async function montarDadosPeca({
   tx,
   peca,
@@ -246,7 +360,22 @@ async function montarDadosPeca({
   }
 }
 
-// Cria peças ligadas a um serviço, diagnóstico ou ordem avulsa.
+/**
+ * Cria as peças vinculadas a uma ordem de serviço.
+ *
+ * As peças podem estar ligadas a um diagnóstico, serviço ou diretamente à ordem.
+ *
+ * @async
+ * @function criarPecasDaOrdem
+ * @param {Object} parametros - Parâmetros da operação.
+ * @param {Object} parametros.tx - Transação ativa do Prisma.
+ * @param {number} parametros.ordemServicoId - Identificador da ordem.
+ * @param {number|null} [parametros.ordemDiagnosticoId=null] - Identificador do diagnóstico.
+ * @param {number|null} [parametros.ordemServicoItemId=null] - Identificador do serviço.
+ * @param {string|null} [parametros.codigoHierarquiaPai=null] - Código hierárquico do item pai.
+ * @param {Array<Object>} [parametros.pecas=[]] - Peças que serão criadas.
+ * @returns {Promise<void>}
+ */
 async function criarPecasDaOrdem({
   tx,
   ordemServicoId,
@@ -275,8 +404,21 @@ async function criarPecasDaOrdem({
     })
   }
 }
-
-// Cria os serviços vinculados a um diagnóstico ou diretamente à ordem.
+/**
+ * Cria os serviços vinculados a um diagnóstico ou diretamente à ordem.
+ *
+ * Após criar cada serviço, também cadastra suas peças relacionadas.
+ *
+ * @async
+ * @function criarServicosDaOrdem
+ * @param {Object} parametros - Parâmetros da operação.
+ * @param {Object} parametros.tx - Transação ativa do Prisma.
+ * @param {number} parametros.ordemServicoId - Identificador da ordem.
+ * @param {number|null} [parametros.ordemDiagnosticoId=null] - Identificador do diagnóstico.
+ * @param {string|null} [parametros.codigoDiagnostico=null] - Código visual do diagnóstico.
+ * @param {Array<Object>} [parametros.servicos=[]] - Serviços que serão criados.
+ * @returns {Promise<void>}
+ */
 async function criarServicosDaOrdem({
   tx,
   ordemServicoId,
@@ -313,7 +455,19 @@ async function criarServicosDaOrdem({
   }
 }
 
-// Cria os diagnósticos da ordem e seus serviços filhos.
+/**
+ * Cria os diagnósticos vinculados à ordem de serviço.
+ *
+ * Também cadastra os serviços e as peças relacionados a cada diagnóstico.
+ *
+ * @async
+ * @function criarDiagnosticosDaOrdem
+ * @param {Object} parametros - Parâmetros da operação.
+ * @param {Object} parametros.tx - Transação ativa do Prisma.
+ * @param {number} parametros.ordemServicoId - Identificador da ordem.
+ * @param {Array<Object>} [parametros.diagnosticos=[]] - Diagnósticos que serão criados.
+ * @returns {Promise<void>}
+ */
 async function criarDiagnosticosDaOrdem({
   tx,
   ordemServicoId,
@@ -349,7 +503,17 @@ async function criarDiagnosticosDaOrdem({
   }
 }
 
-// Cria peças que não pertencem a um diagnóstico nem a um serviço específico.
+/**
+ * Cria peças avulsas que não pertencem a diagnóstico ou serviço.
+ *
+ * @async
+ * @function criarPecasAvulsasDaOrdem
+ * @param {Object} parametros - Parâmetros da operação.
+ * @param {Object} parametros.tx - Transação ativa do Prisma.
+ * @param {number} parametros.ordemServicoId - Identificador da ordem.
+ * @param {Array<Object>} [parametros.pecasAvulsas=[]] - Peças avulsas.
+ * @returns {Promise<void>}
+ */
 async function criarPecasAvulsasDaOrdem({
   tx,
   ordemServicoId,
@@ -365,7 +529,21 @@ async function criarPecasAvulsasDaOrdem({
   })
 }
 
-// Recria toda a estrutura filha da ordem após limpeza ou criação inicial.
+/**
+ * Cria novamente toda a estrutura filha de uma ordem de serviço.
+ *
+ * Inclui diagnósticos, serviços sem diagnóstico e peças avulsas.
+ *
+ * @async
+ * @function recriarItensDaOrdem
+ * @param {Object} parametros - Parâmetros da operação.
+ * @param {Object} parametros.tx - Transação ativa do Prisma.
+ * @param {number} parametros.ordemServicoId - Identificador da ordem.
+ * @param {Array<Object>} [parametros.diagnosticos=[]] - Diagnósticos da ordem.
+ * @param {Array<Object>} [parametros.servicosSemDiagnostico=[]] - Serviços sem diagnóstico.
+ * @param {Array<Object>} [parametros.pecasAvulsas=[]] - Peças avulsas.
+ * @returns {Promise<void>}
+ */
 async function recriarItensDaOrdem({
   tx,
   ordemServicoId,
@@ -394,7 +572,17 @@ async function recriarItensDaOrdem({
   })
 }
 
-// Remove itens filhos antes de atualizar ou excluir a ordem.
+/**
+ * Remove todos os itens filhos vinculados a uma ordem de serviço.
+ *
+ * A remoção ocorre na ordem correta para respeitar as relações do banco.
+ *
+ * @async
+ * @function limparItensDaOrdem
+ * @param {Object} tx - Transação ativa do Prisma.
+ * @param {number|string} ordemServicoId - Identificador da ordem.
+ * @returns {Promise<void>}
+ */
 async function limparItensDaOrdem(tx, ordemServicoId) {
   await tx.ordemPecaItem.deleteMany({
     where: {
@@ -415,7 +603,15 @@ async function limparItensDaOrdem(tx, ordemServicoId) {
   })
 }
 
-// Carrega a ordem completa com veículo, cliente, diagnósticos, serviços e peças.
+/**
+ * Busca uma ordem de serviço pelo ID com todos os relacionamentos.
+ *
+ * @async
+ * @function buscarOrdemCompleta
+ * @param {Object} tx - Cliente Prisma ou transação ativa.
+ * @param {number|string} id - Identificador da ordem.
+ * @returns {Promise<Object|null>} Ordem completa ou null.
+ */
 async function buscarOrdemCompleta(tx, id) {
   return tx.ordemServico.findUnique({
     where: {
@@ -425,7 +621,15 @@ async function buscarOrdemCompleta(tx, id) {
   })
 }
 
-// Resume a ordem em uma linha para uso na busca/listagem filtrada.
+/**
+ * Monta um resumo simplificado de uma ordem de serviço.
+ *
+ * O resumo contém dados do cliente, veículo, quantidades e valores totais.
+ *
+ * @function montarResumoBusca
+ * @param {Object} ordem - Ordem de serviço que será resumida.
+ * @returns {Object} Resumo da ordem de serviço.
+ */
 function montarResumoBusca(ordem) {
   const totalServicos = ordem.servicos.reduce((acc, servico) => {
     return acc + Number(servico.valorTotal || 0)
@@ -463,7 +667,17 @@ function montarResumoBusca(ordem) {
   }
 }
 
-// Lista todas as ordens de serviço com a estrutura completa relacionada.
+/**
+ * Lista todas as ordens de serviço com sua estrutura completa.
+ *
+ * Os registros são ordenados da ordem mais recente para a mais antiga.
+ *
+ * @async
+ * @function listarOrdensServico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a lista de ordens ou mensagem de erro.
+ */
 export async function listarOrdensServico(req, res) {
   try {
     const ordens = await prisma.ordemServico.findMany({
@@ -484,7 +698,19 @@ export async function listarOrdensServico(req, res) {
   }
 }
 
-// Busca uma ordem específica pelo ID com todos os relacionamentos.
+/**
+ * Busca uma ordem de serviço pelo identificador informado.
+ *
+ * A resposta inclui veículo, cliente, diagnósticos, serviços e peças.
+ *
+ * @async
+ * @function buscarOrdemServicoPorId
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador da ordem.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a ordem encontrada ou mensagem de erro.
+ */
 export async function buscarOrdemServicoPorId(req, res) {
   try {
     const { id } = req.params
@@ -508,7 +734,28 @@ export async function buscarOrdemServicoPorId(req, res) {
   }
 }
 
-// Cria uma ordem de serviço e seus itens filhos dentro de uma transação.
+/**
+ * Cria uma ordem de serviço e todos os seus itens relacionados.
+ *
+ * A criação de diagnósticos, serviços e peças é executada
+ * dentro da mesma transação.
+ *
+ * @async
+ * @function criarOrdemServico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.body - Dados enviados no corpo da requisição.
+ * @param {string} req.body.codigo - Código único da ordem.
+ * @param {number|string} req.body.veiculoId - Identificador do veículo.
+ * @param {number|string} [req.body.operadorId] - Identificador do operador.
+ * @param {number|string} [req.body.tecnicoId] - Identificador do técnico.
+ * @param {string} [req.body.observacoes] - Observações da ordem.
+ * @param {string} [req.body.status='ABERTA'] - Status da ordem.
+ * @param {Array<Object>} [req.body.diagnosticos=[]] - Diagnósticos da ordem.
+ * @param {Array<Object>} [req.body.servicosSemDiagnostico=[]] - Serviços sem diagnóstico.
+ * @param {Array<Object>} [req.body.pecasAvulsas=[]] - Peças avulsas.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a ordem criada ou mensagem de erro.
+ */
 export async function criarOrdemServico(req, res) {
   try {
     const {
@@ -587,7 +834,31 @@ export async function criarOrdemServico(req, res) {
   }
 }
 
-// Atualiza uma ordem existente recriando diagnósticos, serviços e peças.
+/**
+ * Atualiza uma ordem de serviço existente.
+ *
+ * Os itens antigos são removidos e a estrutura de diagnósticos,
+ * serviços e peças é recriada dentro de uma transação.
+ *
+ * @async
+ * @function editarOrdemServico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador da ordem.
+ * @param {Object} req.body - Dados atualizados da ordem.
+ * @param {string} [req.body.codigo] - Código da ordem.
+ * @param {number|string} [req.body.veiculoId] - Identificador do veículo.
+ * @param {number|string} [req.body.operadorId] - Identificador do operador.
+ * @param {number|string} [req.body.tecnicoId] - Identificador do técnico.
+ * @param {string|null} [req.body.observacoes] - Observações da ordem.
+ * @param {string} [req.body.status] - Status da ordem.
+ * @param {string|Date|null} [req.body.dataFechamento] - Data de fechamento.
+ * @param {Array<Object>} [req.body.diagnosticos=[]] - Diagnósticos atualizados.
+ * @param {Array<Object>} [req.body.servicosSemDiagnostico=[]] - Serviços sem diagnóstico.
+ * @param {Array<Object>} [req.body.pecasAvulsas=[]] - Peças avulsas.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com a ordem atualizada ou mensagem de erro.
+ */
 export async function editarOrdemServico(req, res) {
   try {
     const { id } = req.params
@@ -685,7 +956,20 @@ export async function editarOrdemServico(req, res) {
   }
 }
 
-// Exclui a ordem e remove primeiro todos os registros filhos relacionados.
+/**
+ * Exclui uma ordem de serviço e todos os seus registros filhos.
+ *
+ * A exclusão é executada em uma transação para manter
+ * a integridade dos dados.
+ *
+ * @async
+ * @function deletarOrdemServico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.params - Parâmetros da rota.
+ * @param {number|string} req.params.id - Identificador da ordem.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
+ */
 export async function deletarOrdemServico(req, res) {
   try {
     const { id } = req.params
@@ -725,7 +1009,17 @@ export async function deletarOrdemServico(req, res) {
   }
 }
 
-// Gera o próximo código sequencial no formato OS-0001.
+/**
+ * Gera o próximo código sequencial de ordem de serviço.
+ *
+ * O código segue o formato OS-0001.
+ *
+ * @async
+ * @function gerarProximoCodigoOS
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com o próximo código ou mensagem de erro.
+ */
 export async function gerarProximoCodigoOS(req, res) {
   try {
     const ultimaOS = await prisma.ordemServico.findFirst({
@@ -748,7 +1042,23 @@ export async function gerarProximoCodigoOS(req, res) {
   }
 }
 
-// Faz busca filtrada por termo, status e intervalo de datas.
+/**
+ * Busca ordens de serviço utilizando filtros opcionais.
+ *
+ * A pesquisa pode considerar código, placa, modelo, fabricante,
+ * cliente, status e intervalo de datas.
+ *
+ * @async
+ * @function buscarOrdensServico
+ * @param {Object} req - Objeto da requisição HTTP.
+ * @param {Object} req.query - Filtros enviados na URL.
+ * @param {string} [req.query.termo] - Termo geral da pesquisa.
+ * @param {string} [req.query.status] - Status da ordem.
+ * @param {string} [req.query.dataInicio] - Data inicial no formato YYYY-MM-DD.
+ * @param {string} [req.query.dataFim] - Data final no formato YYYY-MM-DD.
+ * @param {Object} res - Objeto da resposta HTTP.
+ * @returns {Promise<Object>} Resposta com as ordens encontradas ou mensagem de erro.
+ */
 export async function buscarOrdensServico(req, res) {
   try {
     const {

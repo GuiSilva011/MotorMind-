@@ -5,6 +5,12 @@ import Layout from '../../components/Layout';
 import '../../styles/operadorStyles/layout.css';
 import '../../styles/operadorStyles/cadastroClientes.css';
 
+
+/**
+ * Estado inicial do formulário de cadastro de cliente.
+ *
+ * @constant {Object}
+ */
 const formClienteCadastro = {
   nome: '',
   cpf: '',
@@ -20,6 +26,11 @@ const formClienteCadastro = {
   celular: '',
 };
 
+/**
+ * Opções disponíveis para o campo de câmbio do veículo.
+ *
+ * @constant {string[]}
+ */
 const opcoesCambio = [
   'Manual',
   'Automático Convencional',
@@ -28,6 +39,11 @@ const opcoesCambio = [
   'Dupla Embreagem',
 ];
 
+/**
+ * Estado inicial do formulário de veículo.
+ *
+ * @constant {Object}
+ */
 const veiculoInicial = {
   id: null,
   placa: '',
@@ -44,6 +60,12 @@ const veiculoInicial = {
   _remover: false,
 };
 
+/**
+ * Formata uma data para o padrão aceito por inputs do tipo date.
+ *
+ * @param {string|Date} value - Data que será formatada.
+ * @returns {string} Data no formato yyyy-mm-dd ou string vazia.
+ */
 function formatDateInput(value) {
   if (!value) return '';
 
@@ -56,11 +78,25 @@ function formatDateInput(value) {
   return date.toISOString().slice(0, 10);
 }
 
+/**
+ * Converte um valor booleano para string usada em campos select.
+ *
+ * @param {boolean|string|null|undefined} value - Valor que será convertido.
+ * @returns {string} Valor convertido para o select.
+ */
 function formatBooleanToSelect(value) {
   if (value === null || value === undefined || value === '') return '';
   return value ? 'true' : 'false';
 }
 
+/**
+ * Tela responsável pelo cadastro, edição e visualização de clientes,
+ * incluindo os veículos vinculados ao cliente.
+ *
+ * @component
+ * @function CadastroCliente
+ * @returns {JSX.Element} Tela de cadastro de cliente.
+ */
 function CadastroCliente() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -80,24 +116,44 @@ function CadastroCliente() {
   const [editandoIndex, setEditandoIndex] = useState(null);
   const [loadingCliente, setLoadingCliente] = useState(false);
 
+/**
+ * Lista de veículos visíveis, removendo os veículos marcados para exclusão.
+ *
+ * @type {Array<Object>}
+ */
   const veiculosVisiveis = useMemo(
     () => veiculos.filter((veiculo) => !veiculo._remover),
     [veiculos]
   );
 
-  // Remove qualquer caractere que nao seja numero.
+/**
+ * Remove todos os caracteres que não sejam números.
+ *
+ * @param {string} value - Valor original.
+ * @returns {string} Valor contendo apenas números.
+ */
   function onlyNumbers(value) {
     return String(value || '').replace(/\D/g, '');
   }
 
-  // Coloca a primeira letra de cada palavra em maiusculo.
+/**
+ * Converte a primeira letra de cada palavra para maiúscula.
+ *
+ * @param {string} value - Texto original.
+ * @returns {string} Texto capitalizado.
+ */
   function capitalizeWords(value) {
     return String(value || '')
       .toLowerCase()
       .replace(/\b\w/g, (l) => l.toUpperCase());
   }
 
-  // Formata a placa no padrao usado pelo formulario.
+/**
+ * Formata a placa do veículo, removendo caracteres inválidos.
+ *
+ * @param {string} value - Placa digitada.
+ * @returns {string} Placa formatada.
+ */
   function maskPlaca(value) {
     return String(value || '')
       .replace(/[^a-zA-Z0-9]/g, '')
@@ -105,17 +161,33 @@ function CadastroCliente() {
       .slice(0, 7);
   }
 
-  // Limita o ano a quatro digitos numericos.
+/**
+ * Limita o ano a quatro dígitos numéricos.
+ *
+ * @param {string} value - Ano digitado.
+ * @returns {string} Ano formatado.
+ */
   function maskAno(value) {
     return String(value || '').replace(/\D/g, '').slice(0, 4);
   }
 
-  // Remove espacos e limita o chassi ao tamanho esperado.
+/**
+ * Formata o chassi do veículo, removendo espaços e limitando a 17 caracteres.
+ *
+ * @param {string} value - Chassi digitado.
+ * @returns {string} Chassi formatado.
+ */
   function maskChassi(value) {
     return String(value || '').replace(/\s/g, '').toUpperCase().slice(0, 17);
   }
 
-  // Aplica a mascara correta em cada campo de veiculo.
+/**
+ * Aplica a formatação correspondente ao campo do veículo.
+ *
+ * @param {string} name - Nome do campo do veículo.
+ * @param {string} value - Valor digitado.
+ * @returns {string} Valor formatado.
+ */
   function formatVeiculoField(name, value) {
     const map = {
       placa: maskPlaca,
@@ -131,6 +203,13 @@ function CadastroCliente() {
     return map[name] ? map[name](value) : value;
   }
 
+  
+/**
+ * Converte os dados de um veículo vindo da API para o formato usado na tela.
+ *
+ * @param {Object} veiculo - Veículo retornado pela API.
+ * @returns {Object} Veículo preparado para exibição ou edição.
+ */
   function mapearVeiculoParaTela(veiculo) {
     return {
       id: veiculo.id || null,
@@ -151,6 +230,12 @@ function CadastroCliente() {
     };
   }
 
+/**
+ * Preenche o formulário com os dados de um cliente selecionado.
+ *
+ * @param {Object} cliente - Cliente retornado pela API ou recebido pela navegação.
+ * @returns {void}
+ */
   function preencherClienteNaTela(cliente) {
     if (!cliente) return;
 
@@ -174,7 +259,12 @@ function CadastroCliente() {
     setVeiculos((cliente.veiculos || []).map(mapearVeiculoParaTela));
   }
 
-  // Atualiza os campos do veiculo temporario enquanto o modal esta aberto.
+/**
+ * Atualiza os campos do veículo temporário aberto no modal.
+ *
+ * @param {Object} event - Evento de alteração do campo.
+ * @returns {void}
+ */
   function handleVeiculoChange(event) {
     if (isVisualizacao) return;
 
@@ -186,7 +276,11 @@ function CadastroCliente() {
     }));
   }
 
-  // Abre o modal para cadastrar um novo veiculo.
+/**
+ * Abre o modal para cadastro de um novo veículo.
+ *
+ * @returns {void}
+ */
   function abrirModalNovoVeiculo() {
     if (isVisualizacao) return;
 
@@ -195,18 +289,26 @@ function CadastroCliente() {
     setModalOpen(true);
     setMensagem('');
   }
-
-  // Fecha o modal e limpa o estado temporario do veiculo.
+  
+/**
+ * Fecha o modal de veículo e limpa os dados temporários.
+ *
+ * @returns {void}
+ */
   function fecharModalVeiculo() {
     setModalOpen(false);
     setNovoVeiculo(veiculoInicial);
     setEditandoIndex(null);
   }
 
-  // Prepara um veiculo existente para edicao no modal.
+
   function editarVeiculo(indexOriginal) {
     const veiculoSelecionado = veiculos[indexOriginal];
-
+    /**
+ * Adiciona um novo veículo ou atualiza um veículo já existente na lista local.
+ *
+ * @returns {void}
+ */
     setNovoVeiculo({
       ...veiculoSelecionado,
       ar: formatBooleanToSelect(veiculoSelecionado.ar),
@@ -218,7 +320,12 @@ function CadastroCliente() {
     setMensagem('');
   }
 
-  // Carrega o cliente quando a tela abre em modo edicao ou visualizacao.
+/**
+ * Carrega os dados do cliente quando a tela está em modo de edição ou visualização.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   useEffect(() => {
     async function carregarClienteEmEdicao() {
       if (!idBusca && !nomeBusca && !clienteRecebido) {
@@ -318,7 +425,12 @@ function CadastroCliente() {
     setMensagem('');
   }
 
-  // Remove um veiculo da lista local antes de salvar o cliente.
+/**
+ * Remove um veículo novo da lista local ou marca um veículo salvo para remoção.
+ *
+ * @param {number} indexOriginal - Índice original do veículo na lista.
+ * @returns {void}
+ */
   function removerVeiculo(indexOriginal) {
     if (isVisualizacao) return;
 
@@ -348,7 +460,12 @@ function CadastroCliente() {
     setMensagem('Veículo marcado para remoção. Clique em "Salvar alterações" para confirmar.');
   }
 
-  // Aplica mascara de CPF para exibicao e edicao.
+/**
+ * Aplica máscara de CPF.
+ *
+ * @param {string} value - CPF digitado.
+ * @returns {string} CPF formatado.
+ */
   function maskCPF(value) {
     const numbers = onlyNumbers(value).slice(0, 11);
 
@@ -358,7 +475,12 @@ function CadastroCliente() {
       .replace(/\.(\d{3})(\d)/, '.$1-$2');
   }
 
-  // Aplica mascara de telefone ou celular.
+/**
+ * Aplica máscara de telefone ou celular.
+ *
+ * @param {string} value - Telefone digitado.
+ * @returns {string} Telefone formatado.
+ */
   function maskPhone(value) {
     const numbers = onlyNumbers(value).slice(0, 11);
 
@@ -373,23 +495,44 @@ function CadastroCliente() {
       .replace(/(\d{5})(\d)/, '$1-$2');
   }
 
-  // Formata o CEP.
+/**
+ * Aplica máscara de CEP.
+ *
+ * @param {string} value - CEP digitado.
+ * @returns {string} CEP formatado.
+ */
   function maskCEP(value) {
     const numbers = onlyNumbers(value).slice(0, 8);
     return numbers.replace(/^(\d{5})(\d)/, '$1-$2');
   }
 
-  // Limita a UF a duas letras maiusculas.
+/**
+ * Formata a UF com até duas letras maiúsculas.
+ *
+ * @param {string} value - UF digitada.
+ * @returns {string} UF formatada.
+ */
   function maskUF(value) {
     return String(value || '').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
   }
 
-  // Limita o numero do endereco a digitos.
+/**
+ * Limita o número do endereço a dígitos.
+ *
+ * @param {string} value - Número digitado.
+ * @returns {string} Número formatado.
+ */
   function maskNumero(value) {
     return onlyNumbers(value).slice(0, 6);
   }
 
-  // Escolhe a mascara correta para o campo alterado.
+/**
+ * Escolhe e aplica a máscara correspondente ao campo alterado.
+ *
+ * @param {string} name - Nome do campo.
+ * @param {string} value - Valor digitado.
+ * @returns {string} Valor formatado.
+ */
   function applyMask(name, value) {
     const maskMap = {
       cpf: maskCPF,
@@ -402,7 +545,12 @@ function CadastroCliente() {
     return maskMap[name] ? maskMap[name](value) : value;
   }
 
-  // Atualiza os campos do formulario principal com mascara quando necessario.
+/**
+ * Atualiza os campos do formulário principal aplicando máscara quando necessário.
+ *
+ * @param {Object} event - Evento de alteração do campo.
+ * @returns {void}
+ */
   function handleChange(event) {
     if (isVisualizacao) return;
 
@@ -414,7 +562,11 @@ function CadastroCliente() {
     }));
   }
 
-  // Reseta o formulario e volta para a tela de consulta quando necessario.
+ /**
+ * Limpa o formulário e retorna para a tela adequada quando necessário.
+ *
+ * @returns {void}
+ */
   function limparFormulario() {
     setFormData(formClienteCadastro);
     setVeiculos([]);
@@ -433,7 +585,12 @@ function CadastroCliente() {
     }
   }
 
-  // Exclui o cliente atual, incluindo o fluxo de confirmacao do navegador.
+/**
+ * Exclui o cliente atual após confirmação do usuário.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function handleExcluirCliente() {
     if (!clienteEmEdicaoId) {
       setMensagem('Não foi possível identificar o cliente para exclusão.');
@@ -468,7 +625,13 @@ function CadastroCliente() {
     }
   }
 
-  // Envia o cadastro ou a atualizacao do cliente para a API.
+/**
+ * Envia para a API o cadastro ou atualização do cliente e de seus veículos.
+ *
+ * @async
+ * @param {Object} event - Evento de envio do formulário.
+ * @returns {Promise<void>}
+ */
   async function handleSubmit(event) {
     event.preventDefault();
 

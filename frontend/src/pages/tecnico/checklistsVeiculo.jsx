@@ -5,6 +5,14 @@ import Layout from '../../components/Layout';
 import api from '../../services/api';
 import '../../styles/tecnicoStyles/checklistsVeiculo.css';
 
+/**
+ * Tela responsável por consultar, visualizar e imprimir as checklists
+ * registradas para um veículo.
+ *
+ * @component
+ * @function ChecklistsVeiculo
+ * @returns {JSX.Element} Tela de consulta das checklists do veículo.
+ */
 function ChecklistsVeiculo() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,7 +23,12 @@ function ChecklistsVeiculo() {
   const [checklistSelecionada, setChecklistSelecionada] = useState(null);
   const [carregando, setCarregando] = useState(false);
 
-  // Flag para garantir que o carregamento inicial ocorra apenas uma vez.
+/**
+ * Referência usada para impedir que o carregamento inicial seja executado
+ * mais de uma vez.
+ *
+ * @type {Object}
+ */
   const carregouInicialmente = useRef(false);
 
   // Busca a lista de checklists apenas na primeira vez que ha veiculo selecionado.
@@ -28,7 +41,12 @@ function ChecklistsVeiculo() {
     }
   }, [veiculo?.id]);
 
-  // Carrega todas as checklists do veiculo selecionado.
+/**
+ * Busca na API todas as checklists vinculadas ao veículo selecionado.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
   async function carregarChecklists() {
     try {
       if (!veiculo?.id) {
@@ -66,7 +84,11 @@ function ChecklistsVeiculo() {
     }
   }
 
-  // Monta o nome amigavel do veiculo exibido na tela.
+/**
+ * Monta o nome amigável do veículo selecionado usando fabricante e modelo.
+ *
+ * @returns {string} Nome do veículo ou mensagem indicando ausência de seleção.
+ */
   function montarNomeVeiculo() {
     if (!veiculo) return 'Nenhum veículo selecionado';
 
@@ -76,14 +98,24 @@ function ChecklistsVeiculo() {
     return `${fabricante} ${modelo}`.trim() || 'Veículo sem descrição';
   }
 
-  // Formata a data da checklist para visualizacao.
+/**
+ * Formata uma data e hora para exibição no padrão brasileiro.
+ *
+ * @param {string|Date|null|undefined} data - Data que será formatada.
+ * @returns {string} Data formatada ou hífen quando não informada.
+ */
   function formatarData(data) {
     if (!data) return '-';
 
     return new Date(data).toLocaleString('pt-BR');
   }
 
-  // Resolve a URL completa da imagem enviada no backend.
+/**
+ * Converte o caminho de uma imagem em uma URL completa.
+ *
+ * @param {string|null|undefined} caminho - Caminho da imagem retornado pela API.
+ * @returns {string|null} URL completa da imagem ou null.
+ */
   function obterUrlFoto(caminho) {
     if (!caminho) return null;
 
@@ -94,7 +126,14 @@ function ChecklistsVeiculo() {
     return `http://localhost:3000${caminho}`;
   }
 
-  // Normaliza itens que podem vir como texto ou objeto.
+/**
+ * Normaliza os itens de uma checklist para um formato padronizado.
+ *
+ * Aceita itens representados como texto ou como objetos.
+ *
+ * @param {Array<Object|string>} lista - Lista de itens da checklist.
+ * @returns {Array<Object>} Lista contendo nome e valor normalizados.
+ */
   function normalizarItensChecklist(lista) {
     if (!Array.isArray(lista)) return [];
 
@@ -118,7 +157,12 @@ function ChecklistsVeiculo() {
     });
   }
 
-  // Separa itens marcados como ok e nao ok.
+/**
+ * Separa os itens marcados positivamente e negativamente.
+ *
+ * @param {Array<Object|string>} lista - Lista de itens da checklist.
+ * @returns {{ok: Array<Object>, no: Array<Object>}} Itens separados por status.
+ */
   function separarItensMarcados(lista) {
     const itens = normalizarItensChecklist(lista);
 
@@ -128,42 +172,71 @@ function ChecklistsVeiculo() {
     };
   }
 
-  // Conta quantos itens foram preenchidos na lista.
+/**
+ * Conta quantos itens da checklist foram preenchidos.
+ *
+ * @param {Array<Object|string>} lista - Lista de itens da checklist.
+ * @returns {number} Quantidade de itens preenchidos.
+ */
   function contarItensPreenchidos(lista) {
     const itens = normalizarItensChecklist(lista);
 
     return itens.filter((item) => item.valor !== null).length;
   }
 
-  // Conta quantos itens foram marcados com ok.
+/**
+ * Conta quantos itens foram marcados positivamente.
+ *
+ * @param {Array<Object|string>} lista - Lista de itens da checklist.
+ * @returns {number} Quantidade de itens marcados com sucesso.
+ */
   function contarItensOk(lista) {
     const itens = normalizarItensChecklist(lista);
 
     return itens.filter((item) => item.valor === true).length;
   }
 
-  // Conta quantos itens foram marcados com nao.
+/**
+ * Conta quantos itens foram marcados negativamente.
+ *
+ * @param {Array<Object|string>} lista - Lista de itens da checklist.
+ * @returns {number} Quantidade de itens marcados como reprovados.
+ */
   function contarItensNao(lista) {
     const itens = normalizarItensChecklist(lista);
 
     return itens.filter((item) => item.valor === false).length;
   }
 
-  // Converte o valor da checklist em texto curto.
+/**
+ * Converte o valor de um item em um símbolo visual.
+ *
+ * @param {boolean|null} valor - Valor atual do item.
+ * @returns {string} Símbolo correspondente ao status.
+ */
   function obterTextoStatus(valor) {
     if (valor === true) return '✓';
     if (valor === false) return 'X';
     return '';
   }
 
-  // Escolhe a classe CSS conforme o estado do item.
+/**
+ * Retorna a classe CSS correspondente ao status de um item.
+ *
+ * @param {boolean|null} valor - Valor atual do item.
+ * @returns {string} Classe CSS usada para representar o status.
+ */
   function obterClasseStatus(valor) {
     if (valor === true) return 'checklists-status-ok';
     if (valor === false) return 'checklists-status-no';
     return 'checklists-status-null';
   }
 
-  // Abre a tela de nova checklist para o veiculo atual.
+/**
+ * Abre a tela de criação de uma nova checklist para o veículo atual.
+ *
+ * @returns {void}
+ */
   function abrirNovaChecklist() {
     if (!veiculo) {
       toast.warning('Selecione um veículo antes de criar uma checklist.');
@@ -177,12 +250,23 @@ function ChecklistsVeiculo() {
     });
   }
 
-  // Volta para o painel tecnico.
+/**
+ * Redireciona o usuário de volta para o painel técnico.
+ *
+ * @returns {void}
+ */
   function voltarPainel() {
     navigate('/tecnico/painel');
   }
 
-  // Agrupa itens marcados por estado dentro do modal.
+/**
+ * Renderiza um grupo de itens que possuem o mesmo status.
+ *
+ * @param {string} titulo - Título exibido no grupo.
+ * @param {Array<Object>} itens - Itens que serão renderizados.
+ * @param {boolean} valor - Status associado aos itens.
+ * @returns {JSX.Element|null} Grupo de itens ou null quando estiver vazio.
+ */
   function renderGrupoItens(titulo, itens, valor) {
     if (!itens.length) return null;
 
@@ -209,7 +293,12 @@ function ChecklistsVeiculo() {
     );
   }
 
-  // Renderiza os itens de uma lista em blocos separados.
+/**
+ * Renderiza os itens da checklist separados entre aprovados e reprovados.
+ *
+ * @param {Array<Object|string>} lista - Lista de itens da checklist.
+ * @returns {JSX.Element} Conteúdo visual dos itens.
+ */
   function renderItens(lista) {
     const { ok, no } = separarItensMarcados(lista);
 
@@ -229,7 +318,13 @@ function ChecklistsVeiculo() {
     );
   }
 
-  // Renderiza a foto ou o estado vazio.
+/**
+ * Renderiza uma foto da checklist ou uma indicação de ausência de imagem.
+ *
+ * @param {string|null|undefined} caminho - Caminho da imagem.
+ * @param {string} titulo - Título e texto alternativo da imagem.
+ * @returns {JSX.Element} Cartão de visualização da foto.
+ */
   function renderFoto(caminho, titulo) {
     const url = obterUrlFoto(caminho);
 
@@ -246,7 +341,12 @@ function ChecklistsVeiculo() {
     );
   }
 
-  // Resume os totais de preenchimento da checklist.
+/**
+ * Renderiza um resumo quantitativo dos itens preenchidos na checklist.
+ *
+ * @param {Object} checklist - Checklist que será resumida.
+ * @returns {JSX.Element} Resumo dos itens de entrada e diagnóstico.
+ */
   function renderResumoChecklist(checklist) {
     const entradaPreenchida = contarItensPreenchidos(checklist.itensEntrada);
     const entradaOk = contarItensOk(checklist.itensEntrada);
@@ -274,7 +374,13 @@ function ChecklistsVeiculo() {
   }
 
 
-  // Protege valores usados dentro do HTML de impressão.
+/**
+ * Escapa caracteres especiais para evitar a inserção de HTML inválido
+ * no documento de impressão.
+ *
+ * @param {*} valor - Valor que será protegido.
+ * @returns {string} Texto seguro para inserção no HTML.
+ */
   function escaparHtml(valor) {
     return String(valor ?? '')
       .replace(/&/g, '&amp;')
@@ -284,7 +390,12 @@ function ChecklistsVeiculo() {
       .replace(/'/g, '&#039;');
   }
 
-  // Gera o documento de impressão da checklist selecionada.
+/**
+ * Gera e abre o documento de impressão da checklist selecionada.
+ *
+ * @param {Object} checklist - Checklist que será impressa.
+ * @returns {void}
+ */
   function imprimirChecklist(checklist) {
     if (!checklist) {
       toast.warning('Nenhuma checklist selecionada para impressão.');
@@ -331,7 +442,15 @@ function ChecklistsVeiculo() {
           hour: '2-digit',
           minute: '2-digit',
         });
-
+        /**
+ * Monta uma seção HTML com os itens da checklist.
+ *
+ * @param {string} titulo - Título da seção.
+ * @param {Array<Object>} itens - Itens que serão exibidos.
+ * @param {string} simbolo - Símbolo visual do status.
+ * @param {string} classe - Classe CSS aplicada ao símbolo.
+ * @returns {string} Estrutura HTML da seção.
+ */
     function montarTabelaItens(titulo, itens, simbolo, classe) {
       return `
         <section class="box box-itens">
@@ -359,6 +478,13 @@ function ChecklistsVeiculo() {
       `;
     }
 
+/**
+ * Monta o HTML de uma foto para o documento de impressão.
+ *
+ * @param {string|null|undefined} caminho - Caminho da imagem.
+ * @param {string} titulo - Título da foto.
+ * @returns {string} Estrutura HTML da foto.
+ */
     function montarFoto(caminho, titulo) {
       const url = obterUrlFoto(caminho);
 
@@ -799,7 +925,11 @@ function ChecklistsVeiculo() {
     janela.document.close();
   }
 
-  // Renderiza o modal de detalhes da checklist selecionada.
+/**
+ * Renderiza o modal com os detalhes da checklist selecionada.
+ *
+ * @returns {JSX.Element|null} Modal de detalhes ou null.
+ */
   function renderModalDetalhes() {
     if (!checklistSelecionada) return null;
 
