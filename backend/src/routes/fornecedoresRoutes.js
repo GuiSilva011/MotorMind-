@@ -1,16 +1,23 @@
-import express from 'express'
-import {listarFornecedores,buscarFornecedorPorNome,criarFornecedor,editarFornecedor,deletarFornecedor} from '../controllers/fornecedorController.js'
+import express from "express";
 
-const router = express.Router()
-/**
- * Rotas de fornecedores com CRUD e busca por nome.
- */
+import {
+  listarFornecedores,
+  buscarFornecedorPorNome,
+  criarFornecedor,
+  editarFornecedor,
+  deletarFornecedor,
+} from "../controllers/fornecedorController.js";
 
-// Rotas do cadastro e consulta de fornecedores.
-router.get('/', listarFornecedores)
-router.get('/buscar-por-nome', buscarFornecedorPorNome)
-router.post('/', criarFornecedor)
-router.put('/:id', editarFornecedor)
-router.delete('/:id', deletarFornecedor)
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
-export default router
+const router = express.Router();
+
+router.use(authMiddleware);
+
+router.get("/", listarFornecedores);
+router.get("/buscar-por-nome", buscarFornecedorPorNome);
+router.post("/", criarFornecedor);
+router.put("/:id", editarFornecedor);
+router.delete("/:id", deletarFornecedor);
+
+export default router;

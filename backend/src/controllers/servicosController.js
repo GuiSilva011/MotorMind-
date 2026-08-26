@@ -1,29 +1,24 @@
 import prisma from '../config/prisma.js';
 
-/**
- * Controlador responsável pelas operações de listagem, busca,
- * cadastro, atualização e exclusão de serviços do catálogo.
- *
- * @module controllers/servicoController
- */
+function obterOficinaId(req, res) {
+  const oficinaId = Number(req.user?.oficinaId);
 
-/**
- * Lista todos os serviços cadastrados no catálogo.
- *
- * Os registros são retornados em ordem alfabética pelo nome.
- *
- * @async
- * @function listarServicos
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com a lista de serviços ou mensagem de erro.
- */
+  if (!oficinaId) {
+    res.status(401).json({ erro: 'Usuário não autenticado.' });
+    return null;
+  }
+
+  return oficinaId;
+}
+
 export async function listarServicos(req, res) {
   try {
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
     const servicos = await prisma.servicoCatalogo.findMany({
-      orderBy: {
-        nome: 'asc',
-      },
+      where: { oficinaId },
+      orderBy: { nome: 'asc' },
     });
 
     return res.json(servicos);
@@ -33,22 +28,12 @@ export async function listarServicos(req, res) {
   }
 }
 
-/**
- * Busca serviços pelo nome, código ou categoria.
- *
- * A pesquisa não diferencia letras maiúsculas e minúsculas.
- *
- * @async
- * @function buscarServicoPorNome
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.query - Parâmetros enviados na URL.
- * @param {string} req.query.nome - Termo utilizado na pesquisa.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com os serviços encontrados ou mensagem de erro.
- */
 export async function buscarServicoPorNome(req, res) {
   try {
-    const { nome } = req.query;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
+    const nome = req.query.nome?.trim();
 
     if (!nome) {
       return res.status(400).json({ erro: 'Nome é obrigatório' });
@@ -56,30 +41,14 @@ export async function buscarServicoPorNome(req, res) {
 
     const servicos = await prisma.servicoCatalogo.findMany({
       where: {
+        oficinaId,
         OR: [
-          {
-            nome: {
-              contains: nome,
-              mode: 'insensitive',
-            },
-          },
-          {
-            codigo: {
-              contains: nome,
-              mode: 'insensitive',
-            },
-          },
-          {
-            categoria: {
-              contains: nome,
-              mode: 'insensitive',
-            },
-          },
+          { nome: { contains: nome, mode: 'insensitive' } },
+          { codigo: { contains: nome, mode: 'insensitive' } },
+          { categoria: { contains: nome, mode: 'insensitive' } },
         ],
       },
-      orderBy: {
-        nome: 'asc',
-      },
+      orderBy: { nome: 'asc' },
     });
 
     return res.json(servicos);
@@ -89,26 +58,15 @@ export async function buscarServicoPorNome(req, res) {
   }
 }
 
-/**
- * Cria um novo serviço no catálogo.
- *
- * Valida os campos obrigatórios e impede a duplicidade
- * de código ou nome.
- *
- * @async
- * @function criarServico
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.body - Dados enviados no corpo da requisição.
- * @param {string} req.body.codigo - Código único do serviço.
- * @param {string} req.body.nome - Nome do serviço.
- * @param {string} [req.body.categoria] - Categoria do serviço.
- * @param {number|string} [req.body.valorPadrao] - Valor padrão do serviço.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com o serviço criado ou mensagem de erro.
- */
 export async function criarServico(req, res) {
   try {
-    const { codigo, nome, categoria, valorPadrao } = req.body;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
+    const codigo = req.body.codigo?.trim();
+    const nome = req.body.nome?.trim();
+    const categoria = req.body.categoria?.trim() || null;
+    const { valorPadrao } = req.body;
 
     if (!codigo || !nome) {
       return res.status(400).json({ erro: 'Código e nome são obrigatórios' });
@@ -116,10 +74,8 @@ export async function criarServico(req, res) {
 
     const servicoExistente = await prisma.servicoCatalogo.findFirst({
       where: {
-        OR: [
-          { codigo: codigo.trim() },
-          { nome: nome.trim() },
-        ],
+        oficinaId,
+        OR: [{ codigo }, { nome }],
       },
     });
 
@@ -131,9 +87,10 @@ export async function criarServico(req, res) {
 
     const servico = await prisma.servicoCatalogo.create({
       data: {
-        codigo: codigo.trim(),
-        nome: nome.trim(),
-        categoria: categoria?.trim() || null,
+        oficinaId,
+        codigo,
+        nome,
+        categoria,
         valorPadrao:
           valorPadrao !== undefined && valorPadrao !== ''
             ? Number(valorPadrao)
@@ -144,53 +101,39 @@ export async function criarServico(req, res) {
     return res.status(201).json(servico);
   } catch (error) {
     console.error('Erro ao criar serviço:', error);
+
+    if (error.code === 'P2002') {
+      return res.status(409).json({ erro: 'Código já utilizado nesta oficina.' });
+    }
+
     return res.status(500).json({ erro: 'Erro ao criar serviço' });
   }
 }
 
-/**
- * Atualiza os dados de um serviço existente.
- *
- * Verifica se o serviço está cadastrado e impede a duplicidade
- * de código ou nome em outros registros.
- *
- * @async
- * @function editarServico
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.params - Parâmetros da rota.
- * @param {number|string} req.params.id - Identificador do serviço.
- * @param {Object} req.body - Dados que serão atualizados.
- * @param {string} [req.body.codigo] - Novo código do serviço.
- * @param {string} [req.body.nome] - Novo nome do serviço.
- * @param {string|null} [req.body.categoria] - Nova categoria do serviço.
- * @param {number|string|null} [req.body.valorPadrao] - Novo valor padrão.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com o serviço atualizado ou mensagem de erro.
- */
 export async function editarServico(req, res) {
   try {
-    const { id } = req.params;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
+    const id = Number(req.params.id);
     const { codigo, nome, categoria, valorPadrao } = req.body;
 
-    const servico = await prisma.servicoCatalogo.findUnique({
-      where: {
-        id: Number(id),
-      },
+    const servico = await prisma.servicoCatalogo.findFirst({
+      where: { id, oficinaId },
     });
 
     if (!servico) {
       return res.status(404).json({ erro: 'Serviço não encontrado' });
     }
 
+    const codigoFinal = codigo?.trim() || servico.codigo;
+    const nomeFinal = nome?.trim() || servico.nome;
+
     const servicoDuplicado = await prisma.servicoCatalogo.findFirst({
       where: {
-        id: {
-          not: Number(id),
-        },
-        OR: [
-          codigo ? { codigo: codigo.trim() } : undefined,
-          nome ? { nome: nome.trim() } : undefined,
-        ].filter(Boolean),
+        oficinaId,
+        id: { not: id },
+        OR: [{ codigo: codigoFinal }, { nome: nomeFinal }],
       },
     });
 
@@ -201,16 +144,12 @@ export async function editarServico(req, res) {
     }
 
     const servicoAtualizado = await prisma.servicoCatalogo.update({
-      where: {
-        id: Number(id),
-      },
+      where: { id },
       data: {
-        codigo: codigo?.trim() || servico.codigo,
-        nome: nome?.trim() || servico.nome,
+        codigo: codigoFinal,
+        nome: nomeFinal,
         categoria:
-          categoria !== undefined
-            ? categoria?.trim() || null
-            : servico.categoria,
+          categoria !== undefined ? categoria?.trim() || null : servico.categoria,
         valorPadrao:
           valorPadrao !== undefined
             ? valorPadrao !== ''
@@ -227,39 +166,22 @@ export async function editarServico(req, res) {
   }
 }
 
-/**
- * Exclui um serviço do catálogo pelo identificador informado.
- *
- * A exclusão é impedida quando o serviço estiver vinculado
- * a uma ordem de serviço.
- *
- * @async
- * @function deletarServico
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.params - Parâmetros da rota.
- * @param {number|string} req.params.id - Identificador do serviço.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
- */
 export async function deletarServico(req, res) {
   try {
-    const { id } = req.params;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
 
-    const servico = await prisma.servicoCatalogo.findUnique({
-      where: {
-        id: Number(id),
-      },
+    const id = Number(req.params.id);
+
+    const servico = await prisma.servicoCatalogo.findFirst({
+      where: { id, oficinaId },
     });
 
     if (!servico) {
       return res.status(404).json({ erro: 'Serviço não encontrado' });
     }
 
-    await prisma.servicoCatalogo.delete({
-      where: {
-        id: Number(id),
-      },
-    });
+    await prisma.servicoCatalogo.delete({ where: { id } });
 
     return res.json({ mensagem: 'Serviço deletado com sucesso' });
   } catch (error) {

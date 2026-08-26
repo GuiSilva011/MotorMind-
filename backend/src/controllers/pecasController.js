@@ -1,30 +1,24 @@
 import prisma from '../config/prisma.js';
 
-/**
- * Controlador responsável pelas operações de listagem, busca,
- * cadastro, atualização e exclusão de peças do catálogo.
- *
- * @module controllers/pecaController
- */
+function obterOficinaId(req, res) {
+  const oficinaId = Number(req.user?.oficinaId);
 
+  if (!oficinaId) {
+    res.status(401).json({ erro: 'Usuário não autenticado.' });
+    return null;
+  }
 
-/**
- * Lista todas as peças cadastradas no catálogo.
- *
- * Os registros são retornados em ordem alfabética pelo nome.
- *
- * @async
- * @function listarPecas
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com a lista de peças ou mensagem de erro.
- */
+  return oficinaId;
+}
+
 export async function listarPecas(req, res) {
   try {
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
     const pecas = await prisma.pecaCatalogo.findMany({
-      orderBy: {
-        nome: 'asc',
-      },
+      where: { oficinaId },
+      orderBy: { nome: 'asc' },
     });
 
     return res.json(pecas);
@@ -34,22 +28,12 @@ export async function listarPecas(req, res) {
   }
 }
 
-/**
- * Busca peças por nome, código, marca, aplicação ou grupo.
- *
- * A pesquisa não diferencia letras maiúsculas e minúsculas.
- *
- * @async
- * @function buscarPecaPorNome
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.query - Parâmetros enviados na URL.
- * @param {string} req.query.nome - Termo utilizado na pesquisa.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com as peças encontradas ou mensagem de erro.
- */
 export async function buscarPecaPorNome(req, res) {
   try {
-    const { nome } = req.query;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
+    const nome = req.query.nome?.trim();
 
     if (!nome) {
       return res.status(400).json({ erro: 'Nome é obrigatório' });
@@ -57,42 +41,16 @@ export async function buscarPecaPorNome(req, res) {
 
     const pecas = await prisma.pecaCatalogo.findMany({
       where: {
+        oficinaId,
         OR: [
-          {
-            nome: {
-              contains: nome,
-              mode: 'insensitive',
-            },
-          },
-          {
-            codigo: {
-              contains: nome,
-              mode: 'insensitive',
-            },
-          },
-          {
-            marca: {
-              contains: nome,
-              mode: 'insensitive',
-            },
-          },
-          {
-            aplicacao: {
-              contains: nome,
-              mode: 'insensitive',
-            },
-          },
-          {
-            grupo: {
-              contains: nome,
-              mode: 'insensitive',
-            },
-          },
+          { nome: { contains: nome, mode: 'insensitive' } },
+          { codigo: { contains: nome, mode: 'insensitive' } },
+          { marca: { contains: nome, mode: 'insensitive' } },
+          { aplicacao: { contains: nome, mode: 'insensitive' } },
+          { grupo: { contains: nome, mode: 'insensitive' } },
         ],
       },
-      orderBy: {
-        nome: 'asc',
-      },
+      orderBy: { nome: 'asc' },
     });
 
     return res.json(pecas);
@@ -102,28 +60,17 @@ export async function buscarPecaPorNome(req, res) {
   }
 }
 
-/**
- * Cria uma nova peça no catálogo.
- *
- * Valida os campos obrigatórios e impede a duplicidade
- * de código ou nome.
- *
- * @async
- * @function criarPeca
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.body - Dados enviados no corpo da requisição.
- * @param {string} req.body.codigo - Código único da peça.
- * @param {string} req.body.nome - Nome da peça.
- * @param {string} [req.body.marca] - Marca da peça.
- * @param {string} [req.body.aplicacao] - Aplicação da peça.
- * @param {string} [req.body.grupo] - Grupo da peça.
- * @param {string} [req.body.unidade='UN'] - Unidade de medida da peça.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com a peça criada ou mensagem de erro.
- */
 export async function criarPeca(req, res) {
   try {
-    const { codigo, nome, marca, aplicacao, grupo, unidade } = req.body;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
+    const codigo = req.body.codigo?.trim();
+    const nome = req.body.nome?.trim();
+    const marca = req.body.marca?.trim() || null;
+    const aplicacao = req.body.aplicacao?.trim() || null;
+    const grupo = req.body.grupo?.trim() || null;
+    const unidade = req.body.unidade?.trim() || 'UN';
 
     if (!codigo || !nome) {
       return res.status(400).json({ erro: 'Código e nome são obrigatórios' });
@@ -131,7 +78,8 @@ export async function criarPeca(req, res) {
 
     const pecaExistente = await prisma.pecaCatalogo.findFirst({
       where: {
-        OR: [{ codigo: codigo.trim() }, { nome: nome.trim() }],
+        oficinaId,
+        OR: [{ codigo }, { nome }],
       },
     });
 
@@ -143,67 +91,52 @@ export async function criarPeca(req, res) {
 
     const peca = await prisma.pecaCatalogo.create({
       data: {
-        codigo: codigo.trim(),
-        nome: nome.trim(),
-        marca: marca?.trim() || null,
-        aplicacao: aplicacao?.trim() || null,
-        grupo: grupo?.trim() || null,
-        unidade: unidade?.trim() || 'UN',
+        oficinaId,
+        codigo,
+        nome,
+        marca,
+        aplicacao,
+        grupo,
+        unidade,
       },
     });
 
     return res.status(201).json(peca);
   } catch (error) {
     console.error('Erro ao criar peça:', error);
+
+    if (error.code === 'P2002') {
+      return res.status(409).json({ erro: 'Código já utilizado nesta oficina.' });
+    }
+
     return res.status(500).json({ erro: 'Erro ao criar peça' });
   }
 }
 
-/**
- * Atualiza os dados de uma peça existente.
- *
- * Verifica se a peça está cadastrada e impede a duplicidade
- * de código ou nome em outros registros.
- *
- * @async
- * @function editarPeca
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.params - Parâmetros da rota.
- * @param {number|string} req.params.id - Identificador da peça.
- * @param {Object} req.body - Dados que serão atualizados.
- * @param {string} [req.body.codigo] - Novo código da peça.
- * @param {string} [req.body.nome] - Novo nome da peça.
- * @param {string|null} [req.body.marca] - Nova marca da peça.
- * @param {string|null} [req.body.aplicacao] - Nova aplicação da peça.
- * @param {string|null} [req.body.grupo] - Novo grupo da peça.
- * @param {string} [req.body.unidade] - Nova unidade de medida.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com a peça atualizada ou mensagem de erro.
- */
 export async function editarPeca(req, res) {
   try {
-    const { id } = req.params;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
+    const id = Number(req.params.id);
     const { codigo, nome, marca, aplicacao, grupo, unidade } = req.body;
 
-    const peca = await prisma.pecaCatalogo.findUnique({
-      where: {
-        id: Number(id),
-      },
+    const peca = await prisma.pecaCatalogo.findFirst({
+      where: { id, oficinaId },
     });
 
     if (!peca) {
       return res.status(404).json({ erro: 'Peça não encontrada' });
     }
 
+    const codigoFinal = codigo?.trim() || peca.codigo;
+    const nomeFinal = nome?.trim() || peca.nome;
+
     const pecaDuplicada = await prisma.pecaCatalogo.findFirst({
       where: {
-        id: {
-          not: Number(id),
-        },
-        OR: [
-          codigo ? { codigo: codigo.trim() } : undefined,
-          nome ? { nome: nome.trim() } : undefined,
-        ].filter(Boolean),
+        oficinaId,
+        id: { not: id },
+        OR: [{ codigo: codigoFinal }, { nome: nomeFinal }],
       },
     });
 
@@ -214,17 +147,16 @@ export async function editarPeca(req, res) {
     }
 
     const pecaAtualizada = await prisma.pecaCatalogo.update({
-      where: {
-        id: Number(id),
-      },
+      where: { id },
       data: {
-        codigo: codigo?.trim() || peca.codigo,
-        nome: nome?.trim() || peca.nome,
+        codigo: codigoFinal,
+        nome: nomeFinal,
         marca: marca !== undefined ? marca?.trim() || null : peca.marca,
         aplicacao:
           aplicacao !== undefined ? aplicacao?.trim() || null : peca.aplicacao,
         grupo: grupo !== undefined ? grupo?.trim() || null : peca.grupo,
-        unidade: unidade?.trim() || peca.unidade || 'UN',
+        unidade:
+          unidade !== undefined ? unidade?.trim() || 'UN' : peca.unidade,
       },
     });
 
@@ -235,39 +167,22 @@ export async function editarPeca(req, res) {
   }
 }
 
-/**
- * Exclui uma peça do catálogo pelo identificador informado.
- *
- * A exclusão é impedida quando a peça estiver vinculada
- * a uma ordem de serviço.
- *
- * @async
- * @function deletarPeca
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.params - Parâmetros da rota.
- * @param {number|string} req.params.id - Identificador da peça.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
- */
 export async function deletarPeca(req, res) {
   try {
-    const { id } = req.params;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
 
-    const peca = await prisma.pecaCatalogo.findUnique({
-      where: {
-        id: Number(id),
-      },
+    const id = Number(req.params.id);
+
+    const peca = await prisma.pecaCatalogo.findFirst({
+      where: { id, oficinaId },
     });
 
     if (!peca) {
       return res.status(404).json({ erro: 'Peça não encontrada' });
     }
 
-    await prisma.pecaCatalogo.delete({
-      where: {
-        id: Number(id),
-      },
-    });
+    await prisma.pecaCatalogo.delete({ where: { id } });
 
     return res.json({ mensagem: 'Peça deletada com sucesso' });
   } catch (error) {

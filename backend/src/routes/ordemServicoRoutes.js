@@ -1,18 +1,27 @@
-import express from 'express'
-import {listarOrdensServico,buscarOrdensServico,buscarOrdemServicoPorId,criarOrdemServico,editarOrdemServico,deletarOrdemServico,gerarProximoCodigoOS} from '../controllers/ordemServicoController.js'
+import express from "express";
 
-const router = express.Router()
-/**
- * Rotas de ordens de serviço com CRUD e consultas auxiliares.
- */
+import {
+  listarOrdensServico,
+  buscarOrdensServico,
+  buscarOrdemServicoPorId,
+  criarOrdemServico,
+  editarOrdemServico,
+  deletarOrdemServico,
+  gerarProximoCodigoOS,
+} from "../controllers/ordemServicoController.js";
 
-// Rotas principais da ordem de serviço, com listagem, busca e CRUD.
-router.get('/', listarOrdensServico)
-router.get('/proximo-codigo', gerarProximoCodigoOS)
-router.get('/buscar', buscarOrdensServico)
-router.get('/:id', buscarOrdemServicoPorId)
-router.post('/', criarOrdemServico)
-router.put('/:id', editarOrdemServico)
-router.delete('/:id', deletarOrdemServico)
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
-export default router
+const router = express.Router();
+
+router.use(authMiddleware);
+
+router.get("/", listarOrdensServico);
+router.get("/proximo-codigo", gerarProximoCodigoOS);
+router.get("/buscar", buscarOrdensServico);
+router.get("/:id", buscarOrdemServicoPorId);
+router.post("/", criarOrdemServico);
+router.put("/:id", editarOrdemServico);
+router.delete("/:id", deletarOrdemServico);
+
+export default router;

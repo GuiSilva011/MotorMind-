@@ -1,16 +1,23 @@
-import express from 'express'
-import {listarDiagnosticos,buscarDiagnosticoPorNome,criarDiagnostico,editarDiagnostico,deletarDiagnostico} from '../controllers/diagnosticoController.js'
+import express from "express";
 
-const router = express.Router()
-/**
- * Rotas de diagnósticos com CRUD e busca por nome.
- */
+import {
+  listarDiagnosticos,
+  buscarDiagnosticoPorNome,
+  criarDiagnostico,
+  editarDiagnostico,
+  deletarDiagnostico,
+} from "../controllers/diagnosticoController.js";
 
-// Rotas do catálogo de diagnósticos.
-router.get('/', listarDiagnosticos)
-router.get('/buscar-por-nome', buscarDiagnosticoPorNome)
-router.post('/', criarDiagnostico)
-router.put('/:id', editarDiagnostico)
-router.delete('/:id', deletarDiagnostico)
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
-export default router
+const router = express.Router();
+
+router.use(authMiddleware);
+
+router.get("/", listarDiagnosticos);
+router.get("/buscar-por-nome", buscarDiagnosticoPorNome);
+router.post("/", criarDiagnostico);
+router.put("/:id", editarDiagnostico);
+router.delete("/:id", deletarDiagnostico);
+
+export default router;

@@ -1,16 +1,23 @@
-import express from 'express'
-import {listarServicos,buscarServicoPorNome,criarServico,editarServico,deletarServico} from '../controllers/servicosController.js'
+import express from "express";
 
-const router = express.Router()
-/**
- * Rotas de serviços com CRUD e busca por nome.
- */
+import {
+  listarServicos,
+  buscarServicoPorNome,
+  criarServico,
+  editarServico,
+  deletarServico,
+} from "../controllers/servicosController.js";
 
-// Rotas do catálogo de serviços.
-router.get('/', listarServicos)
-router.get('/buscar-por-nome', buscarServicoPorNome)
-router.post('/', criarServico)
-router.put('/:id', editarServico)
-router.delete('/:id', deletarServico)
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
-export default router
+const router = express.Router();
+
+router.use(authMiddleware);
+
+router.get("/", listarServicos);
+router.get("/buscar-por-nome", buscarServicoPorNome);
+router.post("/", criarServico);
+router.put("/:id", editarServico);
+router.delete("/:id", deletarServico);
+
+export default router;

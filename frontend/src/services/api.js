@@ -1,16 +1,32 @@
-import axios from 'axios'
+import axios from "axios";
 
-/**
- * Instância compartilhada do Axios utilizada para realizar
- * requisições HTTP ao backend da aplicação.
- *
- * A URL base é aplicada automaticamente em todas as requisições
- * feitas por meio desta instância.
- *
- * @constant {Object}
- */
 const api = axios.create({
-  baseURL: 'http://localhost:3000'
-})
+  baseURL: "http://localhost:3000",
+});
 
-export default api
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("motormind_token");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("motormind_token");
+      localStorage.removeItem("motormind_usuario");
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default api;

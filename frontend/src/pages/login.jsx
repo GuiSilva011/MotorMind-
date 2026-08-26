@@ -82,11 +82,23 @@ function Login() {
  * @returns {string} Rota inicial do perfil ou rota de login.
  */
   function obterRotaInicialPorRole(role) {
-    if (role === 'TECNICO') return '/tecnico/painel';
-    if (role === 'ADMIN') return '/admin/relatorios';
-    if (role === 'OPERADOR') return '/operador/agendamentos/calendario';
+    if (role === "OWNER") {
+      return "/admin/relatorios";
+    }
 
-    return '/login';
+    if (role === "ADMIN") {
+      return "/admin/relatorios";
+    }
+
+    if (role === "OPERADOR") {
+      return "/operador/agendamentos/calendario";
+    }
+
+    if (role === "TECNICO") {
+      return "/tecnico/painel";
+    }
+
+    return "/login";
   }
 
 /**
@@ -119,13 +131,16 @@ function Login() {
       });
 
       const usuario = response.data?.usuario;
+      const token = response.data?.token;
 
-      if (!usuario) {
-        toast.error('Resposta de login inválida.');
+      if (!usuario || !token) {
+        toast.error("Resposta de login inválida.");
         return;
-      }
+}
 
-      localStorage.setItem('motormind_usuario', JSON.stringify(usuario));
+      localStorage.setItem("motormind_usuario", JSON.stringify(usuario));
+
+      localStorage.setItem("motormind_token", token);
 
       toast.success(`Bem-vindo, ${usuario.Nome}!`);
 

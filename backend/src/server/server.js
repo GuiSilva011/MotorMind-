@@ -1,4 +1,6 @@
 import express from 'express';
+import dotenv from "dotenv";
+dotenv.config();
 import cors from 'cors';
 import clienteRoutes from '../routes/clienteRoutes.js';
 import veiculoRoutes from '../routes/veiculoRoutes.js';
@@ -11,6 +13,8 @@ import ordemServicoRoutes from '../routes/ordemServicoRoutes.js';
 import authRoutes from '../routes/authRoutes.js';
 import checklistRoutes from '../routes/checklistRoutes.js';
 import funcionarioRoutes from '../routes/funcionarioRoutes.js';
+
+
 
 
 /**

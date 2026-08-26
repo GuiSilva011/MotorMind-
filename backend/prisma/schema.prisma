@@ -7,41 +7,162 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ======================================================
+// OFICINA / TENANT
+// ======================================================
+
+model Oficina {
+  id Int @id @default(autoincrement())
+
+  nomeFantasia String  @db.VarChar(120)
+  razaoSocial  String? @db.VarChar(150)
+  cnpj         String? @unique @db.VarChar(18)
+
+  email    String? @db.VarChar(120)
+  telefone String? @db.VarChar(20)
+  whatsapp String? @db.VarChar(20)
+
+  cep         String? @db.VarChar(9)
+  endereco    String? @db.VarChar(120)
+  numero      String? @db.VarChar(10)
+  complemento String? @db.VarChar(80)
+  bairro      String? @db.VarChar(60)
+  cidade      String? @db.VarChar(60)
+  uf          String? @db.VarChar(2)
+
+  logoUrl String?
+
+  status StatusOficina @default(PENDENTE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuarios             Usuario[]
+  clientes             Cliente[]
+  veiculos             Veiculo[]
+  agendamentos         Agendamento[]
+  diagnosticosCatalogo DiagnosticoCatalogo[]
+  servicosCatalogo     ServicoCatalogo[]
+  pecasCatalogo        PecaCatalogo[]
+  fornecedores         Fornecedor[]
+  ordensServico        OrdemServico[]
+  checklists           Checklist[]
+  funcionarios         Funcionario[]
+
+  licenca Licenca?
+}
+
+enum StatusOficina {
+  PENDENTE
+  ATIVA
+  SUSPENSA
+  CANCELADA
+}
+
+// ======================================================
+// LICENÇA / COMPRA
+// ======================================================
+
+model Licenca {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int     @unique
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  status StatusLicenca @default(PENDENTE)
+
+  valor Decimal? @db.Decimal(10, 2)
+
+  codigoCompra String? @unique @db.VarChar(100)
+
+  compradaEm  DateTime?
+  ativadaEm   DateTime?
+  canceladaEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum StatusLicenca {
+  PENDENTE
+  ATIVA
+  CANCELADA
+}
+
+// ======================================================
+// USUÁRIO
+// ======================================================
+
 model Usuario {
-  id        Int      @id @default(autoincrement())
-  Nome      String
-  Email     String   @unique
-  Senha     String
-  Role      Role
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  Nome  String
+  Email String @unique
+  Senha String
+  Role  Role
+
   CreatedAt DateTime @default(now())
   UpdatedAt DateTime @updatedAt
 
   funcionario Funcionario?
+
+  @@index([oficinaId])
 }
 
+enum Role {
+  OWNER
+  ADMIN
+  OPERADOR
+  TECNICO
+}
+
+// ======================================================
+// CLIENTE
+// ======================================================
+
 model Cliente {
-  id             Int       @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
   nome           String
   cpf            String?   @db.VarChar(11)
   email          String?
   dataNascimento DateTime?
-  cep            String?
-  endereco       String?
-  bairro         String?
-  cidade         String?
-  uf             String?   @db.VarChar(2)
-  numero         String?
-  complemento    String?
-  celular        String?
 
-  createdAt    DateTime      @default(now())
+  cep         String?
+  endereco    String?
+  bairro      String?
+  cidade      String?
+  uf          String? @db.VarChar(2)
+  numero      String?
+  complemento String?
+
+  celular String?
+
+  createdAt DateTime @default(now())
+
   veiculos     Veiculo[]
   agendamentos Agendamento[]
+
+  @@index([oficinaId])
 }
 
+// ======================================================
+// VEÍCULO
+// ======================================================
+
 model Veiculo {
-  id             Int      @id @default(autoincrement())
-  placa          String   @unique @db.VarChar(7)
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  placa          String   @db.VarChar(7)
   chassi         String?  @db.VarChar(17)
   modelo         String?
   fabricante     String?
@@ -55,33 +176,48 @@ model Veiculo {
 
   createdAt DateTime @default(now())
 
-  clienteId    Int
-  cliente      Cliente       @relation(fields: [clienteId], references: [id])
-  agendamentos Agendamento[]
+  clienteId Int
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  agendamentos  Agendamento[]
   ordensServico OrdemServico[]
-  checklists Checklist[]
+  checklists    Checklist[]
+
+  @@unique([oficinaId, placa])
+  @@index([oficinaId])
+  @@index([clienteId])
 }
 
+// ======================================================
+// AGENDAMENTO
+// ======================================================
+
 model Agendamento {
-  id           Int               @id @default(autoincrement())
-  clienteId    Int
-  veiculoId    Int
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  clienteId Int
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  veiculoId Int
+  veiculo   Veiculo @relation(fields: [veiculoId], references: [id])
+
   dataHora     DateTime
   mecanico     String?
   tipo_servico String?
   servico      String
-  status       StatusAgendamento @default(AGENDADO)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
 
-  cliente Cliente @relation(fields: [clienteId], references: [id])
-  veiculo Veiculo @relation(fields: [veiculoId], references: [id])
-}
+  status StatusAgendamento @default(AGENDADO)
 
-enum Role {
-  ADMIN
-  OPERADOR
-  TECNICO
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([oficinaId])
+  @@index([clienteId])
+  @@index([veiculoId])
+  @@index([dataHora])
 }
 
 enum StatusAgendamento {
@@ -91,81 +227,134 @@ enum StatusAgendamento {
   CANCELADO
 }
 
+// ======================================================
+// CATÁLOGO DE DIAGNÓSTICOS
+// ======================================================
+
 model DiagnosticoCatalogo {
-  id          Int      @id @default(autoincrement())
-  codigo      String   @unique @db.VarChar(20)
-  nome        String   @db.VarChar(80)
-  descricao   String?  @db.VarChar(255)
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  codigo    String  @db.VarChar(20)
+  nome      String  @db.VarChar(80)
+  descricao String? @db.VarChar(255)
+
   ordensDiagnosticos OrdemDiagnostico[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([oficinaId, codigo])
+  @@index([oficinaId])
 }
+
+// ======================================================
+// CATÁLOGO DE SERVIÇOS
+// ======================================================
 
 model ServicoCatalogo {
-  id           Int      @id @default(autoincrement())
-  codigo       String   @unique @db.VarChar(20)
-  nome         String   @db.VarChar(80)
-  categoria    String?  @db.VarChar(50)
-  valorPadrao  Decimal? @db.Decimal(10, 2)
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  codigo      String   @db.VarChar(20)
+  nome        String   @db.VarChar(80)
+  categoria   String?  @db.VarChar(50)
+  valorPadrao Decimal? @db.Decimal(10, 2)
+
   ordensServicos OrdemServicoItem[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([oficinaId, codigo])
+  @@index([oficinaId])
 }
 
+// ======================================================
+// CATÁLOGO DE PEÇAS
+// ======================================================
+
 model PecaCatalogo {
-  id          Int      @id @default(autoincrement())
-  codigo      String   @unique @db.VarChar(20)
-  nome        String   @db.VarChar(80)
-  marca       String?  @db.VarChar(50)
-  aplicacao   String?  @db.VarChar(120)
-  grupo       String?  @db.VarChar(50)
-  unidade     String?  @default("UN") @db.VarChar(10)
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  codigo    String  @db.VarChar(20)
+  nome      String  @db.VarChar(80)
+  marca     String? @db.VarChar(50)
+  aplicacao String? @db.VarChar(120)
+  grupo     String? @db.VarChar(50)
+  unidade   String? @default("UN") @db.VarChar(10)
 
   ordensPecas OrdemPecaItem[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([oficinaId, codigo])
+  @@index([oficinaId])
 }
+
+// ======================================================
+// PEÇAS DA ORDEM DE SERVIÇO
+// ======================================================
+
 model OrdemPecaItem {
-  id                 Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  ordemServicoId      Int
-  ordemDiagnosticoId  Int?
-  ordemServicoItemId  Int?
+  ordemServicoId     Int
+  ordemDiagnosticoId Int?
+  ordemServicoItemId Int?
 
-  pecaCatalogoId      Int?
+  pecaCatalogoId Int?
 
-  codigoPeca          String?  @db.VarChar(20)
-  nomePeca            String   @db.VarChar(80)
+  codigoPeca String? @db.VarChar(20)
+  nomePeca   String  @db.VarChar(80)
 
-  fornecedorId        Int?
-  fornecedorNome      String?  @db.VarChar(80)
+  fornecedorId   Int?
+  fornecedorNome String? @db.VarChar(80)
 
-  quantidade          Int      @default(1)
-  custoUnitario       Decimal? @db.Decimal(10, 2)
-  desconto            Decimal? @db.Decimal(10, 2)
-  valorTotal          Decimal? @db.Decimal(10, 2)
+  quantidade    Int      @default(1)
+  custoUnitario Decimal? @db.Decimal(10, 2)
+  desconto      Decimal? @db.Decimal(10, 2)
+  valorTotal    Decimal? @db.Decimal(10, 2)
 
-  codigoVisual        String?  @db.VarChar(10)
-  codigoHierarquia    String?  @db.VarChar(20)
+  codigoVisual     String? @db.VarChar(10)
+  codigoHierarquia String? @db.VarChar(20)
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  ordemServico        OrdemServico       @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
-  ordemDiagnostico    OrdemDiagnostico?  @relation(fields: [ordemDiagnosticoId], references: [id], onDelete: Cascade)
-  ordemServicoItem    OrdemServicoItem?  @relation(fields: [ordemServicoItemId], references: [id], onDelete: Cascade)
-  pecaCatalogo        PecaCatalogo?      @relation(fields: [pecaCatalogoId], references: [id])
+  ordemServico     OrdemServico      @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  ordemDiagnostico OrdemDiagnostico? @relation(fields: [ordemDiagnosticoId], references: [id], onDelete: Cascade)
+  ordemServicoItem OrdemServicoItem? @relation(fields: [ordemServicoItemId], references: [id], onDelete: Cascade)
+  pecaCatalogo     PecaCatalogo?     @relation(fields: [pecaCatalogoId], references: [id])
+
+  @@index([ordemServicoId])
+  @@index([ordemDiagnosticoId])
+  @@index([ordemServicoItemId])
+  @@index([pecaCatalogoId])
 }
+
+// ======================================================
+// FORNECEDOR
+// ======================================================
 
 model Fornecedor {
-  id     Int    @id @default(autoincrement())
-  codigo String @unique @db.VarChar(20)
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  codigo String @db.VarChar(20)
 
   nome      String  @db.VarChar(100)
-  cnpj      String  @unique @db.VarChar(18)
+  cnpj      String  @db.VarChar(18)
   email     String? @db.VarChar(100)
   telefone  String? @db.VarChar(20)
   celular   String? @db.VarChar(20)
@@ -181,85 +370,49 @@ model Fornecedor {
 
   fornecePecas    Boolean @default(true)
   forneceServicos Boolean @default(false)
-  observacoes      String? @db.VarChar(255)
+  observacoes     String? @db.VarChar(255)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([oficinaId, codigo])
+  @@unique([oficinaId, cnpj])
+  @@index([oficinaId])
 }
+
+// ======================================================
+// ORDEM DE SERVIÇO
+// ======================================================
 
 model OrdemServico {
-  id             Int         @id @default(autoincrement())
-  codigo         String      @unique @db.VarChar(20)
-  status         StatusOrdem @default(ABERTA)
+  id Int @id @default(autoincrement())
 
-  veiculoId      Int
-  veiculo        Veiculo     @relation(fields: [veiculoId], references: [id])
-  
-  operadorId     Int?
-  tecnicoId      Int?
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
 
-  observacoes    String?     @db.VarChar(255)
-  dataEmissao    DateTime    @default(now())
+  codigo String      @db.VarChar(20)
+  status StatusOrdem @default(ABERTA)
+
+  veiculoId Int
+  veiculo   Veiculo @relation(fields: [veiculoId], references: [id])
+
+  operadorId Int?
+  tecnicoId  Int?
+
+  observacoes    String?   @db.VarChar(255)
+  dataEmissao    DateTime  @default(now())
   dataFechamento DateTime?
 
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  diagnosticos   OrdemDiagnostico[]
-  servicos       OrdemServicoItem[]
-  pecas          OrdemPecaItem[]
-}
+  diagnosticos OrdemDiagnostico[]
+  servicos     OrdemServicoItem[]
+  pecas        OrdemPecaItem[]
 
-model OrdemDiagnostico {
-  id                   Int      @id @default(autoincrement())
-
-  ordemServicoId        Int
-  diagnosticoCatalogoId Int?
-
-  codigoVisual          String? @db.VarChar(10)
-  codigoHierarquia      String? @db.VarChar(20)
-
-  nomeDiagnostico       String  @db.VarChar(80)
-  descricao             String? @db.VarChar(255)
-  observacoes           String? @db.VarChar(255)
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  ordemServico          OrdemServico         @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
-  diagnosticoCatalogo   DiagnosticoCatalogo? @relation(fields: [diagnosticoCatalogoId], references: [id])
-
-  servicos              OrdemServicoItem[]
-  pecas                 OrdemPecaItem[]
-}
-
-model OrdemServicoItem {
-  id                 Int      @id @default(autoincrement())
-
-  ordemServicoId      Int
-  ordemDiagnosticoId  Int?
-  servicoCatalogoId   Int?
-
-  codigoVisual        String? @db.VarChar(10)
-  codigoHierarquia    String? @db.VarChar(20)
-
-  nomeServico         String  @db.VarChar(80)
-  descricao           String? @db.VarChar(255)
-  responsavel         String? @db.VarChar(80)
-  tipo                String? @db.VarChar(50)
-
-  precoVenda          Decimal? @db.Decimal(10, 2)
-  desconto            Decimal? @db.Decimal(10, 2)
-  valorTotal          Decimal? @db.Decimal(10, 2)
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  ordemServico        OrdemServico       @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
-  ordemDiagnostico    OrdemDiagnostico?  @relation(fields: [ordemDiagnosticoId], references: [id], onDelete: Cascade)
-  servicoCatalogo     ServicoCatalogo?   @relation(fields: [servicoCatalogoId], references: [id])
-
-  pecas               OrdemPecaItem[]
+  @@unique([oficinaId, codigo])
+  @@index([oficinaId])
+  @@index([veiculoId])
 }
 
 enum StatusOrdem {
@@ -270,8 +423,82 @@ enum StatusOrdem {
   CANCELADA
 }
 
+// ======================================================
+// DIAGNÓSTICOS DA ORDEM
+// ======================================================
+
+model OrdemDiagnostico {
+  id Int @id @default(autoincrement())
+
+  ordemServicoId        Int
+  diagnosticoCatalogoId Int?
+
+  codigoVisual     String? @db.VarChar(10)
+  codigoHierarquia String? @db.VarChar(20)
+
+  nomeDiagnostico String  @db.VarChar(80)
+  descricao       String? @db.VarChar(255)
+  observacoes     String? @db.VarChar(255)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ordemServico        OrdemServico         @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  diagnosticoCatalogo DiagnosticoCatalogo? @relation(fields: [diagnosticoCatalogoId], references: [id])
+
+  servicos OrdemServicoItem[]
+  pecas    OrdemPecaItem[]
+
+  @@index([ordemServicoId])
+  @@index([diagnosticoCatalogoId])
+}
+
+// ======================================================
+// SERVIÇOS DA ORDEM
+// ======================================================
+
+model OrdemServicoItem {
+  id Int @id @default(autoincrement())
+
+  ordemServicoId     Int
+  ordemDiagnosticoId Int?
+  servicoCatalogoId  Int?
+
+  codigoVisual     String? @db.VarChar(10)
+  codigoHierarquia String? @db.VarChar(20)
+
+  nomeServico String  @db.VarChar(80)
+  descricao   String? @db.VarChar(255)
+  responsavel String? @db.VarChar(80)
+  tipo        String? @db.VarChar(50)
+
+  precoVenda Decimal? @db.Decimal(10, 2)
+  desconto   Decimal? @db.Decimal(10, 2)
+  valorTotal Decimal? @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ordemServico     OrdemServico      @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  ordemDiagnostico OrdemDiagnostico? @relation(fields: [ordemDiagnosticoId], references: [id], onDelete: Cascade)
+  servicoCatalogo  ServicoCatalogo?  @relation(fields: [servicoCatalogoId], references: [id])
+
+  pecas OrdemPecaItem[]
+
+  @@index([ordemServicoId])
+  @@index([ordemDiagnosticoId])
+  @@index([servicoCatalogoId])
+}
+
+// ======================================================
+// CHECKLIST
+// ======================================================
+
 model Checklist {
   id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
 
   veiculoId Int
   veiculo   Veiculo @relation(fields: [veiculoId], references: [id])
@@ -288,15 +515,25 @@ model Checklist {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([oficinaId])
+  @@index([veiculoId])
 }
+
+// ======================================================
+// FUNCIONÁRIO
+// ======================================================
 
 model Funcionario {
   id Int @id @default(autoincrement())
 
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
   usuarioId Int     @unique
   usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  Cpf            String?   @unique
+  Cpf            String?
   Rg             String?
   DataNascimento DateTime?
   Celular        String?
@@ -314,4 +551,7 @@ model Funcionario {
 
   CreatedAt DateTime @default(now())
   UpdatedAt DateTime @updatedAt
+
+  @@unique([oficinaId, Cpf])
+  @@index([oficinaId])
 }

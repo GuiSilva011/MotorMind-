@@ -1,33 +1,42 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
 
-/**
- * Controla o acesso às rotas protegidas do sistema.
- *
- * Verifica se existe um usuário autenticado e se o perfil possui
- * permissão para acessar a rota solicitada.
- *
- * @component
- * @function ProtectedRoute
- * @param {Object} props - Propriedades do componente.
- * @param {*} props.children - Conteúdo protegido que será renderizado.
- * @param {string[]} [props.allowedRoles=[]] - Perfis autorizados a acessar a rota.
- * @returns {JSX.Element} Conteúdo autorizado ou redirecionamento para o login.
- */
+function ProtectedRoute({
+  children,
+  allowedRoles = [],
+}) {
+  const usuarioSalvo = localStorage.getItem(
+    "motormind_usuario"
+  );
 
-function ProtectedRoute({ children, allowedRoles = [] }) {
-  const usuarioSalvo = localStorage.getItem('motormind_usuario');
+  const token = localStorage.getItem(
+    "motormind_token"
+  );
 
-  if (!usuarioSalvo) {
+  if (!usuarioSalvo || !token) {
     return <Navigate to="/login" replace />;
   }
 
-  const usuario = JSON.parse(usuarioSalvo);
+  try {
+    const usuario = JSON.parse(usuarioSalvo);
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(usuario.Role)) {
+    if (usuario.Role === "OWNER") {
+      return children;
+    }
+
+    if (
+      allowedRoles.length > 0 &&
+      !allowedRoles.includes(usuario.Role)
+    ) {
+      return <Navigate to="/login" replace />;
+    }
+
+    return children;
+  } catch {
+    localStorage.removeItem("motormind_usuario");
+    localStorage.removeItem("motormind_token");
+
     return <Navigate to="/login" replace />;
   }
-
-  return children;
 }
 
 export default ProtectedRoute;

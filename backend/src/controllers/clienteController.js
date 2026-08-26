@@ -1,38 +1,42 @@
 import prisma from '../config/prisma.js';
 
-/**
- * Controlador responsável pelas operações de cadastro, consulta,
- * listagem, atualização e exclusão de clientes e seus veículos.
- *
- * @module controllers/clienteController
- */
+function obterOficinaId(req, res) {
+  const oficinaId = Number(req.user?.oficinaId);
 
+  if (!oficinaId) {
+    res.status(401).json({ erro: 'Usuário não autenticado.' });
+    return null;
+  }
 
-/**
- * Cria um novo cliente e cadastra os veículos enviados na requisição.
- *
- * @async
- * @function criarCliente
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.body - Dados enviados no corpo da requisição.
- * @param {string} req.body.nome - Nome do cliente.
- * @param {string} req.body.cpf - CPF do cliente.
- * @param {string} [req.body.email] - E-mail do cliente.
- * @param {string|Date} [req.body.dataNascimento] - Data de nascimento.
- * @param {string} [req.body.cep] - CEP do cliente.
- * @param {string} [req.body.endereco] - Endereço do cliente.
- * @param {string} [req.body.bairro] - Bairro do cliente.
- * @param {string} [req.body.cidade] - Cidade do cliente.
- * @param {string} [req.body.uf] - Unidade federativa.
- * @param {string} [req.body.numero] - Número do endereço.
- * @param {string} [req.body.complemento] - Complemento do endereço.
- * @param {string} [req.body.celular] - Celular do cliente.
- * @param {Array<Object>} [req.body.veiculos] - Veículos vinculados ao cliente.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com o cliente criado ou mensagem de erro.
- */
+  return oficinaId;
+}
+
+function montarDadosVeiculo(veiculo) {
+  return {
+    placa: veiculo.placa?.trim().toUpperCase(),
+    modelo: veiculo.modelo?.trim() || null,
+    chassi: veiculo.chassi?.trim() || null,
+    fabricante: veiculo.fabricante?.trim() || null,
+    ano_modelo: veiculo.ano_modelo ? Number(veiculo.ano_modelo) : null,
+    ano_fabricacao: veiculo.ano_fabricacao
+      ? Number(veiculo.ano_fabricacao)
+      : null,
+    motor: veiculo.motor?.trim() || null,
+    km:
+      veiculo.km !== undefined && veiculo.km !== null && veiculo.km !== ''
+        ? String(veiculo.km)
+        : null,
+    cor: veiculo.cor?.trim() || null,
+    ar: veiculo.ar !== undefined ? veiculo.ar : null,
+    cambio: veiculo.Cambio?.trim() || veiculo.cambio?.trim() || null,
+  };
+}
+
 export async function criarCliente(req, res) {
   try {
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
     const {
       nome,
       cpf,
@@ -46,60 +50,62 @@ export async function criarCliente(req, res) {
       numero,
       complemento,
       celular,
-      veiculos,
+      veiculos = [],
     } = req.body;
 
-    console.log(req.body);
+    if (!nome?.trim()) {
+      return res.status(400).json({ erro: 'Nome é obrigatório.' });
+    }
 
-    const cliente = await prisma.cliente.create({
-      data: {
-        nome,
-        cpf,
-        email,
-        dataNascimento: dataNascimento ? new Date(dataNascimento) : null,
-        cep,
-        endereco,
-        bairro,
-        cidade,
-        uf,
-        numero,
-        complemento,
-        celular,
-      },
-    });
+    const cliente = await prisma.$transaction(async (tx) => {
+      const clienteCriado = await tx.cliente.create({
+        data: {
+          oficinaId,
+          nome: nome.trim(),
+          cpf: cpf?.trim() || null,
+          email: email?.trim() || null,
+          dataNascimento: dataNascimento ? new Date(dataNascimento) : null,
+          cep: cep?.trim() || null,
+          endereco: endereco?.trim() || null,
+          bairro: bairro?.trim() || null,
+          cidade: cidade?.trim() || null,
+          uf: uf?.trim() || null,
+          numero: numero?.trim() || null,
+          complemento: complemento?.trim() || null,
+          celular: celular?.trim() || null,
+        },
+      });
 
-    if (Array.isArray(veiculos) && veiculos.length > 0) {
-      for (const veiculo of veiculos) {
-        await prisma.veiculo.create({
+      for (const veiculo of Array.isArray(veiculos) ? veiculos : []) {
+        if (veiculo._remover || !veiculo.placa?.trim()) continue;
+
+        await tx.veiculo.create({
           data: {
-            clienteId: cliente.id,
-            placa: veiculo.placa,
-            modelo: veiculo.modelo || null,
-            chassi: veiculo.chassi || null,
-            fabricante: veiculo.fabricante || null,
-            ano_modelo: veiculo.ano_modelo
-              ? Number(veiculo.ano_modelo)
-              : null,
-            ano_fabricacao: veiculo.ano_fabricacao
-              ? Number(veiculo.ano_fabricacao)
-              : null,
-            motor: veiculo.motor || null,
-            km: veiculo.km || null,
-            cor: veiculo.cor || null,
-            ar: veiculo.ar !== undefined ? veiculo.ar : null,
-            cambio: veiculo.Cambio || veiculo.cambio || null,
+            oficinaId,
+            clienteId: clienteCriado.id,
+            ...montarDadosVeiculo(veiculo),
           },
         });
       }
-    }
+
+      return tx.cliente.findFirst({
+        where: {
+          id: clienteCriado.id,
+          oficinaId,
+        },
+        include: {
+          veiculos: true,
+        },
+      });
+    });
 
     return res.status(201).json(cliente);
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao criar cliente:', error);
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        erro: 'Já existe um registro com esses dados únicos.',
+        erro: 'Já existe um veículo cadastrado com esta placa nesta oficina.',
       });
     }
 
@@ -107,22 +113,11 @@ export async function criarCliente(req, res) {
   }
 }
 
-/**
- * Busca um cliente pelo nome informado na query.
- *
- * A pesquisa não diferencia letras maiúsculas e minúsculas
- * e inclui os veículos vinculados ao cliente.
- *
- * @async
- * @function buscarClientePorNome
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.query - Parâmetros enviados na URL.
- * @param {string} req.query.nome - Nome exato do cliente.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com o cliente encontrado ou mensagem de erro.
- */
 export async function buscarClientePorNome(req, res) {
   try {
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
     const nome = req.query.nome?.trim();
 
     if (!nome) {
@@ -131,6 +126,7 @@ export async function buscarClientePorNome(req, res) {
 
     const cliente = await prisma.cliente.findFirst({
       where: {
+        oficinaId,
         nome: {
           equals: nome,
           mode: 'insensitive',
@@ -147,26 +143,18 @@ export async function buscarClientePorNome(req, res) {
 
     return res.json(cliente);
   } catch (error) {
-    console.log(error);
+    console.error('Erro ao buscar cliente por nome:', error);
     return res.status(500).json({ erro: 'Erro ao buscar cliente por nome' });
   }
 }
 
-/**
- * Lista todos os clientes cadastrados com seus veículos.
- *
- * Os registros são ordenados do cliente mais recente
- * para o mais antigo.
- *
- * @async
- * @function listarClientes
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com a lista de clientes ou mensagem de erro.
- */
 export async function listarClientes(req, res) {
   try {
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
     const clientes = await prisma.cliente.findMany({
+      where: { oficinaId },
       include: {
         veiculos: true,
       },
@@ -177,43 +165,21 @@ export async function listarClientes(req, res) {
 
     return res.json(clientes);
   } catch (error) {
-    console.log(error);
+    console.error('Erro ao exibir clientes:', error);
     return res.status(500).json({ erro: 'Erro ao exibir clientes' });
   }
 }
 
-/**
- * Atualiza os dados de um cliente e gerencia seus veículos vinculados.
- *
- * A operação é executada em uma transação. Veículos existentes podem
- * ser atualizados, novos veículos podem ser criados e veículos marcados
- * para remoção podem ser excluídos.
- *
- * @async
- * @function editarClientes
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.params - Parâmetros da rota.
- * @param {number|string} req.params.id - Identificador do cliente.
- * @param {Object} req.body - Dados atualizados do cliente.
- * @param {string} req.body.nome - Nome do cliente.
- * @param {string} req.body.cpf - CPF do cliente.
- * @param {string} [req.body.email] - E-mail do cliente.
- * @param {string|Date} [req.body.dataNascimento] - Data de nascimento.
- * @param {string} [req.body.cep] - CEP do cliente.
- * @param {string} [req.body.endereco] - Endereço do cliente.
- * @param {string} [req.body.bairro] - Bairro do cliente.
- * @param {string} [req.body.cidade] - Cidade do cliente.
- * @param {string} [req.body.uf] - Unidade federativa.
- * @param {string} [req.body.numero] - Número do endereço.
- * @param {string} [req.body.complemento] - Complemento do endereço.
- * @param {string} [req.body.celular] - Celular do cliente.
- * @param {Array<Object>} [req.body.veiculos] - Veículos que serão atualizados, criados ou removidos.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com o cliente atualizado e seus veículos ou mensagem de erro.
- */
 export async function editarClientes(req, res) {
   try {
-    const { id } = req.params;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
+
+    const clienteId = Number(req.params.id);
+
+    if (!clienteId) {
+      return res.status(400).json({ erro: 'ID do cliente inválido.' });
+    }
 
     const {
       nome,
@@ -231,17 +197,10 @@ export async function editarClientes(req, res) {
       veiculos,
     } = req.body;
 
-    const clienteId = Number(id);
-
-    if (!clienteId) {
-      return res.status(400).json({
-        erro: 'ID do cliente inválido.',
-      });
-    }
-
-    const clienteExistente = await prisma.cliente.findUnique({
+    const clienteExistente = await prisma.cliente.findFirst({
       where: {
         id: clienteId,
+        oficinaId,
       },
       include: {
         veiculos: true,
@@ -249,29 +208,43 @@ export async function editarClientes(req, res) {
     });
 
     if (!clienteExistente) {
-      return res.status(404).json({
-        erro: 'Cliente não encontrado.',
-      });
+      return res.status(404).json({ erro: 'Cliente não encontrado.' });
     }
 
     const resultado = await prisma.$transaction(async (tx) => {
       await tx.cliente.update({
-        where: {
-          id: clienteId,
-        },
+        where: { id: clienteId },
         data: {
-          nome,
-          cpf,
-          email: email || null,
-          dataNascimento: dataNascimento ? new Date(dataNascimento) : null,
-          cep: cep || null,
-          endereco: endereco || null,
-          bairro: bairro || null,
-          cidade: cidade || null,
-          uf: uf || null,
-          numero: numero || null,
-          complemento: complemento || null,
-          celular: celular || null,
+          nome: nome !== undefined ? nome?.trim() || clienteExistente.nome : clienteExistente.nome,
+          cpf: cpf !== undefined ? cpf?.trim() || null : clienteExistente.cpf,
+          email:
+            email !== undefined ? email?.trim() || null : clienteExistente.email,
+          dataNascimento:
+            dataNascimento !== undefined
+              ? dataNascimento
+                ? new Date(dataNascimento)
+                : null
+              : clienteExistente.dataNascimento,
+          cep: cep !== undefined ? cep?.trim() || null : clienteExistente.cep,
+          endereco:
+            endereco !== undefined
+              ? endereco?.trim() || null
+              : clienteExistente.endereco,
+          bairro:
+            bairro !== undefined ? bairro?.trim() || null : clienteExistente.bairro,
+          cidade:
+            cidade !== undefined ? cidade?.trim() || null : clienteExistente.cidade,
+          uf: uf !== undefined ? uf?.trim() || null : clienteExistente.uf,
+          numero:
+            numero !== undefined ? numero?.trim() || null : clienteExistente.numero,
+          complemento:
+            complemento !== undefined
+              ? complemento?.trim() || null
+              : clienteExistente.complemento,
+          celular:
+            celular !== undefined
+              ? celular?.trim() || null
+              : clienteExistente.celular,
         },
       });
 
@@ -279,108 +252,88 @@ export async function editarClientes(req, res) {
         for (const veiculo of veiculos) {
           const veiculoId = veiculo.id ? Number(veiculo.id) : null;
 
-          // Caso o veículo tenha sido marcado para remoção no frontend
           if (veiculo._remover === true) {
-            if (!veiculoId) {
-              continue;
-            }
+            if (!veiculoId) continue;
 
-            await tx.veiculo.delete({
+            const veiculoParaExcluir = await tx.veiculo.findFirst({
               where: {
                 id: veiculoId,
+                oficinaId,
+                clienteId,
               },
             });
 
+            if (!veiculoParaExcluir) {
+              const erro = new Error('Veículo não encontrado para este cliente.');
+              erro.code = 'VEICULO_NAO_PERTENCE_CLIENTE';
+              throw erro;
+            }
+
+            await tx.veiculo.delete({ where: { id: veiculoId } });
             continue;
           }
 
-          const dadosVeiculo = {
-            placa: veiculo.placa,
-            modelo: veiculo.modelo || null,
-            chassi: veiculo.chassi || null,
-            fabricante: veiculo.fabricante || null,
-            ano_modelo: veiculo.ano_modelo
-              ? Number(veiculo.ano_modelo)
-              : null,
-            ano_fabricacao: veiculo.ano_fabricacao
-              ? Number(veiculo.ano_fabricacao)
-              : null,
-            motor: veiculo.motor || null,
-            km: veiculo.km || null,
-            cor: veiculo.cor || null,
-            ar: veiculo.ar !== undefined ? veiculo.ar : null,
-            cambio: veiculo.Cambio || veiculo.cambio || null,
-          };
+          if (!veiculo.placa?.trim() && !veiculoId) continue;
 
-          // Caso 1: veículo existente, atualiza pelo ID
+          const dadosVeiculo = montarDadosVeiculo(veiculo);
+
           if (veiculoId) {
-            const veiculoExistente = await tx.veiculo.findUnique({
+            const veiculoExistente = await tx.veiculo.findFirst({
               where: {
                 id: veiculoId,
+                oficinaId,
               },
             });
 
-            if (!veiculoExistente) {
-              continue;
-            }
-
-            if (Number(veiculoExistente.clienteId) !== Number(clienteId)) {
-              const error = new Error(
+            if (!veiculoExistente || veiculoExistente.clienteId !== clienteId) {
+              const erro = new Error(
                 'Este veículo não pertence ao cliente informado.'
               );
-
-              error.code = 'VEICULO_NAO_PERTENCE_CLIENTE';
-              throw error;
+              erro.code = 'VEICULO_NAO_PERTENCE_CLIENTE';
+              throw erro;
             }
 
             await tx.veiculo.update({
-              where: {
-                id: veiculoId,
-              },
+              where: { id: veiculoId },
               data: dadosVeiculo,
             });
 
             continue;
           }
 
-          // Caso 2: veículo sem ID, mas já existe pela placa
-          const veiculoExistentePorPlaca = veiculo.placa
-            ? await tx.veiculo.findUnique({
+          const placa = dadosVeiculo.placa;
+
+          const veiculoExistentePorPlaca = placa
+            ? await tx.veiculo.findFirst({
                 where: {
-                  placa: veiculo.placa,
+                  oficinaId,
+                  placa,
                 },
               })
             : null;
 
           if (
             veiculoExistentePorPlaca &&
-            Number(veiculoExistentePorPlaca.clienteId) === Number(clienteId)
+            veiculoExistentePorPlaca.clienteId === clienteId
           ) {
             await tx.veiculo.update({
-              where: {
-                id: veiculoExistentePorPlaca.id,
-              },
+              where: { id: veiculoExistentePorPlaca.id },
               data: dadosVeiculo,
             });
-
             continue;
           }
 
-          if (
-            veiculoExistentePorPlaca &&
-            Number(veiculoExistentePorPlaca.clienteId) !== Number(clienteId)
-          ) {
-            const error = new Error(
+          if (veiculoExistentePorPlaca) {
+            const erro = new Error(
               'Já existe um veículo cadastrado com esta placa para outro cliente.'
             );
-
-            error.code = 'PLACA_OUTRO_CLIENTE';
-            throw error;
+            erro.code = 'PLACA_OUTRO_CLIENTE';
+            throw erro;
           }
 
-          // Caso 3: veículo realmente novo
           await tx.veiculo.create({
             data: {
+              oficinaId,
               clienteId,
               ...dadosVeiculo,
             },
@@ -388,38 +341,33 @@ export async function editarClientes(req, res) {
         }
       }
 
-      const clienteComVeiculos = await tx.cliente.findUnique({
+      return tx.cliente.findFirst({
         where: {
           id: clienteId,
+          oficinaId,
         },
         include: {
           veiculos: true,
         },
       });
-
-      return clienteComVeiculos;
     });
 
     return res.json(resultado);
   } catch (error) {
-    console.log(error);
+    console.error('Erro ao atualizar cliente:', error);
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        erro: 'Já existe um veículo cadastrado com esta placa.',
+        erro: 'Já existe um veículo cadastrado com esta placa nesta oficina.',
       });
     }
 
     if (error.code === 'PLACA_OUTRO_CLIENTE') {
-      return res.status(409).json({
-        erro: error.message,
-      });
+      return res.status(409).json({ erro: error.message });
     }
 
     if (error.code === 'VEICULO_NAO_PERTENCE_CLIENTE') {
-      return res.status(403).json({
-        erro: error.message,
-      });
+      return res.status(403).json({ erro: error.message });
     }
 
     if (
@@ -429,8 +377,7 @@ export async function editarClientes(req, res) {
       String(error.message || '').includes('Agendamento_veiculoId_fkey')
     ) {
       return res.status(409).json({
-        erro:
-          'Este veículo não pode ser removido porque já possui ordem de serviço, checklist ou agendamento vinculado.',
+        erro: 'Este veículo não pode ser removido porque já possui ordem de serviço, checklist ou agendamento vinculado.',
       });
     }
 
@@ -441,29 +388,17 @@ export async function editarClientes(req, res) {
   }
 }
 
-/**
- * Exclui um cliente e todos os veículos vinculados a ele.
- *
- * A exclusão é executada em uma transação para manter
- * a consistência dos dados.
- *
- * @async
- * @function deletarClientes
- * @param {Object} req - Objeto da requisição HTTP.
- * @param {Object} req.params - Parâmetros da rota.
- * @param {number|string} req.params.id - Identificador do cliente.
- * @param {Object} res - Objeto da resposta HTTP.
- * @returns {Promise<Object>} Resposta com mensagem de sucesso ou erro.
- */
 export async function deletarClientes(req, res) {
   try {
-    const { id } = req.params;
+    const oficinaId = obterOficinaId(req, res);
+    if (!oficinaId) return;
 
-    const clienteId = Number(id);
+    const clienteId = Number(req.params.id);
 
-    const cliente = await prisma.cliente.findUnique({
+    const cliente = await prisma.cliente.findFirst({
       where: {
         id: clienteId,
+        oficinaId,
       },
       include: {
         veiculos: true,
@@ -478,24 +413,25 @@ export async function deletarClientes(req, res) {
       await tx.veiculo.deleteMany({
         where: {
           clienteId,
+          oficinaId,
         },
       });
 
       await tx.cliente.delete({
-        where: {
-          id: clienteId,
-        },
+        where: { id: clienteId },
       });
     });
 
-    return res.json({
-      mensagem: 'Cliente deletado com sucesso',
-    });
+    return res.json({ mensagem: 'Cliente deletado com sucesso' });
   } catch (error) {
-    console.log(error);
+    console.error('Erro ao deletar cliente:', error);
 
-    return res.status(500).json({
-      erro: 'Erro ao deletar cliente',
-    });
+    if (error.code === 'P2003') {
+      return res.status(409).json({
+        erro: 'Este cliente não pode ser removido porque possui registros vinculados.',
+      });
+    }
+
+    return res.status(500).json({ erro: 'Erro ao deletar cliente' });
   }
 }
