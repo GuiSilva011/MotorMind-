@@ -1,0 +1,52 @@
+.estoque-page { padding: 30px 40px 60px; width: 100%; color: #07142b; }
+.est-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+.est-header h1 { font-size: 30px; margin: 0 0 8px; }
+.est-header p, .est-note { color: #455875; font-size: 14px; line-height: 1.6; }
+.est-resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 24px; }
+.est-resumo > div { padding: 22px; background: #fff; border: 1px solid #d9e1ec; border-radius: 12px; }
+.est-resumo span { display: block; color: #455875; font-size: 14px; }
+.est-resumo strong { display: block; font-size: 30px; margin-top: 8px; }
+.est-resumo .est-resumo-alerta { border-top: 3px solid #ff7a00; }
+.est-card { background: #fff; border: 1px solid #d9e1ec; border-radius: 14px; padding: 24px; }
+.est-toolbar { display: flex; align-items: end; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.est-search { flex: 1; min-width: 200px; }
+.estoque-page button { padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #12213a; cursor: pointer; font-size: 14px; font-weight: 600; }
+.estoque-page button:hover { background: #edf2f7; }
+.estoque-page button.est-primary { background: #07142b; color: #fff; border-color: #07142b; }
+.estoque-page button.est-primary:hover { background: #172744; }
+.estoque-page button:disabled { cursor: not-allowed; opacity: .55; }
+.estoque-page :is(button, input, select, textarea):focus-visible { outline: 3px solid #14a8e8; outline-offset: 2px; }
+.est-field { display: flex; flex-direction: column; gap: 7px; font-size: 14px; color: #12213a; }
+.est-field span { font-weight: 600; }
+.est-field input, .est-field select, .est-field textarea { width: 100%; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #12213a; min-width: 0; font-size: 16px; }
+.est-field input:read-only { background: #f4f7fb; color: #455875; }
+.est-field textarea { resize: vertical; }
+.est-table-wrap { overflow-x: auto; }
+.estoque-page table { border-collapse: collapse; width: 100%; font-size: 14px; text-align: left; }
+.estoque-page th { padding: 14px 12px; background: #f4f7fb; color: #455875; font-weight: 600; white-space: nowrap; }
+.estoque-page td { padding: 17px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+.estoque-page td strong { display: block; overflow-wrap: anywhere; min-width: 140px; }
+.estoque-page td small { display: block; margin-top: 5px; color: #455875; font-size: 13px; overflow-wrap: anywhere; }
+.est-number { font-size: 18px; font-weight: 700; white-space: nowrap; }
+.est-badge { display: inline-block; padding: 6px 9px; border-radius: 6px; font-size: 13px; white-space: nowrap; }
+.est-baixo { background: #fff0dc; color: #8a4300; }
+.est-ok { background: #e6f3ee; color: #1f654a; }
+.est-inativo { background: #edf2f7; color: #455875; }
+.est-actions { display: flex; gap: 6px; flex-wrap: wrap; min-width: 190px; }
+.est-actions button { padding: 7px 9px; }
+.est-empty { padding: 44px 20px; text-align: center; color: #455875; font-size: 16px; }
+.est-error { padding: 14px; margin: 12px 0; background: #fff1f0; border: 1px solid #f2c2bd; color: #952c25; border-radius: 8px; line-height: 1.5; }
+.est-note { margin: 14px 0; }
+.est-dialog { position: fixed; inset: 0; margin: auto; width: min(680px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); padding: 26px; border: 1px solid #d9e1ec; border-radius: 14px; color: #07142b; box-shadow: 0 24px 80px #07142b40; overflow: auto; }
+.est-dialog-wide { width: min(1000px, calc(100vw - 32px)); }
+.est-dialog::backdrop { background: #07142b99; }
+.est-dialog-header { display: flex; justify-content: space-between; align-items: start; gap: 20px; margin-bottom: 20px; }
+.est-dialog-header h2 { font-size: 22px; margin: 0; }
+.est-dialog-header button { font-size: 20px; padding: 0 10px; }
+.est-dialog fieldset { border: 0; padding: 0; min-width: 0; }
+.est-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 20px; }
+.est-current { margin: 16px 0 22px; padding: 16px; background: #f4f7fb; border-radius: 8px; line-height: 1.6; }
+.est-dialog-footer { display: flex; justify-content: end; gap: 12px; padding-top: 22px; margin-top: 10px; border-top: 1px solid #e2e8f0; }
+.est-pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 20px; font-size: 14px; }
+@media (max-width: 1050px) { .estoque-page { padding: 24px; } .est-header { align-items: start; flex-wrap: wrap; } }
+@media (max-width: 650px) { .estoque-page { padding: 20px 12px; } .est-resumo { grid-template-columns: 1fr; gap: 10px; } .est-resumo > div { display: flex; justify-content: space-between; align-items: center; padding: 15px; } .est-resumo strong { margin: 0; font-size: 24px; } .est-card { padding: 14px; } .est-toolbar { align-items: stretch; flex-direction: column; } .est-form-grid { grid-template-columns: 1fr; } .est-dialog { padding: 20px; } }

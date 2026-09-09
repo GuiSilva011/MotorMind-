@@ -13,6 +13,7 @@ import ordemServicoRoutes from '../routes/ordemServicoRoutes.js';
 import authRoutes from '../routes/authRoutes.js';
 import checklistRoutes from '../routes/checklistRoutes.js';
 import funcionarioRoutes from '../routes/funcionarioRoutes.js';
+import estoqueRoutes from '../routes/estoqueRoutes.js';
 
 
 
@@ -95,3 +96,4 @@ app.use('/auth', authRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/checklists', checklistRoutes);
 app.use('/funcionarios', funcionarioRoutes);
+app.use('/estoque', estoqueRoutes);

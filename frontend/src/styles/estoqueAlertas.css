@@ -1,0 +1,13 @@
+.estoque-topbar { display: flex; justify-content: flex-end; position: relative; padding: 12px 28px; border-bottom: 1px solid #d9e1ec; background: #fff; }
+.estoque-bell { display: flex; align-items: center; gap: 9px; padding: 8px 12px; border: 1px solid #d9e1ec; border-radius: 8px; background: #fff; color: #07142b; cursor: pointer; font-size: 14px; }
+.estoque-bell svg { width: 20px; height: 20px; }
+.estoque-bell strong { padding: 2px 7px; background: #fff0dc; color: #8a4300; border-radius: 6px; }
+.estoque-bell:focus-visible, .estoque-alertas a:focus-visible { outline: 3px solid #14a8e8; outline-offset: 2px; }
+.estoque-alertas { position: absolute; top: calc(100% + 6px); right: 20px; width: min(380px, calc(100vw - 40px)); max-height: 65vh; overflow: auto; padding: 22px; background: #fff; border: 1px solid #d9e1ec; border-radius: 12px; box-shadow: 0 12px 36px #07142b26; z-index: 30; font-size: 14px; line-height: 1.6; color: #07142b; }
+.estoque-alertas h2 { font-size: 18px; margin: 0 0 10px; }
+.estoque-alertas p { color: #455875; margin: 10px 0; }
+.estoque-alertas ul { list-style: none; padding: 0; margin: 0 0 16px; }
+.estoque-alertas li { padding: 14px 0; border-bottom: 1px solid #e2e8f0; }
+.estoque-alertas a { color: #075985; text-decoration: underline; overflow-wrap: anywhere; }
+.estoque-alertas li span { display: block; color: #455875; margin-top: 4px; }
+@media (max-width: 650px) { .estoque-topbar { padding: 12px; } .estoque-alertas { right: 8px; } }

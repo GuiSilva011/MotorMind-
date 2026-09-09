@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { EstoqueError, reconciliarEstoqueOrdem } from '../services/estoqueService.js';
 
 function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
@@ -105,6 +106,69 @@ async function buscarPecaCatalogo(tx, pecaCatalogoId, oficinaId) {
   }
 
   return peca;
+}
+
+async function buscarPecaEstoque(tx, estoquePecaId, oficinaId) {
+  if (!estoquePecaId) return null;
+
+  const peca = await tx.estoquePeca.findFirst({
+    where: { id: Number(estoquePecaId), oficinaId },
+  });
+
+  if (!peca) {
+    throw criarErroReferencia('Peça do estoque não encontrada nesta oficina.');
+  }
+
+  return peca;
+}
+
+function quantidadePeca(valor) {
+  const quantidade = Number(valor ?? 1);
+  if (!Number.isInteger(quantidade) || quantidade < 1 || quantidade > 2147483647) {
+    const error = new Error('A quantidade da peça deve ser um número inteiro maior que zero.');
+    error.code = 'DADOS_INVALIDOS';
+    throw error;
+  }
+  return quantidade;
+}
+
+function obterPecasDoPayload(diagnosticos = [], servicosSemDiagnostico = [], pecasAvulsas = []) {
+  const pecasDiagnosticos = diagnosticos.flatMap((diagnostico) =>
+    (diagnostico.servicos || []).flatMap((servico) => servico.pecas || [])
+  );
+  const pecasServicos = servicosSemDiagnostico.flatMap((servico) => servico.pecas || []);
+  return [...pecasDiagnosticos, ...pecasServicos, ...pecasAvulsas];
+}
+
+function montarQuantidadesEstoque(diagnosticos, servicosSemDiagnostico, pecasAvulsas) {
+  const quantidades = new Map();
+  for (const peca of obterPecasDoPayload(diagnosticos, servicosSemDiagnostico, pecasAvulsas)) {
+    if (!peca.estoquePecaId) continue;
+    const estoquePecaId = Number(peca.estoquePecaId);
+    if (!Number.isInteger(estoquePecaId) || estoquePecaId < 1) {
+      throw criarErroReferencia('Peça do estoque inválida.');
+    }
+    quantidades.set(
+      estoquePecaId,
+      (quantidades.get(estoquePecaId) || 0) + quantidadePeca(peca.quantidade)
+    );
+  }
+  return quantidades;
+}
+
+async function buscarQuantidadesEstoqueDaOrdem(tx, ordemServicoId) {
+  const itens = await tx.ordemPecaItem.findMany({
+    where: { ordemServicoId, estoquePecaId: { not: null } },
+    select: { estoquePecaId: true, quantidade: true },
+  });
+  const quantidades = new Map();
+  for (const item of itens) {
+    quantidades.set(
+      item.estoquePecaId,
+      (quantidades.get(item.estoquePecaId) || 0) + Number(item.quantidade)
+    );
+  }
+  return quantidades;
 }
 
 async function buscarDiagnosticoCatalogo(tx, diagnosticoCatalogoId, oficinaId) {
@@ -265,6 +329,10 @@ async function montarDadosPeca({
   let codigoPeca = peca.codigoPeca || null;
   let fornecedorNome = peca.fornecedorNome || null;
 
+  if (peca.pecaCatalogoId && peca.estoquePecaId) {
+    throw criarErroReferencia('Escolha a peça pelo catálogo ou pelo estoque, não pelos dois ao mesmo tempo.');
+  }
+
   const pecaCatalogo = await buscarPecaCatalogo(
     tx,
     peca.pecaCatalogoId,
@@ -274,6 +342,13 @@ async function montarDadosPeca({
   if (pecaCatalogo) {
     nomePeca = pecaCatalogo.nome;
     codigoPeca = pecaCatalogo.codigo;
+  }
+
+  const pecaEstoque = await buscarPecaEstoque(tx, peca.estoquePecaId, oficinaId);
+
+  if (pecaEstoque) {
+    nomePeca = pecaEstoque.nome;
+    codigoPeca = pecaEstoque.codigo;
   }
 
   const fornecedor = await buscarFornecedor(tx, peca.fornecedorId, oficinaId);
@@ -287,11 +362,12 @@ async function montarDadosPeca({
       pecaCatalogoId: peca.pecaCatalogoId
         ? Number(peca.pecaCatalogoId)
         : null,
+      estoquePecaId: pecaEstoque ? pecaEstoque.id : null,
       codigoPeca,
       nomePeca,
       fornecedorId: fornecedor ? fornecedor.id : null,
       fornecedorNome,
-      quantidade: Number(peca.quantidade || 1),
+      quantidade: quantidadePeca(peca.quantidade),
       custoUnitario: toNumberOrNull(peca.custoUnitario),
       desconto: toNumberOrNull(peca.desconto),
       valorTotal: calcularTotalPeca(peca),
@@ -628,6 +704,15 @@ export async function criarOrdemServico(req, res) {
       tecnicoIdFinal = tecnico.id;
     }
 
+    const quantidadesEstoque = montarQuantidadesEstoque(
+      diagnosticos,
+      servicosSemDiagnostico,
+      pecasAvulsas
+    );
+    if (quantidadesEstoque.size && !['OWNER', 'ADMIN', 'OPERADOR'].includes(req.user.role)) {
+      return res.status(403).json({ erro: 'Seu perfil não pode retirar peças do estoque pela OS.' });
+    }
+
     const ordemCriada = await prisma.$transaction(async (tx) => {
       const ordem = await tx.ordemServico.create({
         data: {
@@ -639,6 +724,15 @@ export async function criarOrdemServico(req, res) {
           observacoes: observacoes || null,
           status: status || 'ABERTA',
         },
+      });
+
+      await reconciliarEstoqueOrdem({
+        tx,
+        oficinaId,
+        usuarioId: Number(req.user.id),
+        ordemServicoId: ordem.id,
+        codigoOrdem: ordem.codigo,
+        quantidadesAtuais: quantidadesEstoque,
       });
 
       await recriarItensDaOrdem({
@@ -665,6 +759,10 @@ export async function criarOrdemServico(req, res) {
 
     if (error.code === 'REFERENCIA_FORA_DA_OFICINA') {
       return res.status(400).json({ erro: error.message });
+    }
+
+    if (error instanceof EstoqueError || error.code === 'DADOS_INVALIDOS') {
+      return res.status(error.status || 400).json({ erro: error.message });
     }
 
     return res.status(500).json({
@@ -782,7 +880,32 @@ export async function editarOrdemServico(req, res) {
       }
     }
 
+    const quantidadesEstoqueAtuais = montarQuantidadesEstoque(
+      diagnosticos,
+      servicosSemDiagnostico,
+      pecasAvulsas
+    );
+    if (quantidadesEstoqueAtuais.size && !['OWNER', 'ADMIN', 'OPERADOR'].includes(req.user.role)) {
+      return res.status(403).json({ erro: 'Seu perfil não pode retirar peças do estoque pela OS.' });
+    }
+
     const ordemAtualizada = await prisma.$transaction(async (tx) => {
+      const bloqueio = await tx.$queryRaw`
+        SELECT id FROM "OrdemServico" WHERE id = ${id} AND "oficinaId" = ${oficinaId} FOR UPDATE
+      `;
+      if (!bloqueio.length) throw criarErroReferencia('Ordem de serviço não encontrada nesta oficina.');
+
+      const quantidadesAnteriores = await buscarQuantidadesEstoqueDaOrdem(tx, id);
+      await reconciliarEstoqueOrdem({
+        tx,
+        oficinaId,
+        usuarioId: Number(req.user.id),
+        ordemServicoId: id,
+        codigoOrdem: codigoFinal,
+        quantidadesAnteriores,
+        quantidadesAtuais: quantidadesEstoqueAtuais,
+      });
+
       await limparItensDaOrdem(tx, id);
 
       await tx.ordemServico.update({
@@ -830,6 +953,10 @@ export async function editarOrdemServico(req, res) {
       return res.status(400).json({ erro: error.message });
     }
 
+    if (error instanceof EstoqueError || error.code === 'DADOS_INVALIDOS') {
+      return res.status(error.status || 400).json({ erro: error.message });
+    }
+
     return res.status(500).json({
       erro: 'Erro ao editar ordem de serviço',
       detalhe: error.message,
@@ -856,6 +983,20 @@ export async function deletarOrdemServico(req, res) {
     }
 
     await prisma.$transaction(async (tx) => {
+      const bloqueio = await tx.$queryRaw`
+        SELECT id FROM "OrdemServico" WHERE id = ${id} AND "oficinaId" = ${oficinaId} FOR UPDATE
+      `;
+      if (!bloqueio.length) throw criarErroReferencia('Ordem de serviço não encontrada nesta oficina.');
+
+      const quantidadesAnteriores = await buscarQuantidadesEstoqueDaOrdem(tx, id);
+      await reconciliarEstoqueOrdem({
+        tx,
+        oficinaId,
+        usuarioId: Number(req.user.id),
+        ordemServicoId: id,
+        codigoOrdem: ordem.codigo,
+        quantidadesAnteriores,
+      });
       await limparItensDaOrdem(tx, id);
       await tx.ordemServico.delete({ where: { id } });
     });
@@ -863,6 +1004,9 @@ export async function deletarOrdemServico(req, res) {
     return res.json({ mensagem: 'Ordem de serviço deletada com sucesso' });
   } catch (error) {
     console.error('Erro ao deletar ordem de serviço:', error);
+    if (error instanceof EstoqueError || error.code === 'REFERENCIA_FORA_DA_OFICINA') {
+      return res.status(error.status || 400).json({ erro: error.message });
+    }
     return res.status(500).json({
       erro: 'Erro ao deletar ordem de serviço',
       detalhe: error.message,

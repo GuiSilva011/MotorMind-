@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { FiPackage } from 'react-icons/fi';
 
 /**
  * Menu lateral responsivo que adapta as opções ao perfil do usuário.
@@ -140,6 +141,13 @@ function Sidebar() {
         )}
 
         <nav className="sidebar-menu">
+          {(isAdmin || isOperador || role === 'OWNER') && (
+            <NavLink to="/estoque" title="Estoque"
+              className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
+              <FiPackage className="menu-icon" aria-hidden="true" />
+              <span>ESTOQUE</span>
+            </NavLink>
+          )}
           {podeVerOperador() && (
             <>
               <NavLink

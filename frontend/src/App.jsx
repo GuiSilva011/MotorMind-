@@ -26,6 +26,7 @@ import VisualizarFornecedor from './pages/admin/visualizarFornecedores';
 import CadastrarFuncionarios from './pages/admin/cadastrarFuncionarios';
 import VisualizarFuncionarios from './pages/admin/visualizarFuncionarios';
 import Relatorios from './pages/admin/relatorios';
+import Estoque from './pages/admin/estoque';
 
 /**
  * Componente principal responsável por configurar as rotas da aplicação.
@@ -44,6 +45,9 @@ function App() {
       {/* Define todas as rotas da aplicação e protege áreas por perfil. */}
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/estoque" element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}><Estoque /></ProtectedRoute>
+        } />
 
         {/* Redireciona a raiz para a primeira tela principal do operador. */}
         <Route path="/" element={<Navigate to="/operador/ordem-servico" replace />} />

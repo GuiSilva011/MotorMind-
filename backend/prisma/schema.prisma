@@ -49,7 +49,17 @@ model Oficina {
   checklists           Checklist[]
   funcionarios         Funcionario[]
 
-  licenca Licenca?
+  estoquePecas         EstoquePeca[]
+  estoqueMovimentacoes EstoqueMovimentacao[]
+  alertasEstoque       AlertaEstoque[]
+  atribuicoesOrdem     OrdemServicoAtribuicao[]
+  requisicoesPeca      RequisicaoPeca[]
+  conversasTicket      ConversaTicket[]
+  mensagensTicket      MensagemTicket[]
+  notificacoes         Notificacao[]
+
+  licenca      Licenca?
+  configuracao ConfiguracaoOficina?
 }
 
 enum StatusOficina {
@@ -57,6 +67,27 @@ enum StatusOficina {
   ATIVA
   SUSPENSA
   CANCELADA
+}
+
+// ======================================================
+// CONFIGURAÇÕES DA OFICINA
+// ======================================================
+
+model ConfiguracaoOficina {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int     @unique
+  oficina   Oficina @relation(fields: [oficinaId], references: [id], onDelete: Cascade)
+
+  notificarEstoqueEmail   Boolean @default(true)
+  notificarEstoqueSistema Boolean @default(true)
+  notificarTicketsSistema Boolean @default(true)
+  notificarChatSistema    Boolean @default(true)
+
+  emailNotificacaoEstoque String? @db.VarChar(120)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ======================================================
@@ -108,6 +139,19 @@ model Usuario {
   UpdatedAt DateTime @updatedAt
 
   funcionario Funcionario?
+
+  ordensComoOperador OrdemServico[] @relation("OrdemOperador")
+  ordensComoTecnico  OrdemServico[] @relation("OrdemTecnico")
+
+  atribuicoesComoTecnico OrdemServicoAtribuicao[] @relation("AtribuicaoTecnico")
+  atribuicoesCriadas     OrdemServicoAtribuicao[] @relation("AtribuicaoCriadaPor")
+
+  requisicoesSolicitadas  RequisicaoPeca[] @relation("RequisicaoSolicitante")
+  requisicoesResponsaveis RequisicaoPeca[] @relation("RequisicaoResponsavel")
+
+  mensagensTicket      MensagemTicket[]
+  movimentacoesEstoque EstoqueMovimentacao[]
+  notificacoesUsuario  NotificacaoUsuario[]
 
   @@index([oficinaId])
 }
@@ -275,7 +319,7 @@ model ServicoCatalogo {
 }
 
 // ======================================================
-// CATÁLOGO DE PEÇAS
+// CATÁLOGO DE PEÇAS DA OS
 // ======================================================
 
 model PecaCatalogo {
@@ -312,6 +356,7 @@ model OrdemPecaItem {
   ordemServicoItemId Int?
 
   pecaCatalogoId Int?
+  estoquePecaId  Int?
 
   codigoPeca String? @db.VarChar(20)
   nomePeca   String  @db.VarChar(80)
@@ -334,11 +379,13 @@ model OrdemPecaItem {
   ordemDiagnostico OrdemDiagnostico? @relation(fields: [ordemDiagnosticoId], references: [id], onDelete: Cascade)
   ordemServicoItem OrdemServicoItem? @relation(fields: [ordemServicoItemId], references: [id], onDelete: Cascade)
   pecaCatalogo     PecaCatalogo?     @relation(fields: [pecaCatalogoId], references: [id])
+  estoquePeca      EstoquePeca?      @relation(fields: [estoquePecaId], references: [id], onDelete: SetNull)
 
   @@index([ordemServicoId])
   @@index([ordemDiagnosticoId])
   @@index([ordemServicoItemId])
   @@index([pecaCatalogoId])
+  @@index([estoquePecaId])
 }
 
 // ======================================================
@@ -375,6 +422,8 @@ model Fornecedor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  requisicoesItens RequisicaoPecaItem[]
+
   @@unique([oficinaId, codigo])
   @@unique([oficinaId, cnpj])
   @@index([oficinaId])
@@ -397,7 +446,10 @@ model OrdemServico {
   veiculo   Veiculo @relation(fields: [veiculoId], references: [id])
 
   operadorId Int?
-  tecnicoId  Int?
+  operador   Usuario? @relation("OrdemOperador", fields: [operadorId], references: [id], onDelete: SetNull)
+
+  tecnicoId Int?
+  tecnico   Usuario? @relation("OrdemTecnico", fields: [tecnicoId], references: [id], onDelete: SetNull)
 
   observacoes    String?   @db.VarChar(255)
   dataEmissao    DateTime  @default(now())
@@ -410,9 +462,16 @@ model OrdemServico {
   servicos     OrdemServicoItem[]
   pecas        OrdemPecaItem[]
 
+  atribuicoesTecnico OrdemServicoAtribuicao[]
+  requisicoesPeca    RequisicaoPeca[]
+  notificacoes       Notificacao[]
+  movimentacoesEstoque EstoqueMovimentacao[]
+
   @@unique([oficinaId, codigo])
   @@index([oficinaId])
   @@index([veiculoId])
+  @@index([operadorId])
+  @@index([tecnicoId])
 }
 
 enum StatusOrdem {
@@ -420,7 +479,41 @@ enum StatusOrdem {
   EM_ANDAMENTO
   AGUARDANDO_PECA
   FINALIZADA
+  FECHADA
   CANCELADA
+}
+
+// ======================================================
+// HISTÓRICO DE ATRIBUIÇÃO DA OS AO MECÂNICO
+// ======================================================
+
+model OrdemServicoAtribuicao {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  ordemServicoId Int
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+
+  tecnicoId Int
+  tecnico   Usuario @relation("AtribuicaoTecnico", fields: [tecnicoId], references: [id])
+
+  atribuidoPorId Int
+  atribuidoPor   Usuario @relation("AtribuicaoCriadaPor", fields: [atribuidoPorId], references: [id])
+
+  ativa Boolean @default(true)
+
+  atribuidoEm DateTime  @default(now())
+  encerradoEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([oficinaId])
+  @@index([ordemServicoId])
+  @@index([tecnicoId])
+  @@index([ativa])
 }
 
 // ======================================================
@@ -554,4 +647,341 @@ model Funcionario {
 
   @@unique([oficinaId, Cpf])
   @@index([oficinaId])
+}
+
+// ======================================================
+// ESTOQUE - INDEPENDENTE DO PecaCatalogo DA OS
+// ======================================================
+
+model EstoquePeca {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  codigo String @db.VarChar(20)
+  nome   String @db.VarChar(100)
+
+  marca     String? @db.VarChar(60)
+  aplicacao String? @db.VarChar(150)
+  unidade   String  @default("UN") @db.VarChar(10)
+
+  quantidadeAtual  Int @default(0)
+  quantidadeMinima Int @default(0)
+
+  localizacao String? @db.VarChar(80)
+  ativo       Boolean @default(true)
+
+  alertaAtivo    Boolean   @default(false)
+  ultimoAlertaEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movimentacoes    EstoqueMovimentacao[]
+  ordensPecas      OrdemPecaItem[]
+  requisicoesItens RequisicaoPecaItem[]
+  alertas          AlertaEstoque[]
+
+  @@unique([oficinaId, codigo])
+  @@index([oficinaId])
+  @@index([quantidadeAtual])
+}
+
+model EstoqueMovimentacao {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  estoquePecaId Int
+  estoquePeca   EstoquePeca @relation(fields: [estoquePecaId], references: [id])
+
+  usuarioId Int?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  requisicaoItemId Int?
+  requisicaoItem   RequisicaoPecaItem? @relation(fields: [requisicaoItemId], references: [id], onDelete: SetNull)
+
+  ordemServicoId Int?
+  ordemServico   OrdemServico? @relation(fields: [ordemServicoId], references: [id], onDelete: SetNull)
+
+  tipo TipoMovimentacaoEstoque
+
+  quantidade          Int
+  quantidadeAnterior  Int
+  quantidadePosterior Int
+
+  observacao String? @db.VarChar(255)
+
+  createdAt DateTime @default(now())
+
+  @@index([oficinaId])
+  @@index([estoquePecaId])
+  @@index([usuarioId])
+  @@index([requisicaoItemId])
+  @@index([ordemServicoId])
+  @@index([createdAt])
+}
+
+enum TipoMovimentacaoEstoque {
+  ENTRADA
+  SAIDA
+  SAIDA_REQUISICAO
+  SAIDA_OS
+  DEVOLUCAO
+  DEVOLUCAO_OS
+  AJUSTE_ENTRADA
+  AJUSTE_SAIDA
+}
+
+model AlertaEstoque {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  estoquePecaId Int
+  estoquePeca   EstoquePeca @relation(fields: [estoquePecaId], references: [id])
+
+  status StatusAlertaEstoque @default(ATIVO)
+
+  quantidadeDetectada Int
+  quantidadeMinima    Int
+
+  emailEnviadoEm DateTime?
+  resolvidoEm    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notificacoes Notificacao[]
+
+  @@index([oficinaId])
+  @@index([estoquePecaId])
+  @@index([status])
+}
+
+enum StatusAlertaEstoque {
+  ATIVO
+  RESOLVIDO
+}
+
+// ======================================================
+// TICKET DE SOLICITAÇÃO DE PEÇAS
+// ======================================================
+
+model RequisicaoPeca {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  codigo String @db.VarChar(20)
+
+  ordemServicoId Int
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+
+  solicitanteId Int
+  solicitante   Usuario @relation("RequisicaoSolicitante", fields: [solicitanteId], references: [id])
+
+  responsavelId Int?
+  responsavel   Usuario? @relation("RequisicaoResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
+
+  status StatusRequisicaoPeca @default(ABERTA)
+
+  observacao String? @db.VarChar(1000)
+
+  abertaEm    DateTime  @default(now())
+  assumidaEm  DateTime?
+  concluidaEm DateTime?
+  canceladaEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  itens        RequisicaoPecaItem[]
+  conversa     ConversaTicket?
+  notificacoes Notificacao[]
+
+  @@unique([oficinaId, codigo])
+  @@index([oficinaId])
+  @@index([ordemServicoId])
+  @@index([solicitanteId])
+  @@index([responsavelId])
+  @@index([status])
+}
+
+enum StatusRequisicaoPeca {
+  ABERTA
+  EM_ATENDIMENTO
+  AGUARDANDO_PECA
+  DISPONIVEL
+  ENTREGUE
+  CANCELADA
+}
+
+model RequisicaoPecaItem {
+  id Int @id @default(autoincrement())
+
+  requisicaoPecaId Int
+  requisicaoPeca   RequisicaoPeca @relation(fields: [requisicaoPecaId], references: [id], onDelete: Cascade)
+
+  estoquePecaId Int?
+  estoquePeca   EstoquePeca? @relation(fields: [estoquePecaId], references: [id], onDelete: SetNull)
+
+  fornecedorId Int?
+  fornecedor   Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+
+  nomePeca String @db.VarChar(120)
+
+  quantidadeSolicitada Int @default(1)
+  quantidadeAtendida   Int @default(0)
+
+  origemAtendimento OrigemAtendimentoPeca?
+  observacao        String?                @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movimentacoesEstoque EstoqueMovimentacao[]
+
+  @@index([requisicaoPecaId])
+  @@index([estoquePecaId])
+  @@index([fornecedorId])
+}
+
+enum OrigemAtendimentoPeca {
+  ESTOQUE
+  COMPRA_FORNECEDOR
+}
+
+// ======================================================
+// CHAT DO TICKET - MENSAGENS EXPIRAM EM 48 HORAS
+// ======================================================
+
+model ConversaTicket {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  requisicaoPecaId Int            @unique
+  requisicaoPeca   RequisicaoPeca @relation(fields: [requisicaoPecaId], references: [id], onDelete: Cascade)
+
+  encerradaEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mensagens MensagemTicket[]
+
+  @@index([oficinaId])
+}
+
+model MensagemTicket {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id])
+
+  conversaId Int
+  conversa   ConversaTicket @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+
+  autorId Int
+  autor   Usuario @relation(fields: [autorId], references: [id])
+
+  conteudo String? @db.VarChar(2000)
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  anexos MensagemAnexo[]
+
+  @@index([oficinaId])
+  @@index([conversaId])
+  @@index([autorId])
+  @@index([expiresAt])
+}
+
+model MensagemAnexo {
+  id Int @id @default(autoincrement())
+
+  mensagemId Int
+  mensagem   MensagemTicket @relation(fields: [mensagemId], references: [id], onDelete: Cascade)
+
+  url          String  @db.VarChar(500)
+  nomeArquivo  String? @db.VarChar(255)
+  mimeType     String? @db.VarChar(100)
+  tamanhoBytes Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([mensagemId])
+}
+
+// ======================================================
+// NOTIFICAÇÕES / SINO
+// ======================================================
+
+model Notificacao {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina   Oficina @relation(fields: [oficinaId], references: [id], onDelete: Cascade)
+
+  tipo TipoNotificacao
+
+  titulo   String @db.VarChar(120)
+  mensagem String @db.VarChar(500)
+
+  ordemServicoId Int?
+  ordemServico   OrdemServico? @relation(fields: [ordemServicoId], references: [id], onDelete: SetNull)
+
+  requisicaoPecaId Int?
+  requisicaoPeca   RequisicaoPeca? @relation(fields: [requisicaoPecaId], references: [id], onDelete: SetNull)
+
+  alertaEstoqueId Int?
+  alertaEstoque   AlertaEstoque? @relation(fields: [alertaEstoqueId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  usuarios NotificacaoUsuario[]
+
+  @@index([oficinaId])
+  @@index([tipo])
+  @@index([ordemServicoId])
+  @@index([requisicaoPecaId])
+  @@index([alertaEstoqueId])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+enum TipoNotificacao {
+  ESTOQUE_BAIXO
+  ORDEM_ATRIBUIDA
+  REQUISICAO_PECA
+  TICKET_ASSUMIDO
+  PECA_DISPONIVEL
+  MENSAGEM_TICKET
+  SISTEMA
+}
+
+model NotificacaoUsuario {
+  id Int @id @default(autoincrement())
+
+  notificacaoId Int
+  notificacao   Notificacao @relation(fields: [notificacaoId], references: [id], onDelete: Cascade)
+
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  lidaEm DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([notificacaoId, usuarioId])
+  @@index([usuarioId])
+  @@index([lidaEm])
 }
