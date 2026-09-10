@@ -4,7 +4,7 @@
 
 Este arquivo deve ficar na raiz do MotorMind, ao lado de `backend/` e `frontend/`. Ele registra a evolução do projeto, as regras de negócio, o estado da última entrega e as próximas etapas. É um ponto de partida para trabalhar com Guilherme; não é uma ordem para implementar todo o roteiro de uma vez.
 
-Estado de referência: primeira entrega do módulo de estoque e ajustes posteriores que tornaram o acesso do OPERADOR somente leitura e o código das peças automático. Guilherme confirmou que a primeira entrega funcionou. A decisão mais recente é que o operador apenas visualize a aba de estoque e os itens disponíveis, sem acesso ao histórico ou a movimentações. No cadastro administrativo, o código é gerado pelo backend e a unidade é escolhida entre UN, PAR e L.
+Estado de referência: módulo de estoque integrado à ordem de serviço. Na aba Estoque, o OPERADOR permanece somente leitura; dentro da OS, ele pode escolher uma peça física pela opção **Pegar do estoque**, e a baixa é confirmada ao salvar. O código das peças de estoque é automático e a unidade é escolhida entre UN, PAR e L. O botão **Enviar OS para o cliente** foi removido; a geração e o compartilhamento do documento ficam centralizados em **Imprimir OS**, que permite salvar em PDF.
 
 Antes de alterar código:
 
@@ -112,6 +112,7 @@ Antes desta entrega, o schema já havia sido ampliado para estoque, atribuição
 | Isolamento por oficina e autenticação | Presentes na base; preservar e validar nas novas operações |
 | Estoque físico, movimentações e alerta visual | API e tela entregues; primeira entrega confirmada por Guilherme |
 | Acesso do OPERADOR ao estoque | Somente leitura dos itens ativos e seus saldos; sem histórico ou movimentações |
+| Peça do estoque na OS | Seleção e baixa transacional entregues; edição reconcilia apenas a diferença e remoção devolve o saldo |
 | E-mail de estoque baixo | Configuração/campos modelados; envio ainda não implementado |
 | Relações OS–operador/técnico | Campos e uso básico de `tecnicoId` já existem no controller da OS |
 | Histórico de atribuição e visão restrita de OS do técnico | Modelagem preparada; fluxo completo ainda precisa ser integrado/verificado |
@@ -137,6 +138,7 @@ Esta é uma decisão explícita de Guilherme:
 - `EstoquePeca` representa peças físicas armazenadas na oficina.
 - Não criar relação entre esses dois cadastros.
 - Não unificar tabelas, sincronizar saldos ou provocar baixa automática ao adicionar uma peça do catálogo à OS.
+- A opção **Pegar do estoque** vincula `OrdemPecaItem` diretamente a `EstoquePeca`; escolher uma peça do catálogo continua sem provocar baixa. Um item da OS não pode apontar simultaneamente para catálogo e estoque.
 - A futura requisição pode relacionar a OS e uma peça física por meio do ticket/item de requisição. Isso não autoriza vincular `PecaCatalogo` a `EstoquePeca`.
 
 ### 5.2. Perfis e proprietário
@@ -153,10 +155,11 @@ Permissões efetivamente entregues para o estoque:
 | Consultar peças inativas e histórico | Sim | Não | Não | Sim |
 | Consultar alertas de estoque | Sim | Sim | Não | Sim |
 | Registrar retirada manual (`SAIDA`) | Sim | Não | Não | Sim |
+| Retirar peça vinculada ao salvamento da OS | Sim | Sim | Não | Sim |
 | Cadastrar/editar peças | Sim | Não | Não | Sim |
 | Repor, devolver, ajustar e inativar/reativar | Sim | Não | Não | Sim |
 
-Na decisão mais recente, Guilherme definiu que o operador deve apenas visualizar a aba de estoque e os itens disponíveis. A interface não apresenta ações ao operador, a listagem da API retorna somente peças ativas para esse perfil e o histórico e todas as operações de escrita permanecem restritos ao administrador. Se uma próxima tarefa exigir que o admin fique estritamente limitado ao cadastro, alinhar essa diferença antes de remover ações existentes.
+Na aba Estoque, o operador apenas visualiza os itens disponíveis: a interface não apresenta ações, a API retorna somente peças ativas e histórico e movimentações manuais permanecem restritos ao administrador. A retirada pelo operador ocorre somente dentro de uma OS, pela opção **Pegar do estoque**, ficando vinculada e registrada como movimentação da OS.
 
 O proprietário foi discutido como responsável por manter a oficina, sem necessariamente atuar na operação diária. Entretanto, `authorizeRoles` e `ProtectedRoute` ainda têm uma exceção que permite acesso amplo ao `OWNER`. A entrega do estoque preservou esse comportamento; a restrição do proprietário não foi implementada. Tratar essa divergência numa tarefa específica de permissões, sem presumir que proprietário e administrador são semanticamente o mesmo papel.
 
@@ -187,7 +190,7 @@ Todas as alterações de saldo, histórico e alerta são realizadas na mesma tra
 
 O operador não recebe botões de ação na tela e não pode consultar o histórico nem chamar endpoints de movimentação. A autorização é aplicada também no backend; todas as movimentações manuais são restritas ao administrador. O usuário da movimentação vem da sessão autenticada, não de um nome/ID enviado no formulário.
 
-`SAIDA_REQUISICAO` existe no enum, mas é rejeitado no endpoint de movimentação manual. Fica reservado para a futura baixa vinculada ao ticket.
+`SAIDA_REQUISICAO` existe no enum, mas é rejeitado no endpoint de movimentação manual. Fica reservado para a futura baixa vinculada ao ticket. `SAIDA_OS` e `DEVOLUCAO_OS` também não são tipos manuais; são gerados exclusivamente pela reconciliação da ordem de serviço.
 
 ### 6.2. Alertas
 
@@ -232,11 +235,23 @@ O operador não recebe botões de ação na tela e não pode consultar o histór
 - A primeira entrega passou em 11 testes de regras; uma atualização anterior que liberava retiradas para o operador passou em 12 testes, mas essa permissão foi posteriormente removida por decisão de negócio.
 - Os testes usam banco simulado. Eles não comprovam concorrência, bloqueios e rollback em um PostgreSQL real.
 - Foram conferidas sintaxe JavaScript/JSX e resolução dos imports locais dos arquivos alterados.
-- No ambiente em que a entrega foi preparada, a instalação das dependências foi bloqueada; não houve build completo do Vite, teste em navegador ou execução contra o banco real por parte do assistente.
+- O build do Vite foi executado com sucesso após os ajustes de código automático, unidades e integração da OS ao estoque. Ainda não houve teste manual completo em navegador.
 - Guilherme confirmou que a primeira entrega funcionou em seu ambiente. Não transformar esse retorno em alegação de cobertura completa de testes.
-- Nenhuma nova dependência ou migration foi criada para essas duas entregas do estoque.
+- A integração OS–estoque criou e aplicou a migration `20260908233000_vincula_estoque_ordem_servico`; nenhuma dependência nova foi adicionada.
 - Registros que já estivessem baixos antes da funcionalidade são reavaliados ao editar, movimentar ou reativar a peça; não foi criada uma carga retroativa automática de alertas.
 - A tela bloqueia clique duplo durante o envio, mas ainda não há chave de idempotência para reenvios HTTP. Após timeout, conferir histórico antes de repetir a movimentação.
+
+### 6.5. Integração da ordem de serviço com o estoque
+
+- Cada linha de peça da OS oferece caminhos separados: **Selecionar do catálogo** e **Pegar do estoque**.
+- O modal de estoque mostra código, nome, saldo, unidade e localização; peças sem saldo não podem ser selecionadas na interface.
+- A API valida novamente peça ativa, oficina, quantidade inteira e saldo disponível. A seleção feita no navegador não é usada como garantia de saldo.
+- Ao criar a OS, a quantidade escolhida é baixada com `SAIDA_OS`. Ao editar, o backend compara as quantidades anteriores e atuais por peça, movimentando somente a diferença.
+- Reduzir ou remover uma peça do estoque da OS gera `DEVOLUCAO_OS`. Excluir a OS também devolve as quantidades vinculadas antes de apagar seus itens.
+- A OS e as peças de estoque são bloqueadas em ordem estável durante a transação para evitar baixa duplicada e saldo negativo em alterações concorrentes.
+- Movimentação, saldo, itens da OS e alertas são confirmados ou revertidos juntos. O histórico mantém usuário, motivo e `ordemServicoId` enquanto a OS existir; na exclusão física, a referência fica nula, mas o código da OS permanece na observação da movimentação.
+- Peças escolhidas no estoque não entram na lista de cotação para fornecedores, e o campo de fornecedor fica desabilitado para essas linhas.
+- A integração adicionou `OrdemPecaItem.estoquePecaId`, `EstoqueMovimentacao.ordemServicoId` e os tipos `SAIDA_OS`/`DEVOLUCAO_OS`. Isso não cria relação entre `PecaCatalogo` e `EstoquePeca`.
 
 ## 7. Próximos passos
 
@@ -275,7 +290,7 @@ Fluxo definido:
 
 Modelos existentes: `RequisicaoPeca` e `RequisicaoPecaItem`. Estados já modelados: `ABERTA`, `EM_ATENDIMENTO`, `AGUARDANDO_PECA`, `DISPONIVEL`, `ENTREGUE` e `CANCELADA`. Origem do atendimento: `ESTOQUE` ou `COMPRA_FORNECEDOR`.
 
-Para atendimento pelo estoque, reutilizar as garantias de saldo, histórico e transação. Vincular a movimentação ao item da requisição e impedir baixa duplicada. Não descontar uma segunda vez uma peça já retirada manualmente para o mesmo atendimento; definir essa transição antes de ligar os dois fluxos.
+Para atendimento pelo estoque, reutilizar as garantias de saldo, histórico e transação. Vincular a movimentação ao item da requisição e impedir baixa duplicada. Não descontar uma segunda vez uma peça já retirada pela OS ou manualmente para o mesmo atendimento; definir essa transição antes de ligar tickets ao fluxo existente.
 
 Avaliar se o schema atual é suficiente para histórico de mudanças de status: ele contém estado atual e datas relevantes, mas não se deve alegar um histórico completo de todas as transições sem uma implementação que o registre.
 
@@ -362,4 +377,4 @@ Há também scripts `npm start`, `npm run seed` e `npm run docs` no backend, e `
 
 Ao receber a próxima tarefa, conferir primeiro os arquivos atuais e o estado do estoque. Resumir brevemente o que já existe e implementar o pedido de Guilherme. Não presumir acesso automático às conversas antigas nem repetir etapas concluídas.
 
-Pontos que precisam continuar verdadeiros: isolamento entre oficinas, estoque separado do catálogo da OS, operador com acesso somente à consulta dos itens ativos e saldos, histórico permanente das operações e expiração restrita ao conteúdo temporário do chat.
+Pontos que precisam continuar verdadeiros: isolamento entre oficinas, estoque separado do catálogo da OS, operador somente leitura na aba Estoque mas autorizado a retirar pela OS, baixa/devolução transacional com histórico permanente e expiração restrita ao conteúdo temporário do chat.

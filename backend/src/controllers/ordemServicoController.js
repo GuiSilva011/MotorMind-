@@ -351,7 +351,9 @@ async function montarDadosPeca({
     codigoPeca = pecaEstoque.codigo;
   }
 
-  const fornecedor = await buscarFornecedor(tx, peca.fornecedorId, oficinaId);
+  const fornecedor = pecaEstoque
+    ? null
+    : await buscarFornecedor(tx, peca.fornecedorId, oficinaId);
 
   if (fornecedor) {
     fornecedorNome = fornecedor.nome;

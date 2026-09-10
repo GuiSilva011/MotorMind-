@@ -10,7 +10,7 @@ import {
   gerarProximoCodigoOS,
 } from "../controllers/ordemServicoController.js";
 
-import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { authMiddleware, authorizeRoles } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -20,8 +20,8 @@ router.get("/", listarOrdensServico);
 router.get("/proximo-codigo", gerarProximoCodigoOS);
 router.get("/buscar", buscarOrdensServico);
 router.get("/:id", buscarOrdemServicoPorId);
-router.post("/", criarOrdemServico);
-router.put("/:id", editarOrdemServico);
-router.delete("/:id", deletarOrdemServico);
+router.post("/", authorizeRoles('ADMIN', 'OPERADOR'), criarOrdemServico);
+router.put("/:id", authorizeRoles('ADMIN', 'OPERADOR'), editarOrdemServico);
+router.delete("/:id", authorizeRoles('ADMIN', 'OPERADOR'), deletarOrdemServico);
 
 export default router;

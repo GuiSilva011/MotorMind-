@@ -5,7 +5,8 @@ import api from '../../services/api';
 import '../../styles/operadorStyles/layout.css';
 import '../../styles/adminStyles/estoque.css';
 
-const tipos = { ENTRADA: 'Entrada', SAIDA: 'Saída', DEVOLUCAO: 'Devolução', AJUSTE_ENTRADA: 'Ajuste de entrada', AJUSTE_SAIDA: 'Ajuste de saída', SAIDA_REQUISICAO: 'Saída por requisição' };
+const tipos = { ENTRADA: 'Entrada', SAIDA: 'Saída', SAIDA_OS: 'Saída pela OS', DEVOLUCAO: 'Devolução', DEVOLUCAO_OS: 'Devolução pela OS', AJUSTE_ENTRADA: 'Ajuste de entrada', AJUSTE_SAIDA: 'Ajuste de saída', SAIDA_REQUISICAO: 'Saída por requisição' };
+const tiposManuais = ['ENTRADA', 'SAIDA', 'DEVOLUCAO', 'AJUSTE_ENTRADA', 'AJUSTE_SAIDA'];
 const inicial = () => ({ nome: '', marca: '', aplicacao: '', unidade: 'UN', localizacao: '', quantidadeAtual: '0', quantidadeMinima: '0' });
 const erroApi = error => error.response?.data?.erro || 'Não foi possível conectar ao servidor.';
 const numero = valor => Number(valor).toLocaleString('pt-BR');
@@ -148,7 +149,7 @@ function Estoque() {
           {modal.tipo === 'movimentar' && <>
             <p className="est-current">Saldo atual: <strong>{numero(modal.peca.quantidadeAtual)} {modal.peca.unidade}</strong></p>
             <div className="est-form-grid"><label className="est-field"><span>Tipo *</span><select value={form.tipo} onChange={event => setForm(atual => ({ ...atual, tipo: event.target.value }))}>
-              {Object.entries(tipos).filter(([tipo]) => tipo !== 'SAIDA_REQUISICAO').map(([tipo, nome]) => <option key={tipo} value={tipo}>{nome}</option>)}
+              {tiposManuais.map(tipo => <option key={tipo} value={tipo}>{tipos[tipo]}</option>)}
             </select></label>{campo('quantidade', 'Quantidade a movimentar *', { type: 'number', required: true, min: 1, max: 2147483647, step: 1 })}</div>
             <label className="est-field"><span>Motivo *</span><textarea required maxLength={255} rows={3} value={form.observacao} onChange={event => setForm(atual => ({ ...atual, observacao: event.target.value }))} /></label>
             <p className="est-note">Informe a quantidade que entra ou sai, não o saldo final. Ajustes também ficam registrados no histórico.</p>

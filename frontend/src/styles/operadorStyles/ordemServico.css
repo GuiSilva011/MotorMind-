@@ -296,6 +296,32 @@
   background: #eef8ff;
 }
 
+.os-piece-source-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.os-select-modal-btn.os-stock-selected {
+  border-color: #14a8e8;
+  background: #eef8ff;
+  color: #075985;
+}
+
+.os-stock-note {
+  display: block;
+  margin-top: 6px;
+  color: #1f654a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 650px) {
+  .os-piece-source-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* =========================================================
    CHECKBOX
 ========================================================= */
@@ -1157,17 +1183,11 @@
   box-shadow: 0 0 0 3px rgba(20, 168, 232, 0.14);
 }
 
-.os-action-green {
-  background: #0e352d;
-  color: #fff;
-}
-
 .os-action-blue {
   background: #1d1d1b;
   color: #fff;
 }
 
-.os-action-green:hover,
 .os-action-blue:hover {
   filter: brightness(0.95);
 }

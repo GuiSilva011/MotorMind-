@@ -103,6 +103,7 @@ function OrdemServico() {
     diagnosticos: [],
     servicos: [],
     pecas: [],
+    estoque: [],
     fornecedores: [],
     tecnicos: [],
   });
@@ -509,12 +510,14 @@ function OrdemServico() {
         diagnosticosResponse,
         servicosResponse,
         pecasResponse,
+        estoqueResponse,
         fornecedoresResponse,
         funcionariosResponse,
       ] = await Promise.all([
         api.get('/diagnosticos'),
         api.get('/servicos'),
         api.get('/pecas'),
+        api.get('/estoque'),
         api.get('/fornecedores'),
         api.get('/funcionarios'),
       ]);
@@ -535,6 +538,7 @@ function OrdemServico() {
         diagnosticos: diagnosticosResponse.data || [],
         servicos: servicosResponse.data || [],
         pecas: pecasResponse.data || [],
+        estoque: estoqueResponse.data || [],
         fornecedores: fornecedoresPecas,
         tecnicos,
       });
@@ -730,6 +734,7 @@ function OrdemServico() {
     return {
       id: crypto.randomUUID(),
       pecaCatalogoId: '',
+      estoquePecaId: '',
       codigoPeca: '',
       descricao: '',
       fornecedorId: '',
@@ -1249,6 +1254,7 @@ function OrdemServico() {
       'pecaCatalogoId',
       pecaCatalogo.id
     );
+    atualizarPecaDiagnostico(diagnosticoId, servicoId, pecaId, 'estoquePecaId', '');
 
     atualizarPecaDiagnostico(
       diagnosticoId,
@@ -1295,6 +1301,7 @@ function OrdemServico() {
       'pecaCatalogoId',
       pecaCatalogo.id
     );
+    atualizarPecaSemDiagnostico(servicoId, pecaId, 'estoquePecaId', '');
 
     atualizarPecaSemDiagnostico(
       servicoId,
@@ -1329,8 +1336,40 @@ function OrdemServico() {
     }
 
     atualizarPecaAvulsa(pecaId, 'pecaCatalogoId', pecaCatalogo.id);
+    atualizarPecaAvulsa(pecaId, 'estoquePecaId', '');
     atualizarPecaAvulsa(pecaId, 'codigoPeca', pecaCatalogo.codigo || '');
     atualizarPecaAvulsa(pecaId, 'descricao', pecaCatalogo.nome || '');
+  }
+
+  function aplicarPecaEstoque(item) {
+    const atualizar = (campo, valor) => {
+      if (modalCatalogo.origem === 'diagnostico') {
+        atualizarPecaDiagnostico(
+          modalCatalogo.diagnosticoId,
+          modalCatalogo.servicoId,
+          modalCatalogo.pecaId,
+          campo,
+          valor
+        );
+      } else if (modalCatalogo.origem === 'servico-sem-diagnostico') {
+        atualizarPecaSemDiagnostico(
+          modalCatalogo.servicoId,
+          modalCatalogo.pecaId,
+          campo,
+          valor
+        );
+      } else {
+        atualizarPecaAvulsa(modalCatalogo.pecaId, campo, valor);
+      }
+    };
+
+    atualizar('estoquePecaId', item.id);
+    atualizar('pecaCatalogoId', '');
+    atualizar('codigoPeca', item.codigo || '');
+    atualizar('descricao', item.nome || '');
+    atualizar('fornecedorId', '');
+    atualizar('fornecedorNome', '');
+    atualizar('quantidade', 1);
   }
 
   /**
@@ -1539,6 +1578,9 @@ function OrdemServico() {
     if (modalCatalogo.tipo === 'diagnostico') return catalogos.diagnosticos;
     if (modalCatalogo.tipo === 'servico') return catalogos.servicos;
     if (modalCatalogo.tipo === 'peca') return catalogos.pecas;
+    if (modalCatalogo.tipo === 'estoque') {
+      return catalogos.estoque.filter((item) => item.ativo !== false);
+    }
 
     return [];
   }
@@ -1561,6 +1603,7 @@ function OrdemServico() {
       const marca = String(item.marca || '').toLowerCase();
       const aplicacao = String(item.aplicacao || '').toLowerCase();
       const grupo = String(item.grupo || '').toLowerCase();
+      const localizacao = String(item.localizacao || '').toLowerCase();
 
       return (
         codigo.includes(termo) ||
@@ -1569,7 +1612,8 @@ function OrdemServico() {
         categoria.includes(termo) ||
         marca.includes(termo) ||
         aplicacao.includes(termo) ||
-        grupo.includes(termo)
+        grupo.includes(termo) ||
+        localizacao.includes(termo)
       );
     });
   }
@@ -1612,6 +1656,7 @@ function OrdemServico() {
     if (modalCatalogo.tipo === 'diagnostico') return 'Selecionar diagnóstico';
     if (modalCatalogo.tipo === 'servico') return 'Selecionar serviço';
     if (modalCatalogo.tipo === 'peca') return 'Selecionar peça';
+    if (modalCatalogo.tipo === 'estoque') return 'Pegar peça do estoque';
 
     return 'Selecionar cadastro';
   }
@@ -1631,6 +1676,10 @@ function OrdemServico() {
 
     if (modalCatalogo.tipo === 'peca') {
       return 'Nenhuma peça encontrada.';
+    }
+
+    if (modalCatalogo.tipo === 'estoque') {
+      return 'Nenhuma peça disponível foi encontrada no estoque.';
     }
 
     return 'Nenhum cadastro encontrado.';
@@ -1653,6 +1702,10 @@ function OrdemServico() {
       return '/pecas/cadastro';
     }
 
+    if (modalCatalogo.tipo === 'estoque') {
+      return '/estoque';
+    }
+
     return '/';
   }
 
@@ -1671,6 +1724,10 @@ function OrdemServico() {
 
     if (modalCatalogo.tipo === 'peca') {
       return '+ Cadastrar nova peça';
+    }
+
+    if (modalCatalogo.tipo === 'estoque') {
+      return 'Consultar estoque';
     }
 
     return '+ Cadastrar novo';
@@ -1744,6 +1801,12 @@ function OrdemServico() {
       }
 
       fecharModalCatalogo();
+      return;
+    }
+
+    if (modalCatalogo.tipo === 'estoque') {
+      aplicarPecaEstoque(item);
+      fecharModalCatalogo();
     }
   }
 
@@ -1775,6 +1838,15 @@ function OrdemServico() {
         .join(' | ');
 
       return detalhe || '-';
+    }
+
+    if (modalCatalogo.tipo === 'estoque') {
+      return [
+        `Saldo: ${Number(item.quantidadeAtual || 0).toLocaleString('pt-BR')} ${item.unidade}`,
+        item.localizacao ? `Local: ${item.localizacao}` : null,
+        item.marca,
+        item.aplicacao,
+      ].filter(Boolean).join(' | ');
     }
 
     return '-';
@@ -1811,8 +1883,9 @@ function OrdemServico() {
                     type="button"
                     className="os-small-btn os-blue"
                     onClick={() => selecionarItemCatalogo(item)}
+                    disabled={modalCatalogo.tipo === 'estoque' && item.quantidadeAtual < 1}
                   >
-                    Selecionar
+                    {modalCatalogo.tipo === 'estoque' && item.quantidadeAtual < 1 ? 'Sem saldo' : 'Selecionar'}
                   </button>
                 </td>
               </tr>
@@ -2072,6 +2145,7 @@ function OrdemServico() {
     return {
       id: peca.id,
       pecaCatalogoId: peca.pecaCatalogoId || '',
+      estoquePecaId: peca.estoquePecaId || '',
       codigoPeca: peca.codigoPeca || '',
       descricao: peca.nomePeca || '',
       fornecedorId: peca.fornecedorId || '',
@@ -2230,7 +2304,8 @@ function OrdemServico() {
       servico: null,
     }));
 
-    return [...pecasComDiagnostico, ...pecasSemDiagnostico, ...pecasAvulsas];
+    return [...pecasComDiagnostico, ...pecasSemDiagnostico, ...pecasAvulsas]
+      .filter((peca) => !peca.estoquePecaId);
   }, [ordem]);
 
   /**
@@ -2267,6 +2342,9 @@ function OrdemServico() {
             pecaCatalogoId: peca.pecaCatalogoId
               ? Number(peca.pecaCatalogoId)
               : null,
+            estoquePecaId: peca.estoquePecaId
+              ? Number(peca.estoquePecaId)
+              : null,
             descricao: peca.descricao || null,
             fornecedorId: peca.fornecedorId ? Number(peca.fornecedorId) : null,
             fornecedorNome: peca.fornecedorNome || null,
@@ -2291,6 +2369,9 @@ function OrdemServico() {
           pecaCatalogoId: peca.pecaCatalogoId
             ? Number(peca.pecaCatalogoId)
             : null,
+          estoquePecaId: peca.estoquePecaId
+            ? Number(peca.estoquePecaId)
+            : null,
           descricao: peca.descricao || null,
           fornecedorId: peca.fornecedorId ? Number(peca.fornecedorId) : null,
           fornecedorNome: peca.fornecedorNome || null,
@@ -2303,6 +2384,9 @@ function OrdemServico() {
       pecasAvulsas: ordem.pecasAvulsas.map((peca) => ({
         pecaCatalogoId: peca.pecaCatalogoId
           ? Number(peca.pecaCatalogoId)
+          : null,
+        estoquePecaId: peca.estoquePecaId
+          ? Number(peca.estoquePecaId)
           : null,
         descricao: peca.descricao || null,
         fornecedorId: peca.fornecedorId ? Number(peca.fornecedorId) : null,
@@ -2345,6 +2429,8 @@ function OrdemServico() {
 
       carregarOrdemNaTela(response.data);
       setModoTela('visualizacao');
+      await carregarCatalogos();
+      window.dispatchEvent(new Event('estoque-atualizado'));
 
       localStorage.removeItem(OS_RASCUNHO_KEY);
 
@@ -2520,172 +2606,6 @@ Pode me enviar os valores e disponibilidade, por favor?`;
     if (fornecedoresComEnvio === 0 && fornecedoresSemTelefone > 0) {
       toast.error('Nenhuma cotação foi enviada. Cadastre telefone/celular nos fornecedores selecionados.');
     }
-  }
-
-  /**
-   * Retorna todos os serviços da OS para montar mensagens e impressão.
-   * @returns {Object[]} Lista resultante da operação.
-   */
-  function obterTodosServicosOS() {
-    return [
-      ...ordem.diagnosticos.flatMap((diagnostico, diagnosticoIndex) =>
-        diagnostico.servicos.map((servico, servicoIndex) => ({
-          ...servico,
-          codigoVisual: `${letraDiagnostico(diagnosticoIndex)}.${servicoIndex + 1}`,
-          diagnostico: diagnostico.descricao || '',
-        }))
-      ),
-      ...ordem.servicosSemDiagnostico.map((servico, servicoIndex) => ({
-        ...servico,
-        codigoVisual: `S.${servicoIndex + 1}`,
-        diagnostico: '',
-      })),
-    ];
-  }
-
-  /**
-   * Retorna todas as peças da OS para montar mensagens e impressão.
-   * @returns {Object[]} Lista resultante da operação.
-   */
-  function obterTodasPecasOS() {
-    const pecasDosServicos = obterTodosServicosOS().flatMap((servico) =>
-      (servico.pecas || []).map((peca, pecaIndex) => ({
-        ...peca,
-        codigoVisual: `${servico.codigoVisual}.${pecaIndex + 1}`,
-        servico: servico.descricao || '',
-        diagnostico: servico.diagnostico || '',
-      }))
-    );
-
-    const pecasAvulsas = ordem.pecasAvulsas.map((peca, pecaIndex) => ({
-      ...peca,
-      codigoVisual: `P.${pecaIndex + 1}`,
-      servico: '',
-      diagnostico: '',
-    }));
-
-    return [...pecasDosServicos, ...pecasAvulsas];
-  }
-
-  /**
-   * Monta a mensagem que será enviada para o cliente pelo WhatsApp.
-   * @returns {string} Texto resultante da operação.
-   */
-  function montarMensagemOSCliente() {
-    const diagnosticos = ordem.diagnosticos.filter((diagnostico) =>
-      String(diagnostico.descricao || '').trim()
-    );
-
-    const servicos = obterTodosServicosOS().filter((servico) =>
-      String(servico.descricao || '').trim()
-    );
-
-    const pecas = obterTodasPecasOS().filter((peca) =>
-      String(peca.descricao || '').trim()
-    );
-
-    const linhasDiagnosticos = diagnosticos.length
-      ? diagnosticos
-          .map(
-            (diagnostico, index) =>
-              `${letraDiagnostico(index)} - ${diagnostico.descricao}`
-          )
-          .join('\n')
-      : 'Nenhum diagnóstico informado.';
-
-    const linhasServicos = servicos.length
-      ? servicos
-          .map((servico) => {
-            const valor = formatarMoeda(
-              Math.max(
-                Number(servico.precoVenda || 0) - Number(servico.desconto || 0),
-                0
-              )
-            );
-
-            return `${servico.codigoVisual} - ${servico.descricao} | ${valor}`;
-          })
-          .join('\n')
-      : 'Nenhum serviço informado.';
-
-    const linhasPecas = pecas.length
-      ? pecas
-          .map((peca) => {
-            const quantidade = Number(peca.quantidade || 1);
-            const total = formatarMoeda(
-              Math.max(
-                quantidade * Number(peca.custoUnitario || 0) -
-                  Number(peca.desconto || 0),
-                0
-              )
-            );
-
-            return `${peca.codigoVisual} - ${peca.descricao} | Qtd: ${quantidade} | ${total}`;
-          })
-          .join('\n')
-      : 'Nenhuma peça informada.';
-
-    return `Olá, ${ordem.cliente.nome || 'cliente'}!
-
-Segue o resumo da sua Ordem de Serviço.
-
-OS: ${ordem.codigo || '-'}
-Status: ${ordem.status || '-'}
-
-Cliente: ${ordem.cliente.nome || '-'}
-Veículo: ${[ordem.veiculo.marca, ordem.veiculo.modelo, ordem.veiculo.ano]
-      .filter(Boolean)
-      .join(' ') || '-'}
-Placa: ${ordem.veiculo.placa || '-'}
-Motor: ${ordem.veiculo.motor || '-'}
-Câmbio: ${ordem.veiculo.cambio || '-'}
-KM: ${ordem.veiculo.km || '-'}
-
-Diagnósticos:
-${linhasDiagnosticos}
-
-Serviços:
-${linhasServicos}
-
-Peças:
-${linhasPecas}
-
-Total de serviços: ${formatarMoeda(totais.totalServicos)}
-Total de peças: ${formatarMoeda(totais.totalPecas)}
-Total geral: ${formatarMoeda(totais.totalGeral)}
-
-Observações:
-${ordem.observacoes || '-'}`;
-
-  }
-
-  /**
-   * Abre o WhatsApp do cliente com o resumo da OS preenchido.
-   * @returns {void} Não possui retorno.
-   */
-  function enviarOSParaCliente() {
-    if (!ordem.cliente.nome || !ordem.veiculo.id) {
-      toast.warning('Selecione um cliente/veículo antes de enviar a OS.');
-      return;
-    }
-
-    const telefoneCliente =
-      ordem.cliente.whatsapp || ordem.cliente.celular || ordem.cliente.telefone || '';
-
-    const telefoneWhatsApp = normalizarTelefoneWhatsApp(telefoneCliente);
-
-    if (!telefoneWhatsApp) {
-      toast.warning('O cliente não possui telefone/celular cadastrado.');
-      return;
-    }
-
-    const mensagem = montarMensagemOSCliente();
-    const url = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(
-      mensagem
-    )}`;
-
-    window.open(url, '_blank', 'noopener,noreferrer');
-    toast.success('OS aberta no WhatsApp do cliente.');
   }
 
   /**
@@ -3341,6 +3261,7 @@ ${ordem.observacoes || '-'}`;
     pecaIndex,
     codigoPecaCompleto,
     onAbrirCatalogo,
+    onAbrirEstoque,
     onAplicarFornecedor,
     onAtualizar,
     onRemover,
@@ -3358,18 +3279,27 @@ ${ordem.observacoes || '-'}`;
 
         <div className="os-form-grid os-grid-piece">
           <div className="os-field os-col-2">
-            <label>Peça</label>
+            <label>Origem da peça</label>
 
-            <button
-              type="button"
-              className="os-select-modal-btn"
-              onClick={onAbrirCatalogo}
-              disabled={!podeEditar}
-            >
-              {peca.pecaCatalogoId
-                ? peca.descricao
-                : 'Selecionar peça cadastrada'}
-            </button>
+            <div className="os-piece-source-actions">
+              <button
+                type="button"
+                className="os-select-modal-btn"
+                onClick={onAbrirCatalogo}
+                disabled={!podeEditar}
+              >
+                {peca.pecaCatalogoId ? peca.descricao : 'Selecionar do catálogo'}
+              </button>
+              <button
+                type="button"
+                className={`os-select-modal-btn ${peca.estoquePecaId ? 'os-stock-selected' : ''}`}
+                onClick={onAbrirEstoque}
+                disabled={!podeEditar}
+              >
+                {peca.estoquePecaId ? `Estoque: ${peca.descricao}` : 'Pegar do estoque'}
+              </button>
+            </div>
+            {peca.estoquePecaId && <small className="os-stock-note">A baixa será confirmada ao salvar a OS.</small>}
           </div>
 
           <div className="os-field os-col-2">
@@ -3386,10 +3316,12 @@ ${ordem.observacoes || '-'}`;
             <label>Fornecedor</label>
             <select
               value={peca.fornecedorId}
-              disabled={!podeEditar}
+              disabled={!podeEditar || Boolean(peca.estoquePecaId)}
               onChange={(event) => onAplicarFornecedor(event.target.value)}
             >
-              <option value="">Selecione</option>
+              <option value="">
+                {peca.estoquePecaId ? 'Estoque interno' : 'Selecione'}
+              </option>
 
               {catalogos.fornecedores.map((fornecedor) => (
                 <option key={fornecedor.id} value={fornecedor.id}>
@@ -3403,6 +3335,8 @@ ${ordem.observacoes || '-'}`;
             <label>Qtd.</label>
             <input
               type="number"
+              min="1"
+              step="1"
               value={peca.quantidade}
               disabled={!podeEditar}
               onChange={(event) =>
@@ -4001,6 +3935,14 @@ ${ordem.observacoes || '-'}`;
                                 pecaId: peca.id,
                                 origem: 'diagnostico',
                               }),
+                            onAbrirEstoque: () =>
+                              abrirModalCatalogo({
+                                tipo: 'estoque',
+                                diagnosticoId: diagnostico.id,
+                                servicoId: servico.id,
+                                pecaId: peca.id,
+                                origem: 'diagnostico',
+                              }),
                             onAplicarFornecedor: (fornecedorId) =>
                               aplicarFornecedorPecaDiagnostico(
                                 diagnostico.id,
@@ -4211,6 +4153,13 @@ ${ordem.observacoes || '-'}`;
                               pecaId: peca.id,
                               origem: 'servico-sem-diagnostico',
                             }),
+                          onAbrirEstoque: () =>
+                            abrirModalCatalogo({
+                              tipo: 'estoque',
+                              servicoId: servico.id,
+                              pecaId: peca.id,
+                              origem: 'servico-sem-diagnostico',
+                            }),
                           onAplicarFornecedor: (fornecedorId) =>
                             aplicarFornecedorPecaSemDiagnostico(
                               servico.id,
@@ -4246,6 +4195,12 @@ ${ordem.observacoes || '-'}`;
                     onAbrirCatalogo: () =>
                       abrirModalCatalogo({
                         tipo: 'peca',
+                        pecaId: peca.id,
+                        origem: 'avulsa',
+                      }),
+                    onAbrirEstoque: () =>
+                      abrirModalCatalogo({
+                        tipo: 'estoque',
                         pecaId: peca.id,
                         origem: 'avulsa',
                       }),
@@ -4292,15 +4247,6 @@ ${ordem.observacoes || '-'}`;
         </section>
 
         <section className="os-final-actions">
-          <button
-            type="button"
-            className="os-action os-action-green"
-            onClick={enviarOSParaCliente}
-            disabled={!ordem.veiculo.id}
-          >
-            Enviar OS para o cliente
-          </button>
-
           <button
             type="button"
             className="os-action os-action-blue"
@@ -4499,8 +4445,9 @@ ${ordem.observacoes || '-'}`;
                   <h2>{obterTituloModalCatalogo()}</h2>
 
                   <span>
-                    Selecione um cadastro existente ou cadastre um novo em outra
-                    aba.
+                    {modalCatalogo.tipo === 'estoque'
+                      ? 'Selecione uma peça disponível. O saldo será validado novamente ao salvar a OS.'
+                      : 'Selecione um cadastro existente ou cadastre um novo em outra aba.'}
                   </span>
                 </div>
 
@@ -4536,7 +4483,7 @@ ${ordem.observacoes || '-'}`;
                 <input
                   value={buscaCatalogo}
                   onChange={(event) => setBuscaCatalogo(event.target.value)}
-                  placeholder={`Pesquisar ${obterTituloModalCatalogo().toLowerCase()} por código, nome, grupo ou descrição...`}
+                  placeholder={`Pesquisar ${obterTituloModalCatalogo().toLowerCase()} por código, nome, marca, aplicação ou localização...`}
                 />
               </div>
 
