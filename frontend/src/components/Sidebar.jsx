@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { FiPackage } from 'react-icons/fi';
+import { FiPackage, FiMessageSquare } from 'react-icons/fi';
 
 /**
  * Menu lateral responsivo que adapta as opções ao perfil do usuário.
@@ -141,6 +141,10 @@ function Sidebar() {
         )}
 
         <nav className="sidebar-menu">
+          {['TECNICO', 'OPERADOR', 'ADMIN', 'OWNER'].includes(role) && <NavLink to="/tickets" title="Solicitações de peças"
+            className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
+            <FiMessageSquare className="menu-icon" aria-hidden="true" /><span>SOLICITAÇÕES DE PEÇAS</span>
+          </NavLink>}
           {(isAdmin || isOperador || role === 'OWNER') && (
             <NavLink to="/estoque" title="Estoque"
               className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
@@ -320,7 +324,9 @@ function Sidebar() {
 
           {podeVerTecnico() && (
             <>
-              {/* Sidebar do técnico removida conforme regra atual. */}
+              <NavLink to="/tecnico/painel" title="Painel técnico" className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
+                <FiPackage className="menu-icon" aria-hidden="true" /><span>PAINEL TÉCNICO</span>
+              </NavLink>
             </>
           )}
 

@@ -780,7 +780,7 @@ model RequisicaoPeca {
   codigo String @db.VarChar(20)
 
   ordemServicoId Int
-  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Restrict)
 
   solicitanteId Int
   solicitante   Usuario @relation("RequisicaoSolicitante", fields: [solicitanteId], references: [id])
@@ -791,6 +791,7 @@ model RequisicaoPeca {
   status StatusRequisicaoPeca @default(ABERTA)
 
   observacao String? @db.VarChar(1000)
+  chaveAbertura String? @db.VarChar(36)
 
   abertaEm    DateTime  @default(now())
   assumidaEm  DateTime?
@@ -803,13 +804,28 @@ model RequisicaoPeca {
   itens        RequisicaoPecaItem[]
   conversa     ConversaTicket?
   notificacoes Notificacao[]
+  historico RequisicaoPecaHistorico[]
 
   @@unique([oficinaId, codigo])
+  @@unique([oficinaId, solicitanteId, chaveAbertura])
   @@index([oficinaId])
   @@index([ordemServicoId])
   @@index([solicitanteId])
   @@index([responsavelId])
   @@index([status])
+}
+
+model RequisicaoPecaHistorico {
+  id Int @id @default(autoincrement())
+  requisicaoPecaId Int
+  requisicaoPeca RequisicaoPeca @relation(fields: [requisicaoPecaId], references: [id], onDelete: Restrict)
+  usuarioId Int
+  statusAnterior StatusRequisicaoPeca?
+  statusAtual StatusRequisicaoPeca
+  motivo String? @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  @@index([requisicaoPecaId, createdAt])
 }
 
 enum StatusRequisicaoPeca {
@@ -892,12 +908,14 @@ model MensagemTicket {
   autor   Usuario @relation(fields: [autorId], references: [id])
 
   conteudo String? @db.VarChar(2000)
+  chaveEnvio String? @db.VarChar(36)
 
   createdAt DateTime @default(now())
   expiresAt DateTime
 
   anexos MensagemAnexo[]
 
+  @@unique([conversaId, autorId, chaveEnvio])
   @@index([oficinaId])
   @@index([conversaId])
   @@index([autorId])

@@ -28,6 +28,7 @@ const ordemInicial = {
   id: null,
   codigo: '',
   status: 'ABERTA',
+  tecnicoId: '',
   cliente: {
     id: '',
     nome: '',
@@ -106,6 +107,7 @@ function OrdemServico() {
     estoque: [],
     fornecedores: [],
     tecnicos: [],
+    tecnicosOS: [],
   });
 
   const [busca, setBusca] = useState('');
@@ -513,6 +515,7 @@ function OrdemServico() {
         estoqueResponse,
         fornecedoresResponse,
         funcionariosResponse,
+        tecnicosOSResponse,
       ] = await Promise.all([
         api.get('/diagnosticos'),
         api.get('/servicos'),
@@ -520,6 +523,7 @@ function OrdemServico() {
         api.get('/estoque'),
         api.get('/fornecedores'),
         api.get('/funcionarios'),
+        api.get('/tickets/tecnicos'),
       ]);
 
       const fornecedoresPecas = Array.isArray(fornecedoresResponse.data)
@@ -541,6 +545,7 @@ function OrdemServico() {
         estoque: estoqueResponse.data || [],
         fornecedores: fornecedoresPecas,
         tecnicos,
+        tecnicosOS: tecnicosOSResponse.data || [],
       });
     } catch (error) {
       console.error('Erro ao carregar catálogos:', error);
@@ -2090,6 +2095,7 @@ function OrdemServico() {
       id: os.id || null,
       codigo: os.codigo || '',
       status: os.status || 'ABERTA',
+      tecnicoId: os.tecnicoId || '',
       cliente: mapearClienteParaTela(cliente),
       veiculo: {
         id: veiculo.id || os.veiculoId || '',
@@ -2317,8 +2323,7 @@ function OrdemServico() {
       codigo: ordem.codigo,
       status: ordem.status || 'ABERTA',
       veiculoId: Number(ordem.veiculo.id),
-      operadorId: 1,
-      tecnicoId: 1,
+      tecnicoId: ordem.tecnicoId ? Number(ordem.tecnicoId) : null,
       observacoes: ordem.observacoes || null,
 
       diagnosticos: ordem.diagnosticos.map((diagnostico) => ({
@@ -3494,8 +3499,18 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                 <option value="EM_ANDAMENTO">Em andamento</option>
                 <option value="AGUARDANDO_PECA">Aguardando peça</option>
                 <option value="FINALIZADA">Finalizada</option>
+                <option value="FECHADA">Fechada</option>
                 <option value="CANCELADA">Cancelada</option>
               </select>
+            </div>
+            <div className="os-field">
+              <label htmlFor="os-tecnico">Mecânico responsável</label>
+              <select id="os-tecnico" value={ordem.tecnicoId || ''} disabled={!podeEditar}
+                onChange={event => atualizarCampoOrdem('tecnicoId', event.target.value)}>
+                <option value="">Sem atribuição</option>
+                {(catalogos.tecnicosOS || []).map(tecnico => <option key={tecnico.id} value={tecnico.id}>{tecnico.Nome}</option>)}
+              </select>
+              {ordem.id && <button type="button" className="os-small-btn os-blue" onClick={() => navigate(`/tickets?ordem=${ordem.id}`)}>Tickets desta OS</button>}
             </div>
           </div>
 

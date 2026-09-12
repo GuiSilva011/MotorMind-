@@ -1,0 +1,65 @@
+.tickets-page { padding: 28px; color: #102440; background: #f3f6fa; min-height: 85vh; }
+.tickets-page h1 { margin: 0 0 8px; font-size: 28px; }
+.tickets-page h2, .ticket-dialog h2 { font-size: 20px; margin: 0 0 16px; }
+.tickets-page h3 { font-size: 16px; margin: 0 0 10px; }
+.tickets-page p, .ticket-dialog p { line-height: 1.5; }
+.ticket-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.ticket-card { background: #fff; border: 1px solid #dae2ee; border-radius: 14px; padding: 22px; margin-bottom: 22px; min-width: 0; }
+.ticket-colunas { display: grid; grid-template-columns: minmax(250px, 330px) minmax(0, 1fr); gap: 22px; align-items: start; }
+.tickets-page button, .ticket-dialog button { padding: 10px 14px; border: 1px solid #cad5e4; border-radius: 8px; background: #fff; color: #102440; font: inherit; cursor: pointer; }
+.tickets-page button:hover, .ticket-dialog button:hover { background: #edf4ff; }
+.tickets-page button:disabled, .ticket-dialog button:disabled { opacity: .55; cursor: not-allowed; }
+.tickets-page .ticket-primario, .ticket-dialog .ticket-primario { background: #16385f; border-color: #16385f; color: #fff; }
+.tickets-page .ticket-primario:hover, .ticket-dialog .ticket-primario:hover { background: #225286; }
+.tickets-page label, .ticket-dialog label { display: flex; flex-direction: column; gap: 7px; margin: 12px 0; font-size: 14px; font-weight: 600; }
+.tickets-page input, .tickets-page select, .tickets-page textarea, .ticket-dialog input, .ticket-dialog textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #c6d3e4; border-radius: 7px; background: #fff; color: #102440; font: inherit; }
+.tickets-page textarea, .ticket-dialog textarea { resize: vertical; min-height: 80px; }
+.tickets-page :focus-visible, .ticket-dialog :focus-visible { outline: 3px solid #1ba1dc; outline-offset: 2px; }
+.tickets-page .ticket-checkbox { flex-direction: row; align-items: center; }
+.ticket-checkbox input { width: auto; }
+.ticket-ordens { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.ticket-ordens article { padding: 16px; background: #f6f8fc; border: 1px solid #dce5ef; border-radius: 10px; }
+.ticket-ordens button { display: block; margin-top: 14px; }
+.ticket-ordens small, .ticket-lista small { color: #52647b; }
+.ticket-lista ul { list-style: none; margin: 18px 0; padding: 0; }
+.ticket-lista li a { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; color: #102440; padding: 16px; margin: 10px 0; text-decoration: none; border: 1px solid #dce5ef; border-radius: 9px; }
+.ticket-lista li a:hover, .ticket-lista li a.selecionado { border-color: #2482c7; background: #edf6ff; }
+.ticket-status { padding: 5px 9px; border-radius: 6px; background: #eaf0f9; color: #254971; font-size: 12px; font-weight: 700; }
+.ticket-status.ABERTA, .ticket-status.AGUARDANDO_PECA { background: #fff0db; color: #8b4b08; }
+.ticket-status.DISPONIVEL, .ticket-status.ENTREGUE { background: #e5f5ed; color: #186642; }
+.ticket-status.CANCELADA { background: #f4e7e8; color: #913139; }
+.ticket-acoes { display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; margin-top: 14px; }
+.ticket-erro { color: #a12030; background: #fff0f0; padding: 12px; border-radius: 7px; }
+.ticket-aviso { background: #f1f5fa; color: #496079; padding: 12px; border-radius: 7px; font-size: 13px; }
+.ticket-texto, .ticket-historico p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ticket-detalhe table { width: 100%; border-collapse: collapse; margin: 22px 0; text-align: left; }
+.ticket-detalhe caption { text-align: left; font-weight: 700; margin-bottom: 10px; }
+.ticket-detalhe th, .ticket-detalhe td { padding: 12px; border-bottom: 1px solid #e1e7ef; overflow-wrap: anywhere; }
+.ticket-detalhe td small { display: block; margin-top: 6px; }
+.ticket-status-form { border-top: 1px solid #dce5ef; margin-top: 18px; padding-top: 6px; }
+.ticket-historico { margin: 22px 0; }
+.ticket-historico summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+.ticket-historico li { padding: 10px 0; }
+.ticket-historico time { display: block; font-size: 12px; margin: 4px 0; color: #52647b; }
+.ticket-chat { border-top: 1px solid #dce5ef; padding-top: 20px; }
+.ticket-mensagens { max-height: 430px; overflow-y: auto; min-height: 130px; padding: 14px; background: #f5f7fb; border-radius: 9px; margin-top: 14px; }
+.ticket-mensagem { width: fit-content; max-width: 88%; padding: 12px 16px; border: 1px solid #dce5ef; background: #fff; border-radius: 10px; margin: 10px 0; overflow-wrap: anywhere; }
+.ticket-mensagem.propria { margin-left: auto; background: #e8f3fd; border-color: #b7d8ee; }
+.ticket-mensagem strong { font-size: 13px; }
+.ticket-mensagem time { display: block; font-size: 11px; color: #52647b; margin-top: 4px; }
+.ticket-mensagem p { white-space: pre-wrap; margin-bottom: 0; }
+.ticket-mensagem .ticket-anexo { display: block; max-width: 100%; font-size: 13px; margin-top: 8px; overflow-wrap: anywhere; }
+.ticket-chat form > button { margin-top: 12px; }
+.ticket-dialog { width: min(720px, calc(100vw - 32px)); box-sizing: border-box; max-height: 90vh; border: 0; border-radius: 14px; padding: 26px; color: #102440; }
+.ticket-dialog::backdrop { background: #08162ca6; }
+.ticket-dialog fieldset { border: 0; padding: 0; margin: 0; }
+.ticket-dialog legend { font-weight: 700; }
+.ticket-item-form { display: grid; grid-template-columns: minmax(0, 1fr) 100px auto; gap: 10px; align-items: center; }
+.ticket-item-form button { margin-top: 16px; }
+.ticket-vazio { color: #52647b; }
+.ticket-notificacoes { position: relative; }
+.ticket-notificacoes .estoque-alertas { right: 0; }
+.ticket-notificacoes .nao-lida { border-left: 3px solid #ed912c; padding-left: 10px; }
+.estoque-topbar { gap: 12px; flex-wrap: wrap; }
+@media (max-width: 1000px) { .ticket-colunas { grid-template-columns: 1fr; } .ticket-lista ul { max-height: 330px; overflow-y: auto; } }
+@media (max-width: 600px) { .tickets-page { padding: 14px; } .ticket-card { padding: 16px; } .ticket-item-form { grid-template-columns: minmax(0, 1fr) 85px; } .ticket-item-form button { grid-column: 1 / -1; margin: 0 0 10px; } .ticket-mensagem { max-width: 95%; } }

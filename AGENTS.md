@@ -6,6 +6,8 @@ Este arquivo deve ficar na raiz do MotorMind, ao lado de `backend/` e `frontend/
 
 Estado de referência: módulo de estoque integrado à ordem de serviço. Na aba Estoque, o OPERADOR permanece somente leitura; dentro da OS, ele pode escolher uma peça física pela opção **Pegar do estoque**, e a baixa é confirmada ao salvar. O código das peças de estoque é automático e a unidade é escolhida entre UN, PAR e L. O botão **Enviar OS para o cliente** foi removido; a geração e o compartilhamento do documento ficam centralizados em **Imprimir OS**, que permite salvar em PDF.
 
+Atualização de 12/09/2026: primeira etapa de tickets e chat implementada. O técnico solicita peças em uma OS atribuída a ele; o operador assume atomicamente e conversa com o solicitante. Há status, histórico permanente, notificações individuais e anexos privados com expiração de 48 horas. A baixa continua exclusivamente no fluxo já existente da OS: o ticket não movimenta estoque nesta etapa. Consulte `TICKETS-LEIA-ME.md` e a seção 6.6.
+
 Antes de alterar código:
 
 1. Entenda a solicitação atual de Guilherme e leia este arquivo e eventuais instruções específicas da pasta afetada.
@@ -115,10 +117,10 @@ Antes desta entrega, o schema já havia sido ampliado para estoque, atribuição
 | Peça do estoque na OS | Seleção e baixa transacional entregues; edição reconcilia apenas a diferença e remoção devolve o saldo |
 | E-mail de estoque baixo | Configuração/campos modelados; envio ainda não implementado |
 | Relações OS–operador/técnico | Campos e uso básico de `tecnicoId` já existem no controller da OS |
-| Histórico de atribuição e visão restrita de OS do técnico | Modelagem preparada; fluxo completo ainda precisa ser integrado/verificado |
-| Tickets de peças | Schema preparado; fluxo de API e telas ainda pendente nesta entrega |
-| Chat e anexos com expiração de 48 horas | Schema preparado; conversa e limpeza automática ainda pendentes |
-| Notificações | Persistência de estoque e sino entregues; central geral e leitura individual pendentes |
+| Histórico de atribuição e visão restrita de OS do técnico | Seleção do mecânico na OS, histórico e lista de OS atribuídas integrados aos tickets; painel legado de veículos preservado |
+| Tickets de peças | Abertura, disputa atômica, atendimento, status e histórico entregues; baixa direta pelo ticket e compra estruturada ainda pendentes |
+| Chat e anexos com expiração de 48 horas | API, tela, anexos privados e limpeza automática entregues |
+| Notificações | Sino de estoque preservado; avisos individuais de tickets/chat/atribuições entregues; central geral ainda pendente |
 
 Ter um modelo no Prisma não significa que sua funcionalidade esteja pronta. Não recriar as tabelas abaixo sem primeiro conferir sua definição atual:
 
@@ -253,6 +255,24 @@ O operador não recebe botões de ação na tela e não pode consultar o histór
 - Peças escolhidas no estoque não entram na lista de cotação para fornecedores, e o campo de fornecedor fica desabilitado para essas linhas.
 - A integração adicionou `OrdemPecaItem.estoquePecaId`, `EstoqueMovimentacao.ordemServicoId` e os tipos `SAIDA_OS`/`DEVOLUCAO_OS`. Isso não cria relação entre `PecaCatalogo` e `EstoquePeca`.
 
+### 6.6. Tickets e chat — primeira etapa (12/09/2026)
+
+- Tela compartilhada `/tickets` e detalhe `/tickets/:id`, acessíveis pelo menu **Solicitações de peças**. O técnico vê suas OS atribuídas e solicita peças por nome e quantidade inteira (até 20 linhas).
+- A OS agora usa **Mecânico responsável** em vez de enviar `tecnicoId: 1`; o operador vem da sessão ao criar. Atribuições são abertas/encerradas com histórico e notificação. `FECHADA` e `CANCELADA` deixam a lista ativa; `FINALIZADA` permanece distinta.
+- Técnico consulta somente seus tickets. Operadores da mesma oficina veem a fila; ADMIN/OWNER também podem acompanhar/assumir. O primeiro responsável vence por bloqueio transacional e atualização condicional. Não existe transferência de responsável nesta etapa.
+- Código automático `TKT-000001` derivado do ID. Ticket, itens, conversa, primeiro histórico e notificações são criados juntos. Chaves UUID impedem duplicação de abertura e de envio por repetição imediata da mesma requisição.
+- Chat restrito ao solicitante e ao responsável; outro operador, ADMIN ou OWNER não participante não pode ler mensagens nem baixar anexos. É necessário assumir explicitamente antes de conversar.
+- O responsável atualiza atendimento, espera, disponibilidade, entrega ou cancelamento. Entrega exige disponibilidade anterior e confirmação de todas as quantidades. O técnico pode cancelar antes de o ticket ser assumido. Cancelamento exige motivo.
+- `RequisicaoPecaHistorico` registra cada transição nova com autor, estados, data e motivo opcional. Não foi fabricado histórico retroativo para registros antigos.
+- **Sem baixa pelo ticket nesta etapa.** A confirmação de entrega registra `quantidadeAtendida`, mas não verifica/comprova uma saída de estoque. O operador deve registrar a retirada pela OS. Origem, fornecedor, atendimento parcial e vínculo de movimentação ao item do ticket continuam pendentes; não ligar `SAIDA_REQUISICAO` sem definir a transição para evitar dupla baixa.
+- OS com tickets pendentes não pode fechar, cancelar ou trocar de técnico. OS com qualquer ticket ou histórico de atribuição não pode ser excluída pela API. Encerre/cancele preservando os registros.
+- Mensagens têm até 2.000 caracteres; até três anexos de 5 MB (JPG, PNG, WebP ou PDF), com checagem de assinatura/MIME. Arquivos ficam em `backend/private/tickets/`, fora de `/uploads`; downloads exigem JWT, oficina, participação e prazo válido. Essa checagem não é antivírus.
+- API oculta conteúdo expirado imediatamente. Limpeza no início do backend e a cada cinco minutos remove arquivos e mensagens vencidas, sem apagar tickets, OS, histórico, atribuições ou notificações. Falha de disco mantém a mensagem para nova tentativa. Órfãos com mais de 48 horas são reavaliados; não há serviço externo de limpeza enquanto o backend estiver desligado.
+- Notificações de abertura (operadores), atribuição, ticket assumido, disponibilidade/status e mensagem. Chat gera aviso genérico sem copiar conteúdo efêmero. Painel mostra as 30 recentes, permite leitura individual ou marcar todas do usuário como lidas; isso não resolve nem marca alertas de estoque.
+- Configurações `notificarTicketsSistema` e `notificarChatSistema` são respeitadas na geração dos avisos. Atualização por consulta periódica: fila/avisos 15 s, detalhe 10 s, chat 5 s. Não foram adicionados WebSocket nem novas dependências.
+- Migration `20260912120000_tickets_chat` aplicada no banco local e Prisma Client regenerado. A migration adiciona histórico/chaves e protege a relação OS–ticket contra exclusão em cascata.
+- Validação: 13 testes de regras e dez cenários HTTP/PostgreSQL (incluindo concorrência real) passaram em schema descartável separado. Os dados fictícios e anexos de teste foram removidos. Build passou; lint dos arquivos novos sem erros. A OS mantém um aviso pré-existente de dependência de `useEffect`. Navegador indisponível na sessão: teste visual/manual continua necessário.
+
 ## 7. Próximos passos
 
 O estoque foi escolhido por Guilherme como primeira prioridade, antes de tickets/chat. A ordem abaixo organiza o restante por dependência; seguir a tarefa que ele solicitar, sem iniciar todos os itens automaticamente.
@@ -269,6 +289,8 @@ Idempotência das movimentações e tratamento de alertas antigos são pendênci
 
 ### 7.2. Completar OS vinculada ao mecânico
 
+Base integrada aos tickets em 12/09/2026 (seção 6.6). As regras abaixo continuam como referência; não refazer atribuição, histórico, filtro e aviso já implementados. A organização completa do painel legado do técnico ainda pode ser evoluída em tarefa específica.
+
 Decisão de negócio: o mecânico deve trabalhar nas OS atribuídas a ele. A OS atribuída e aberta precisa aparecer em sua lista; quando `FECHADA`, deve deixar a lista ativa, encerrando a atribuição sem apagar seu histórico.
 
 - Reaproveitar `OrdemServico.operadorId`, `tecnicoId` e `OrdemServicoAtribuicao`.
@@ -279,6 +301,8 @@ Decisão de negócio: o mecânico deve trabalhar nas OS atribuídas a ele. A OS 
 - Integrar aviso de nova OS atribuída.
 
 ### 7.3. Implementar tickets de solicitação de peças
+
+Abertura, responsável, status, histórico e chat já implementados na primeira etapa. Restam atendimento estruturado por estoque/fornecedor, entregas parciais e a reconciliação de baixa com a OS. O fluxo abaixo é referência de produto, não indicação de que tudo permanece pendente.
 
 Fluxo definido:
 
@@ -296,11 +320,15 @@ Avaliar se o schema atual é suficiente para histórico de mudanças de status: 
 
 ### 7.4. Evoluir notificações
 
+Avisos de tickets/chat/atribuição com leitura por destinatário já existem ao lado do sino de estoque. A central geral ainda é uma evolução futura.
+
 Reutilizar `Notificacao` e `NotificacaoUsuario`, além do sino atual. Eventos previstos: estoque baixo, nova OS atribuída, solicitação de peça, ticket assumido, peça disponível, nova mensagem e avisos gerais.
 
 Implementar destinatários e permissões por oficina/usuário, leitura individual e apresentação dos eventos. Preservar o comportamento dos alertas ativos de estoque. Ler uma notificação não deve resolver um estoque que continua abaixo do mínimo.
 
 ### 7.5. Implementar chat temporário do ticket
+
+Primeira implementação concluída na seção 6.6; manter as garantias abaixo e validar a interface no ambiente de Guilherme. Não recriar as tabelas nem a rotina de expiração já entregues.
 
 Reutilizar `ConversaTicket`, `MensagemTicket` e `MensagemAnexo` para a conversa mecânico–operador, incluindo fotos/anexos quando necessários.
 

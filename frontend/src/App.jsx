@@ -27,6 +27,7 @@ import CadastrarFuncionarios from './pages/admin/cadastrarFuncionarios';
 import VisualizarFuncionarios from './pages/admin/visualizarFuncionarios';
 import Relatorios from './pages/admin/relatorios';
 import Estoque from './pages/admin/estoque';
+import Tickets from './pages/tickets';
 
 /**
  * Componente principal responsável por configurar as rotas da aplicação.
@@ -45,6 +46,8 @@ function App() {
       {/* Define todas as rotas da aplicação e protege áreas por perfil. */}
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/tickets" element={<ProtectedRoute allowedRoles={['TECNICO', 'OPERADOR', 'ADMIN']}><Tickets /></ProtectedRoute>} />
+        <Route path="/tickets/:id" element={<ProtectedRoute allowedRoles={['TECNICO', 'OPERADOR', 'ADMIN']}><Tickets /></ProtectedRoute>} />
         <Route path="/estoque" element={
           <ProtectedRoute allowedRoles={['ADMIN', 'OPERADOR']}><Estoque /></ProtectedRoute>
         } />

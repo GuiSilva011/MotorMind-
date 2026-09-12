@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiBell } from 'react-icons/fi';
 import api from '../services/api';
 import '../styles/estoqueAlertas.css';
+import NotificacoesTickets from './NotificacoesTickets';
 
 function Topbar() {
   const usuario = JSON.parse(localStorage.getItem('motormind_usuario') || 'null');
@@ -38,8 +39,9 @@ function Topbar() {
     };
   }, [permitido]);
 
-  if (!permitido) return null;
   return <div className="estoque-topbar" onKeyDown={event => { if (event.key === 'Escape') setAberto(false); }}>
+    <NotificacoesTickets />
+    {permitido && <>
     <button type="button" className="estoque-bell" aria-expanded={aberto} aria-controls="estoque-alertas" onClick={() => setAberto(!aberto)}>
       <FiBell aria-hidden="true" /><span>Alertas de estoque</span><strong>{erro ? '!' : carregando ? '…' : alertas.length}</strong>
     </button>
@@ -54,6 +56,7 @@ function Topbar() {
         </li>)}</ul></>}
       <Link to="/estoque" onClick={() => setAberto(false)}>Consultar estoque</Link>
     </section>}
+    </>}
   </div>;
 }
 

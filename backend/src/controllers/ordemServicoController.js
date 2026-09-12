@@ -1,5 +1,7 @@
 import prisma from '../config/prisma.js';
 import { EstoqueError, reconciliarEstoqueOrdem } from '../services/estoqueService.js';
+import { TicketError, OS_ENCERRADA } from '../services/ticketRegras.js';
+import { sincronizarAtribuicao } from '../services/ordemAtribuicaoService.js';
 
 function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
@@ -585,7 +587,7 @@ export async function listarOrdensServico(req, res) {
     if (!oficinaId) return;
 
     const ordens = await prisma.ordemServico.findMany({
-      where: { oficinaId },
+      where: { oficinaId, ...(req.user.role === 'TECNICO' ? { tecnicoId: req.user.id, status: { notIn: OS_ENCERRADA } } : {}) },
       orderBy: {
         createdAt: 'desc',
       },
@@ -613,7 +615,7 @@ export async function buscarOrdemServicoPorId(req, res) {
       oficinaId
     );
 
-    if (!ordem) {
+    if (!ordem || (req.user.role === 'TECNICO' && ordem.tecnicoId !== req.user.id)) {
       return res.status(404).json({ erro: 'Ordem de serviço não encontrada' });
     }
 
@@ -728,6 +730,8 @@ export async function criarOrdemServico(req, res) {
         },
       });
 
+      await sincronizarAtribuicao(tx, ordem, tecnicoIdFinal, ordem.status, req.user);
+
       await reconciliarEstoqueOrdem({
         tx,
         oficinaId,
@@ -751,7 +755,7 @@ export async function criarOrdemServico(req, res) {
 
     return res.status(201).json(ordemCriada);
   } catch (error) {
-    console.error('Erro ao criar ordem de serviço:', error);
+    if (!(error instanceof TicketError)) console.error('Erro ao criar ordem de serviço:', error);
 
     if (error.code === 'P2002') {
       return res.status(409).json({
@@ -763,7 +767,7 @@ export async function criarOrdemServico(req, res) {
       return res.status(400).json({ erro: error.message });
     }
 
-    if (error instanceof EstoqueError || error.code === 'DADOS_INVALIDOS') {
+    if (error instanceof TicketError || error instanceof EstoqueError || error.code === 'DADOS_INVALIDOS') {
       return res.status(error.status || 400).json({ erro: error.message });
     }
 
@@ -897,6 +901,10 @@ export async function editarOrdemServico(req, res) {
       `;
       if (!bloqueio.length) throw criarErroReferencia('Ordem de serviço não encontrada nesta oficina.');
 
+      const ordemBloqueada = await tx.ordemServico.findUnique({ where: { id } });
+      if (tecnicoId === undefined) tecnicoIdFinal = ordemBloqueada.tecnicoId;
+      await sincronizarAtribuicao(tx, ordemBloqueada, tecnicoIdFinal, status || ordemBloqueada.status, req.user);
+
       const quantidadesAnteriores = await buscarQuantidadesEstoqueDaOrdem(tx, id);
       await reconciliarEstoqueOrdem({
         tx,
@@ -921,7 +929,7 @@ export async function editarOrdemServico(req, res) {
             observacoes !== undefined
               ? observacoes || null
               : ordemExistente.observacoes,
-          status: status || ordemExistente.status,
+          status: status || ordemBloqueada.status,
           dataFechamento:
             dataFechamento !== undefined
               ? toDateOrNull(dataFechamento)
@@ -943,7 +951,7 @@ export async function editarOrdemServico(req, res) {
 
     return res.json(ordemAtualizada);
   } catch (error) {
-    console.error('Erro ao editar ordem de serviço:', error);
+    if (!(error instanceof TicketError)) console.error('Erro ao editar ordem de serviço:', error);
 
     if (error.code === 'P2002') {
       return res.status(409).json({
@@ -955,7 +963,7 @@ export async function editarOrdemServico(req, res) {
       return res.status(400).json({ erro: error.message });
     }
 
-    if (error instanceof EstoqueError || error.code === 'DADOS_INVALIDOS') {
+    if (error instanceof TicketError || error instanceof EstoqueError || error.code === 'DADOS_INVALIDOS') {
       return res.status(error.status || 400).json({ erro: error.message });
     }
 
@@ -990,6 +998,13 @@ export async function deletarOrdemServico(req, res) {
       `;
       if (!bloqueio.length) throw criarErroReferencia('Ordem de serviço não encontrada nesta oficina.');
 
+      if (await tx.requisicaoPeca.count({ where: { ordemServicoId: id, oficinaId } })) {
+        throw new TicketError(409, 'Esta OS possui tickets e deve ser preservada. Encerre ou cancele a OS em vez de excluí-la.');
+      }
+      if (await tx.ordemServicoAtribuicao.count({ where: { ordemServicoId: id, oficinaId } })) {
+        throw new TicketError(409, 'Esta OS possui histórico de atribuição e deve ser preservada. Encerre ou cancele a OS em vez de excluí-la.');
+      }
+
       const quantidadesAnteriores = await buscarQuantidadesEstoqueDaOrdem(tx, id);
       await reconciliarEstoqueOrdem({
         tx,
@@ -1005,8 +1020,8 @@ export async function deletarOrdemServico(req, res) {
 
     return res.json({ mensagem: 'Ordem de serviço deletada com sucesso' });
   } catch (error) {
-    console.error('Erro ao deletar ordem de serviço:', error);
-    if (error instanceof EstoqueError || error.code === 'REFERENCIA_FORA_DA_OFICINA') {
+    if (!(error instanceof TicketError)) console.error('Erro ao deletar ordem de serviço:', error);
+    if (error instanceof TicketError || error instanceof EstoqueError || error.code === 'REFERENCIA_FORA_DA_OFICINA') {
       return res.status(error.status || 400).json({ erro: error.message });
     }
     return res.status(500).json({
@@ -1060,6 +1075,7 @@ export async function buscarOrdensServico(req, res) {
 
     const { termo, status, dataInicio, dataFim } = req.query;
     const filtros = [{ oficinaId }];
+    if (req.user.role === 'TECNICO') filtros.push({ tecnicoId: req.user.id, status: { notIn: OS_ENCERRADA } });
 
     if (termo) {
       filtros.push({

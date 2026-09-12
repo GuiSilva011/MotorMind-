@@ -14,6 +14,9 @@ import authRoutes from '../routes/authRoutes.js';
 import checklistRoutes from '../routes/checklistRoutes.js';
 import funcionarioRoutes from '../routes/funcionarioRoutes.js';
 import estoqueRoutes from '../routes/estoqueRoutes.js';
+import ticketRoutes from '../routes/ticketRoutes.js';
+import prisma from '../config/prisma.js';
+import { iniciarLimpezaChat } from '../services/ticketArquivos.js';
 
 
 
@@ -97,3 +100,5 @@ app.use('/uploads', express.static('uploads'));
 app.use('/checklists', checklistRoutes);
 app.use('/funcionarios', funcionarioRoutes);
 app.use('/estoque', estoqueRoutes);
+app.use('/tickets', ticketRoutes);
+iniciarLimpezaChat(prisma);
