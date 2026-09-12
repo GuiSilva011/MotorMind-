@@ -2,6 +2,7 @@ import prisma from '../config/prisma.js';
 import { EstoqueError, reconciliarEstoqueOrdem } from '../services/estoqueService.js';
 import { TicketError, OS_ENCERRADA } from '../services/ticketRegras.js';
 import { sincronizarAtribuicao } from '../services/ordemAtribuicaoService.js';
+import { criarTecnicoService } from '../services/tecnicoService.js';
 
 function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
@@ -608,6 +609,7 @@ export async function buscarOrdemServicoPorId(req, res) {
   try {
     const oficinaId = obterOficinaId(req, res);
     if (!oficinaId) return;
+    if (req.user.role === 'TECNICO') return res.json(await criarTecnicoService(prisma).ordem(req.user, req.params.id));
 
     const ordem = await buscarOrdemCompleta(
       prisma,
@@ -622,6 +624,7 @@ export async function buscarOrdemServicoPorId(req, res) {
     return res.json(ordem);
   } catch (error) {
     console.error('Erro ao buscar ordem de serviço:', error);
+    if (error instanceof TicketError) return res.status(error.status).json({ erro: error.message });
     return res.status(500).json({
       erro: 'Erro ao buscar ordem de serviço',
       detalhe: error.message,

@@ -42,6 +42,18 @@ const upload = multer({
 });
 
 router.use(authMiddleware);
+router.use((req, res, next) => {
+  res.on('finish', () => {
+    if (res.statusCode < 400) return;
+    for (const arquivo of Object.values(req.files || {}).flat()) {
+      if (path.dirname(path.resolve(arquivo.path)) !== uploadDir) continue;
+      fs.unlink(arquivo.path, error => {
+        if (error && error.code !== 'ENOENT') console.error('Não foi possível remover uma foto de checklist recusada.');
+      });
+    }
+  });
+  next();
+});
 
 router.post(
   "/",

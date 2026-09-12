@@ -8,6 +8,10 @@ Estado de referência: módulo de estoque integrado à ordem de serviço. Na aba
 
 Atualização de 12/09/2026: primeira etapa de tickets e chat implementada. O técnico solicita peças em uma OS atribuída a ele; o operador assume atomicamente e conversa com o solicitante. Há status, histórico permanente, notificações individuais e anexos privados com expiração de 48 horas. A baixa continua exclusivamente no fluxo já existente da OS: o ticket não movimenta estoque nesta etapa. Consulte `TICKETS-LEIA-ME.md` e a seção 6.6.
 
+Continuidade do painel técnico: o vínculo só é confirmado quando o operador salva a OS. O painel agora lista somente veículos com OS que não estejam `FINALIZADA`, `FECHADA` ou `CANCELADA` e que estejam atribuídas ao técnico. **Exibir ordem de serviço** abre os itens salvos em somente leitura; **Solicitar peça ao operador**, dentro dessa visualização, cria o ticket e leva à conversa. A lista geral de tickets serve para acompanhamento, não para abrir pedidos fora da OS. Detalhes na seção 6.7.
+
+Próxima fase definida por Guilherme: adicionar uma landing page pública do MotorMind, a partir da qual o usuário poderá iniciar a “compra” do sistema e cadastrar sua oficina. Guilherme adicionará a base da landing page ao projeto, e a integração será desenvolvida passo a passo. Até que o fluxo comercial, o provedor de pagamento e a ativação sejam definidos e implementados, não tratar botões, formulários ou telas visuais como compra real concluída. Consulte a seção 7.1.
+
 Antes de alterar código:
 
 1. Entenda a solicitação atual de Guilherme e leia este arquivo e eventuais instruções específicas da pasta afetada.
@@ -29,8 +33,10 @@ Decisões de produto já registradas:
 - Aplicação web com frontend e backend separados; não introduzir Electron ou Docker.
 - O escopo atual é a oficina. Não criar portal ou aplicativo do cliente final sem uma nova solicitação.
 - Modelo comercial planejado: compra única, sem assinatura recorrente, com liberação do acesso após aprovação da compra.
+- A landing page será a entrada pública comercial do MotorMind, separada da área autenticada da oficina. Seu fluxo planejado conduz da apresentação do sistema à “compra” e ao cadastro inicial da oficina.
+- O cadastro inicial deve criar o ambiente isolado da nova oficina e o primeiro acesso responsável por ela, sem permitir que dados ou usuários sejam vinculados a outra oficina.
 - Dados e configuração da oficina devem servir à identificação do negócio e aos documentos/PDFs emitidos pelo sistema.
-- A existência de `Oficina`, `Licenca` e verificações no login não comprova que checkout, pagamento e ativação automática já estejam implementados.
+- A existência de `Oficina`, `Licenca` e verificações no login não comprova que checkout, pagamento, cadastro público da oficina ou ativação automática já estejam implementados.
 
 ## 3. Stack e organização existente
 
@@ -117,7 +123,7 @@ Antes desta entrega, o schema já havia sido ampliado para estoque, atribuição
 | Peça do estoque na OS | Seleção e baixa transacional entregues; edição reconcilia apenas a diferença e remoção devolve o saldo |
 | E-mail de estoque baixo | Configuração/campos modelados; envio ainda não implementado |
 | Relações OS–operador/técnico | Campos e uso básico de `tecnicoId` já existem no controller da OS |
-| Histórico de atribuição e visão restrita de OS do técnico | Seleção do mecânico na OS, histórico e lista de OS atribuídas integrados aos tickets; painel legado de veículos preservado |
+| Histórico de atribuição e visão restrita de OS do técnico | Vínculo confirmado no salvamento, painel filtrado por veículos atribuídos e visualização técnica somente leitura entregues |
 | Tickets de peças | Abertura, disputa atômica, atendimento, status e histórico entregues; baixa direta pelo ticket e compra estruturada ainda pendentes |
 | Chat e anexos com expiração de 48 horas | API, tela, anexos privados e limpeza automática entregues |
 | Notificações | Sino de estoque preservado; avisos individuais de tickets/chat/atribuições entregues; central geral ainda pendente |
@@ -258,7 +264,7 @@ O operador não recebe botões de ação na tela e não pode consultar o histór
 ### 6.6. Tickets e chat — primeira etapa (12/09/2026)
 
 - Tela compartilhada `/tickets` e detalhe `/tickets/:id`, acessíveis pelo menu **Solicitações de peças**. O técnico vê suas OS atribuídas e solicita peças por nome e quantidade inteira (até 20 linhas).
-- A OS agora usa **Mecânico responsável** em vez de enviar `tecnicoId: 1`; o operador vem da sessão ao criar. Atribuições são abertas/encerradas com histórico e notificação. `FECHADA` e `CANCELADA` deixam a lista ativa; `FINALIZADA` permanece distinta.
+- A OS agora usa **Mecânico responsável** em vez de enviar `tecnicoId: 1`; o operador vem da sessão ao criar. Atribuições são abertas/encerradas com histórico e notificação. `FINALIZADA`, `FECHADA` e `CANCELADA` deixam a lista ativa do técnico, embora continuem estados distintos da OS.
 - Técnico consulta somente seus tickets. Operadores da mesma oficina veem a fila; ADMIN/OWNER também podem acompanhar/assumir. O primeiro responsável vence por bloqueio transacional e atualização condicional. Não existe transferência de responsável nesta etapa.
 - Código automático `TKT-000001` derivado do ID. Ticket, itens, conversa, primeiro histórico e notificações são criados juntos. Chaves UUID impedem duplicação de abertura e de envio por repetição imediata da mesma requisição.
 - Chat restrito ao solicitante e ao responsável; outro operador, ADMIN ou OWNER não participante não pode ler mensagens nem baixar anexos. É necessário assumir explicitamente antes de conversar.
@@ -267,17 +273,69 @@ O operador não recebe botões de ação na tela e não pode consultar o histór
 - **Sem baixa pelo ticket nesta etapa.** A confirmação de entrega registra `quantidadeAtendida`, mas não verifica/comprova uma saída de estoque. O operador deve registrar a retirada pela OS. Origem, fornecedor, atendimento parcial e vínculo de movimentação ao item do ticket continuam pendentes; não ligar `SAIDA_REQUISICAO` sem definir a transição para evitar dupla baixa.
 - OS com tickets pendentes não pode fechar, cancelar ou trocar de técnico. OS com qualquer ticket ou histórico de atribuição não pode ser excluída pela API. Encerre/cancele preservando os registros.
 - Mensagens têm até 2.000 caracteres; até três anexos de 5 MB (JPG, PNG, WebP ou PDF), com checagem de assinatura/MIME. Arquivos ficam em `backend/private/tickets/`, fora de `/uploads`; downloads exigem JWT, oficina, participação e prazo válido. Essa checagem não é antivírus.
+- Imagens JPG, PNG e WebP aparecem em prévia no chat, com ampliação ao clicar e fechamento por botão ou Escape. `frontend/src/components/ImagemTicket.jsx` carrega o arquivo pela mesma rota privada usando Axios/JWT e uma URL temporária em memória, sem publicar o anexo. Cancela chamadas e libera a URL ao sair/expirar; falhas oferecem nova tentativa. Download continua opcional e PDFs mantêm o botão de download. Sem migration ou dependência nova. Build, lint focado, 13 testes de regras e 14 cenários integrados passaram, incluindo imagem autenticada, MIME, conteúdo, bloqueios e expiração; visualização manual ainda pendente por indisponibilidade do navegador.
 - API oculta conteúdo expirado imediatamente. Limpeza no início do backend e a cada cinco minutos remove arquivos e mensagens vencidas, sem apagar tickets, OS, histórico, atribuições ou notificações. Falha de disco mantém a mensagem para nova tentativa. Órfãos com mais de 48 horas são reavaliados; não há serviço externo de limpeza enquanto o backend estiver desligado.
 - Notificações de abertura (operadores), atribuição, ticket assumido, disponibilidade/status e mensagem. Chat gera aviso genérico sem copiar conteúdo efêmero. Painel mostra as 30 recentes, permite leitura individual ou marcar todas do usuário como lidas; isso não resolve nem marca alertas de estoque.
 - Configurações `notificarTicketsSistema` e `notificarChatSistema` são respeitadas na geração dos avisos. Atualização por consulta periódica: fila/avisos 15 s, detalhe 10 s, chat 5 s. Não foram adicionados WebSocket nem novas dependências.
 - Migration `20260912120000_tickets_chat` aplicada no banco local e Prisma Client regenerado. A migration adiciona histórico/chaves e protege a relação OS–ticket contra exclusão em cascata.
 - Validação: 13 testes de regras e dez cenários HTTP/PostgreSQL (incluindo concorrência real) passaram em schema descartável separado. Os dados fictícios e anexos de teste foram removidos. Build passou; lint dos arquivos novos sem erros. A OS mantém um aviso pré-existente de dependência de `useEffect`. Navegador indisponível na sessão: teste visual/manual continua necessário.
 
+### 6.7. Painel técnico e abertura de tickets dentro da OS
+
+- O operador seleciona **Mecânico responsável** e salva. Selecionar um nome no formulário não efetiva a atribuição. A gravação da OS, do vínculo, dos itens e do aviso permanece transacional; erro ao salvar reverte também a atribuição.
+- `/tecnico/painel` consulta `GET /tecnico/veiculos`: somente veículos da oficina com pelo menos uma OS atribuída ao usuário autenticado e não `FINALIZADA`/`FECHADA`/`CANCELADA`. Ao salvar a OS como `FINALIZADA`, o operador encerra sua atribuição ativa e ela deixa imediatamente a lista e os acessos ativos do técnico, preservando o histórico. Várias OS do mesmo veículo geram um cartão com acesso separado a cada ordem, não veículos duplicados. O painel atualiza a cada 15 segundos e ao retornar à janela.
+- Permanecem **Nova checklist**, consulta de **Checklists** e **Histórico veicular**. O vínculo atual também é exigido pela API das checklists; a criação bloqueia as OS vinculadas durante a transação para não confirmar uma checklist após perder a atribuição.
+- A listagem antiga de veículos e sua busca também filtram o perfil TECNICO. Não considerar isso uma auditoria completa dos demais endpoints legados ou da publicação antiga de fotos de checklist em `/uploads`.
+- **Exibir ordem de serviço** abre `/tecnico/ordens-servico/:id`, usando `GET /tecnico/ordens/:id`. Somente a OS ativa atribuída ao técnico pode ser aberta nessa visão, incluindo checagem de oficina.
+- A visualização traz exclusivamente os diagnósticos, serviços e peças persistidos, com nomes, descrições técnicas, quantidades e seus agrupamentos. Não traz preços, custos, formulários de edição ou cadastros completos do cliente. Não preenche dados com o catálogo atual nem com rascunhos do navegador.
+- Peças de serviços, peças avulsas e eventuais vínculos diretos a diagnósticos já persistidos são exibidos sem duplicação. A nova tela não acrescenta um novo caminho de cadastro de peças diretas no formulário do operador.
+- **Solicitar peça ao operador** abre o formulário dentro da OS; somente a confirmação cria ticket, itens, conversa e avisos. Depois, o técnico é levado ao ticket. A conversa é liberada quando um operador assume, preservando a disputa atômica existente. Abrir a OS ou o formulário não cria ticket.
+- A lista `/tickets` mantém acompanhamento/chat e um link para o painel técnico; não contém mais a abertura de pedido por uma lista paralela de OS. Notificações de atribuição levam à visualização da OS.
+- O histórico é consultado por `GET /tecnico/veiculos/:veiculoId/historico` e `.../historico/:ordemId`. Enquanto houver vínculo ativo com o veículo, o técnico consulta também OS anteriores dele, inclusive encerradas ou realizadas por outro técnico da mesma oficina. Isso não permite solicitar peças por essas OS antigas nem consultar veículos sem vínculo atual.
+- O componente técnico é reutilizado no histórico para mostrar todos os grupos de itens e evitar contagem duplicada. Encerrar/cancelar a última OS vinculada retira o veículo da lista ativa, sem apagar seu histórico.
+- Arquivos centrais: `backend/src/services/tecnicoService.js`, `backend/src/routes/tecnicoRoutes.js`, controllers de veículos/checklist/OS; `frontend/src/pages/tecnico/painel.jsx`, `ordemServico.jsx`, `historicoVeicular.jsx`, `frontend/src/components/ConteudoOrdemTecnica.jsx` e `NovaSolicitacao.jsx`.
+- Nenhum schema, migration ou dependência foi alterado nesta continuidade. Validação: 14 cenários integrados HTTP/PostgreSQL em schema descartável passaram (15 testes contando o agrupador), incluindo vínculo após salvamento, rollback, múltiplas OS, troca de mecânico, snapshots do catálogo, checklist, histórico e regressão de tickets/chat. Build passou. Validação visual/manual ainda deve ser feita no ambiente local.
+
 ## 7. Próximos passos
 
-O estoque foi escolhido por Guilherme como primeira prioridade, antes de tickets/chat. A ordem abaixo organiza o restante por dependência; seguir a tarefa que ele solicitar, sem iniciar todos os itens automaticamente.
+Estoque, integração da OS, painel técnico e primeira etapa de tickets/chat são considerados concluídos para a fase atual. As evoluções técnicas que ainda aparecem neste roteiro permanecem registradas, mas não devem ser iniciadas automaticamente. A próxima fase ativa é a landing page e o ingresso de uma nova oficina; seguir cada solicitação de Guilherme passo a passo.
 
-### 7.1. Consolidar o estoque e concluir os e-mails
+### 7.1. Landing page, “compra” e cadastro da oficina — próxima fase ativa
+
+Objetivo definido: disponibilizar uma landing page pública do MotorMind onde o interessado conhece o sistema, inicia a “compra” e pode cadastrar sua oficina para obter acesso ao ambiente correspondente.
+
+Estado atual desta fase:
+
+- Guilherme adicionará a base da landing page ao repositório. Antes de editar, localizar e inspecionar os arquivos recebidos, suas rotas, estilos e recursos; não recriar a página nem substituir sua identidade visual sem pedido.
+- Nenhum checkout, pagamento, webhook, cadastro público de oficina ou ativação automática deve ser considerado pronto apenas por existir uma interface.
+- O desenvolvimento será incremental. Implementar somente a etapa solicitada em cada conversa e validar sua integração com o projeto existente.
+- O modelo comercial de referência continua sendo compra única, sem assinatura recorrente, salvo decisão posterior de Guilherme.
+
+Fluxo de produto pretendido, ainda sujeito às decisões de cada etapa:
+
+1. O visitante acessa a landing page pública e consulta a apresentação do MotorMind.
+2. Uma ação de compra conduz ao fluxo comercial que for definido.
+3. Depois da condição de compra/aprovação definida, o usuário informa os dados necessários para cadastrar a oficina e seu primeiro acesso responsável.
+4. O backend cria os registros necessários de oficina, usuário inicial e licença de forma consistente, mantendo o isolamento por `oficinaId`.
+5. Com a oficina e a licença em estado autorizado, o usuário pode seguir para o login e acessar somente o ambiente da própria oficina.
+
+Decisões que devem ser confirmadas antes das respectivas implementações:
+
+- Se a “compra” será inicialmente simulada/demonstrativa, aprovada manualmente ou integrada a um provedor de pagamento real.
+- Qual provedor, meio de pagamento, valor, confirmação, cancelamento e tratamento de falhas serão usados, caso exista integração real.
+- Em que momento o cadastro da oficina será liberado e como uma compra aprovada será associada com segurança a um único cadastro.
+- Quais dados da oficina e do primeiro usuário serão obrigatórios, além das regras de aceite, verificação e recuperação de acesso.
+- Quais estados e regras de ativação serão aplicados a `Oficina` e `Licenca` e se haverá alguma tela administrativa para aprovação.
+
+Garantias que devem permanecer em todas as etapas:
+
+- A landing page e as rotas estritamente necessárias ao ingresso são públicas; painéis e dados operacionais continuam protegidos por autenticação e perfil.
+- Não confiar em `oficinaId`, perfil, preço, aprovação ou estado de pagamento enviados pelo navegador. Uma futura confirmação real de pagamento deve ser validada no backend conforme o provedor escolhido.
+- Senhas devem continuar protegidas com hash; não registrar senhas, tokens, dados de pagamento ou credenciais em logs, documentação ou respostas.
+- A criação de oficina, primeiro usuário, licença e eventual vínculo com a compra deve evitar cadastros parciais e duplicados. Definir transação e idempotência quando o contrato do fluxo estiver claro.
+- Não misturar a landing page comercial com um portal do cliente final da oficina; esse portal continua fora do escopo atual.
+
+### 7.2. Consolidar o estoque e concluir os e-mails
 
 1. Validar com login de OPERADOR que a tela mostra somente itens ativos e não apresenta histórico nem ações; chamadas diretas aos endpoints administrativos devem retornar 403.
 2. Validar isolamento por oficina, concorrência e rollback com PostgreSQL de desenvolvimento. Exemplo: saldo 1 e duas retiradas simultâneas de 1; somente uma pode concluir.
@@ -287,20 +345,20 @@ O estoque foi escolhido por Guilherme como primeira prioridade, antes de tickets
 
 Idempotência das movimentações e tratamento de alertas antigos são pendências técnicas identificadas; avaliar quando forem necessárias ao fluxo, sem modificar o banco de forma especulativa.
 
-### 7.2. Completar OS vinculada ao mecânico
+### 7.3. Completar OS vinculada ao mecânico
 
-Base integrada aos tickets em 12/09/2026 (seção 6.6). As regras abaixo continuam como referência; não refazer atribuição, histórico, filtro e aviso já implementados. A organização completa do painel legado do técnico ainda pode ser evoluída em tarefa específica.
+Base integrada aos tickets e ao painel técnico (seções 6.6 e 6.7). As regras abaixo continuam como referência; não refazer atribuição, histórico, filtro, visualização da OS ou aviso já implementados.
 
-Decisão de negócio: o mecânico deve trabalhar nas OS atribuídas a ele. A OS atribuída e aberta precisa aparecer em sua lista; quando `FECHADA`, deve deixar a lista ativa, encerrando a atribuição sem apagar seu histórico.
+Decisão de negócio: o mecânico deve trabalhar nas OS atribuídas a ele. A OS atribuída e aberta precisa aparecer em sua lista; quando `FINALIZADA`, `FECHADA` ou `CANCELADA`, deve deixar a lista ativa, encerrando a atribuição sem apagar seu histórico.
 
 - Reaproveitar `OrdemServico.operadorId`, `tecnicoId` e `OrdemServicoAtribuicao`.
 - O controller já recebe/valida técnico da mesma oficina; conferir e completar o fluxo, sem recriar a OS.
 - Implementar atribuição, troca/encerramento da atribuição, histórico e filtro no backend para o técnico.
 - Preservar a consulta histórica de quem executou/recebeu a OS; não apagar dados apenas para escondê-la da lista ativa.
-- Definir a apresentação dos estados intermediários já existentes, como `EM_ANDAMENTO` e `AGUARDANDO_PECA`, sem confundir `FINALIZADA` com `FECHADA`.
+- Preservar a distinção de negócio entre `FINALIZADA` e `FECHADA`, embora ambas retirem a OS do painel técnico; `EM_ANDAMENTO` e `AGUARDANDO_PECA` continuam estados ativos.
 - Integrar aviso de nova OS atribuída.
 
-### 7.3. Implementar tickets de solicitação de peças
+### 7.4. Implementar tickets de solicitação de peças
 
 Abertura, responsável, status, histórico e chat já implementados na primeira etapa. Restam atendimento estruturado por estoque/fornecedor, entregas parciais e a reconciliação de baixa com a OS. O fluxo abaixo é referência de produto, não indicação de que tudo permanece pendente.
 
@@ -318,7 +376,7 @@ Para atendimento pelo estoque, reutilizar as garantias de saldo, histórico e tr
 
 Avaliar se o schema atual é suficiente para histórico de mudanças de status: ele contém estado atual e datas relevantes, mas não se deve alegar um histórico completo de todas as transições sem uma implementação que o registre.
 
-### 7.4. Evoluir notificações
+### 7.5. Evoluir notificações
 
 Avisos de tickets/chat/atribuição com leitura por destinatário já existem ao lado do sino de estoque. A central geral ainda é uma evolução futura.
 
@@ -326,7 +384,7 @@ Reutilizar `Notificacao` e `NotificacaoUsuario`, além do sino atual. Eventos pr
 
 Implementar destinatários e permissões por oficina/usuário, leitura individual e apresentação dos eventos. Preservar o comportamento dos alertas ativos de estoque. Ler uma notificação não deve resolver um estoque que continua abaixo do mínimo.
 
-### 7.5. Implementar chat temporário do ticket
+### 7.6. Implementar chat temporário do ticket
 
 Primeira implementação concluída na seção 6.6; manter as garantias abaixo e validar a interface no ambiente de Guilherme. Não recriar as tabelas nem a rotina de expiração já entregues.
 
@@ -338,12 +396,12 @@ Reutilizar `ConversaTicket`, `MensagemTicket` e `MensagemAnexo` para a conversa 
 - Manter requisição, OS, movimentações, estados/histórico relevantes e atribuições.
 - O campo `expiresAt` sozinho não executa limpeza; é necessária uma rotina real.
 
-### 7.6. Revisões posteriores
+### 7.7. Revisões posteriores
 
 - Revisar o papel do proprietário quando Guilherme solicitar a etapa de permissões.
 - Atualizar requisitos, diagrama de classes e documentação conforme funcionalidades efetivamente implementadas.
 - Retomar cotações/comparação de fornecedores quando essa etapa for solicitada, verificando o que já existe. Houve discussão de importação por imagem/texto/manual, revisão humana e montagem de pedido para envio manual pelo WhatsApp; não tratar esse plano como uma integração pronta.
-- Checkout, compra e ativação automática da licença permanecem dependentes de inspeção/implementação específica.
+- Landing page, checkout, compra, cadastro público da oficina e ativação automática devem seguir a fase ativa da seção 7.1; não presumir integração pronta antes de cada entrega ser implementada e validada.
 
 ## 8. Forma de trabalhar e preservar o projeto
 

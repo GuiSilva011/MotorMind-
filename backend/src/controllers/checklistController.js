@@ -1,4 +1,6 @@
 import prisma from '../config/prisma.js';
+import { bloquearVinculoVeiculo, filtroVeiculoTecnico } from '../services/tecnicoService.js';
+import { TicketError } from '../services/ticketRegras.js';
 
 function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
@@ -50,6 +52,7 @@ export async function criarChecklist(req, res) {
       where: {
         id: Number(veiculoId),
         oficinaId,
+        ...filtroVeiculoTecnico(req.user),
       },
     });
 
@@ -57,26 +60,30 @@ export async function criarChecklist(req, res) {
       return res.status(404).json({ erro: 'Veículo não encontrado.' });
     }
 
-    const checklist = await prisma.checklist.create({
-      data: {
-        oficinaId,
-        veiculoId: veiculo.id,
-        itensEntrada: parseJsonField(itensEntrada),
-        itensDiagnostico: parseJsonField(itensDiagnostico),
-        observacoesEntrada: observacoesEntrada || null,
-        observacoesDiagnostico: observacoesDiagnostico || null,
-        fotoFrente: pegarArquivo(req, 'fotoFrente'),
-        fotoTraseira: pegarArquivo(req, 'fotoTraseira'),
-        fotoEsquerda: pegarArquivo(req, 'fotoEsquerda'),
-        fotoDireita: pegarArquivo(req, 'fotoDireita'),
-      },
-      include: {
-        veiculo: {
-          include: {
-            cliente: true,
+    const checklist = await prisma.$transaction(async tx => {
+      await bloquearVinculoVeiculo(tx, req.user, veiculo.id);
+      return tx.checklist.create({
+        data: {
+          oficinaId,
+          veiculoId: veiculo.id,
+          itensEntrada: parseJsonField(itensEntrada),
+          itensDiagnostico: parseJsonField(itensDiagnostico),
+          observacoesEntrada: observacoesEntrada || null,
+          observacoesDiagnostico: observacoesDiagnostico || null,
+          fotoFrente: pegarArquivo(req, 'fotoFrente'),
+          fotoTraseira: pegarArquivo(req, 'fotoTraseira'),
+          fotoEsquerda: pegarArquivo(req, 'fotoEsquerda'),
+          fotoDireita: pegarArquivo(req, 'fotoDireita'),
+        },
+        include: {
+          veiculo: {
+            include: {
+              cliente: true,
+            },
           },
         },
-      },
+      });
+
     });
 
     return res.status(201).json({
@@ -84,6 +91,7 @@ export async function criarChecklist(req, res) {
       checklist,
     });
   } catch (error) {
+    if (error instanceof TicketError) return res.status(error.status).json({ erro: error.message });
     console.error('Erro ao criar checklist:', error);
     return res.status(500).json({
       erro: 'Erro ao criar checklist.',
@@ -107,6 +115,7 @@ export async function listarChecklistsPorVeiculo(req, res) {
       where: {
         id: veiculoId,
         oficinaId,
+        ...filtroVeiculoTecnico(req.user),
       },
       select: {
         id: true,
@@ -121,6 +130,7 @@ export async function listarChecklistsPorVeiculo(req, res) {
       where: {
         oficinaId,
         veiculoId,
+        veiculo: filtroVeiculoTecnico(req.user),
       },
       include: {
         veiculo: {
@@ -153,6 +163,7 @@ export async function buscarChecklistPorId(req, res) {
       where: {
         id: Number(req.params.id),
         oficinaId,
+        veiculo: filtroVeiculoTecnico(req.user),
       },
       include: {
         veiculo: {
@@ -188,6 +199,7 @@ export async function deletarChecklist(req, res) {
       where: {
         id,
         oficinaId,
+        veiculo: filtroVeiculoTecnico(req.user),
       },
     });
 

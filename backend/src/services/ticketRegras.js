@@ -5,7 +5,7 @@ export class TicketError extends Error {
 export const PRAZO_CHAT_MS = 48 * 60 * 60 * 1000;
 export const STATUS_FINAIS = ['ENTREGUE', 'CANCELADA'];
 export const STATUS_TICKET = ['ABERTA', 'EM_ATENDIMENTO', 'AGUARDANDO_PECA', 'DISPONIVEL', ...STATUS_FINAIS];
-export const OS_ENCERRADA = ['FECHADA', 'CANCELADA'];
+export const OS_ENCERRADA = ['FINALIZADA', 'FECHADA', 'CANCELADA'];
 export const PERFIS_ATENDIMENTO = ['OPERADOR', 'ADMIN', 'OWNER'];
 export const TRANSICOES = {
   EM_ATENDIMENTO: ['AGUARDANDO_PECA', 'DISPONIVEL', 'CANCELADA'],

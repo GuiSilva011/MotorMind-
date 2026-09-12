@@ -15,6 +15,7 @@ import checklistRoutes from '../routes/checklistRoutes.js';
 import funcionarioRoutes from '../routes/funcionarioRoutes.js';
 import estoqueRoutes from '../routes/estoqueRoutes.js';
 import ticketRoutes from '../routes/ticketRoutes.js';
+import tecnicoRoutes from '../routes/tecnicoRoutes.js';
 import prisma from '../config/prisma.js';
 import { iniciarLimpezaChat } from '../services/ticketArquivos.js';
 
@@ -101,4 +102,5 @@ app.use('/checklists', checklistRoutes);
 app.use('/funcionarios', funcionarioRoutes);
 app.use('/estoque', estoqueRoutes);
 app.use('/tickets', ticketRoutes);
+app.use('/tecnico', tecnicoRoutes);
 iniciarLimpezaChat(prisma);

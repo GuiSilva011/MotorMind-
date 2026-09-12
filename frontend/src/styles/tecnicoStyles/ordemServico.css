@@ -1,0 +1,203 @@
+.os-tecnica-page {
+    padding: 30px 40px;
+    background: #edf2f7;
+    color: #07142b;
+    min-height: calc(100vh - 70px);
+}
+
+.os-tecnica-page a {
+    color: #075985;
+    text-decoration: underline;
+}
+
+.os-tecnica-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 24px 0;
+}
+
+.os-tecnica-top h1 {
+    font-size: 28px;
+    margin: 0 0 10px;
+}
+
+.os-tecnica-top p {
+    margin: 0;
+    color: #455875;
+    line-height: 1.6;
+}
+
+.os-tecnica-page button {
+    padding: 11px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #102440;
+    cursor: pointer;
+    font: inherit;
+}
+
+.os-tecnica-page button:hover {
+    background: #edf6ff;
+}
+
+.os-tecnica-page button:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+}
+
+.os-tecnica-page .os-tecnica-solicitar {
+    background: #e77b12;
+    color: #07142b;
+    border-color: #e77b12;
+    font-weight: 700;
+}
+
+.os-tecnica-page .os-tecnica-solicitar:hover {
+    background: #f6a54d;
+}
+
+.os-tecnica-page :focus-visible {
+    outline: 3px solid #1597d1;
+    outline-offset: 3px;
+}
+
+.os-tecnica-resumo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 22px;
+    background: #fff;
+    border: 1px solid #d9e1ec;
+    border-radius: 12px;
+}
+
+.os-tecnica-resumo div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.os-tecnica-resumo span {
+    color: #455875;
+    font-size: 13px;
+}
+
+.os-tecnica-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin: 24px 0;
+}
+
+.os-tecnica-conteudo {
+    display: grid;
+    gap: 22px;
+    color: #102440;
+    min-width: 0;
+}
+
+.os-tecnica-grupo {
+    padding: 22px;
+    border: 1px solid #d9e1ec;
+    border-radius: 12px;
+    background: #fff;
+    min-width: 0;
+}
+
+.os-tecnica-conteudo h2 {
+    font-size: 21px;
+    margin: 0 0 16px;
+}
+
+.os-tecnica-conteudo h3 {
+    font-size: 18px;
+    margin: 0 0 12px;
+}
+
+.os-tecnica-conteudo h4 {
+    font-size: 16px;
+    margin: 12px 0;
+}
+
+.os-tecnica-conteudo h5 {
+    font-size: 14px;
+    margin: 14px 0 8px;
+}
+
+.os-tecnica-conteudo p {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
+}
+
+.os-tecnica-diagnostico {
+    border-left: 4px solid #ef932a;
+    padding: 18px;
+    margin: 16px 0;
+    background: #f7f9fc;
+}
+
+.os-tecnica-servico {
+    border: 1px solid #dce5ef;
+    padding: 16px;
+    margin: 12px 0;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.os-tecnica-vazio {
+    color: #52647b;
+    font-size: 14px;
+}
+
+.os-tecnica-tabela {
+    overflow-x: auto;
+}
+
+.os-tecnica-tabela table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.os-tecnica-tabela th,
+.os-tecnica-tabela td {
+    padding: 12px;
+    border-bottom: 1px solid #dae2ed;
+    overflow-wrap: anywhere;
+}
+
+.os-tecnica-tabela th {
+    background: #eef3f8;
+    font-size: 13px;
+}
+
+.os-tecnica-erro {
+    padding: 14px;
+    background: #fff0f0;
+    color: #981a2b;
+    border-radius: 8px;
+}
+
+@media (max-width: 650px) {
+    .os-tecnica-page {
+        padding: 22px 14px;
+    }
+
+    .os-tecnica-top {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .os-tecnica-grupo {
+        padding: 14px;
+    }
+
+    .os-tecnica-diagnostico {
+        padding: 12px;
+    }
+}

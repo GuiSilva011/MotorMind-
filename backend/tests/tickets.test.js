@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { TicketError, inteiro, texto, chave, validarItens, validarAcesso, validarChat, validarTransicao, PRAZO_CHAT_MS } from '../src/services/ticketRegras.js';
+import { TicketError, inteiro, texto, chave, validarItens, validarAcesso, validarChat, validarTransicao, PRAZO_CHAT_MS, OS_ENCERRADA } from '../src/services/ticketRegras.js';
 import { arquivosTicket, caminhoAnexo, limparChatExpirado, tipoArquivo } from '../src/services/ticketArquivos.js';
 import { criarTicketService, notificarTicket } from '../src/services/ticketService.js';
 
@@ -43,6 +43,8 @@ test('chat aguarda responsável, encerra a escrita e preserva a leitura históri
   assert.doesNotThrow(() => validarChat({ ...ticket, status: 'ENTREGUE' }, tecnico));
   assert.throws(() => validarChat({ ...ticket, ordemServico: { tecnicoId: 3, status: 'ABERTA' } }, tecnico, true), erro(403));
   assert.throws(() => validarChat({ ...ticket, ordemServico: { tecnicoId: 1, status: 'FECHADA' } }, operador, true), erro(409));
+  assert.throws(() => validarChat({ ...ticket, ordemServico: { tecnicoId: 1, status: 'FINALIZADA' } }, operador, true), erro(409));
+  assert.ok(OS_ENCERRADA.includes('FINALIZADA'));
 });
 test('status não pode pular disponibilidade, reabrir concluído nem ser alterado por outro operador', () => {
   assert.doesNotThrow(() => validarTransicao(ticket, operador, 'DISPONIVEL'));

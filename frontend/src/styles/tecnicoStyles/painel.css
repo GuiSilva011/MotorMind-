@@ -278,6 +278,7 @@
 .painel-tecnico-veiculo-actions {
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -376,3 +377,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+.painel-tecnico-btn.painel-tecnico-btn-orange { display: flex; align-items: center; justify-content: center; background: #ef932a; border: 0; color: #07142b; flex-direction: column; gap: 5px; min-height: 58px; height: auto; padding: 9px 12px; }
+.painel-tecnico-btn-orange small { display: block; font-size: 11px; }
+.painel-tecnico-btn-orange:hover { background: #f6aa50; }
+.painel-tecnico-erro { color: #981a2b; background: #fff0f0; padding: 14px; border-radius: 8px; }

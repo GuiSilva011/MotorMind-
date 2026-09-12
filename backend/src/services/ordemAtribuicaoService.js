@@ -12,5 +12,5 @@ export async function sincronizarAtribuicao(tx, ordem, tecnicoId, status, usuari
   await tx.ordemServicoAtribuicao.updateMany({ where: { oficinaId: usuario.oficinaId, ordemServicoId: ordem.id, ativa: true, ...(manter ? { id: { not: manter.id } } : {}) }, data: { ativa: false, encerradoEm: new Date() } });
   if (encerrada || !tecnicoId || manter) return;
   await tx.ordemServicoAtribuicao.create({ data: { oficinaId: usuario.oficinaId, ordemServicoId: ordem.id, tecnicoId, atribuidoPorId: usuario.id } });
-  await notificarTicket(tx, { oficinaId: usuario.oficinaId, tipo: 'ORDEM_ATRIBUIDA', titulo: `OS ${ordem.codigo} atribuída`, mensagem: 'Uma ordem de serviço foi atribuída a você. Acesse suas OS na tela de solicitações.', usuarios: [tecnicoId], ordemServicoId: ordem.id });
+  await notificarTicket(tx, { oficinaId: usuario.oficinaId, tipo: 'ORDEM_ATRIBUIDA', titulo: `OS ${ordem.codigo} atribuída`, mensagem: 'Uma ordem de serviço foi atribuída a você. Acesse o painel técnico para visualizar os itens salvos.', usuarios: [tecnicoId], ordemServicoId: ordem.id });
 }

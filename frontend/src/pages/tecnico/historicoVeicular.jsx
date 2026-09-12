@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
+import ConteudoOrdemTecnica from '../../components/ConteudoOrdemTecnica';
+import useConsultaTickets from '../../hooks/useConsultaTickets';
 import api from '../../services/api';
 import '../../styles/tecnicoStyles/historicoVeicular.css';
 
@@ -18,20 +20,15 @@ function HistoricoVeicular() {
 
   const veiculoSelecionado = location.state?.veiculo || null;
 
-  const [busca, setBusca] = useState('');
-  const [historico, setHistorico] = useState([]);
+  const [versao, setVersao] = useState(0);
+  const consulta = useConsultaTickets(veiculoSelecionado?.id ? `/tecnico/veiculos/${veiculoSelecionado.id}/historico` : null, 15000, versao);
+  const historico = useMemo(() => consulta.dados || [], [consulta.dados]);
+  const busca = veiculoSelecionado?.placa || '';
   const [ordemDetalhada, setOrdemDetalhada] = useState(null);
 
-  const [carregando, setCarregando] = useState(false);
+  const carregando = consulta.carregando;
   const [carregandoDetalhes, setCarregandoDetalhes] = useState(false);
 
-  // Se um veiculo vier da navegação, dispara a primeira busca automaticamente.
-  useEffect(() => {
-    if (veiculoSelecionado?.placa) {
-      setBusca(veiculoSelecionado.placa);
-      buscarHistoricoPorTermo(veiculoSelecionado.placa);
-    }
-  }, []);
 
  /**
  * Totais consolidados de diagnósticos, serviços e peças encontrados no histórico.
@@ -59,46 +56,9 @@ function HistoricoVeicular() {
     );
   }, [historico]);
 
-/**
- * Busca ordens de serviço com base em uma placa, cliente ou veículo.
- *
- * @async
- * @param {string} termoBusca - Termo utilizado na pesquisa.
- * @returns {Promise<void>}
- */
-  async function buscarHistoricoPorTermo(termoBusca) {
-    try {
-      if (!termoBusca.trim()) {
-        alert('Digite uma placa, cliente ou veículo para buscar.');
-        return;
-      }
-
-      setCarregando(true);
-      setOrdemDetalhada(null);
-
-      const response = await api.get('/ordens-servico/buscar', {
-        params: {
-          termo: termoBusca.trim(),
-        },
-      });
-
-      setHistorico(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('Erro ao buscar histórico veicular:', error);
-      setHistorico([]);
-      alert('Erro ao buscar histórico veicular.');
-    } finally {
-      setCarregando(false);
-    }
-  }
-
-/**
- * Executa a busca do histórico usando o valor digitado no campo de pesquisa.
- *
- * @returns {void}
- */
   function buscarHistorico() {
-    buscarHistoricoPorTermo(busca);
+    setOrdemDetalhada(null);
+    setVersao(v => v + 1);
   }
 
 /**
@@ -112,7 +72,7 @@ function HistoricoVeicular() {
     try {
       setCarregandoDetalhes(true);
 
-      const response = await api.get(`/ordens-servico/${ordemId}`);
+      const response = await api.get(`/tecnico/veiculos/${veiculoSelecionado.id}/historico/${ordemId}`);
 
       setOrdemDetalhada(response.data);
     } catch (error) {
@@ -189,10 +149,10 @@ function HistoricoVeicular() {
             return accServico + Number(servico.pecas?.length || 0);
           }, 0) || 0;
 
-        return accDiagnostico + pecasServicos;
+        return accDiagnostico + pecasServicos + Number(diagnostico.pecas?.length || 0);
       }, 0) || 0;
 
-    const pecasSoltas = ordem?.pecas?.length || 0;
+    const pecasSoltas = (ordem?.pecas?.length || 0) + (ordem?.servicos?.reduce((total, servico) => total + (servico.pecas?.length || 0), 0) || 0);
 
     return pecasDiagnostico + pecasSoltas;
   }
@@ -366,153 +326,7 @@ function HistoricoVeicular() {
             </div>
           )}
 
-          <div className="historico-modal-grid">
-            <section className="historico-modal-section">
-              <div className="historico-section-title">
-                <h3>Diagnósticos</h3>
-                <span>{ordemDetalhada.diagnosticos?.length || 0} registro(s)</span>
-              </div>
-
-              {(!ordemDetalhada.diagnosticos ||
-                ordemDetalhada.diagnosticos.length === 0) && (
-                <div className="historico-empty-box">
-                  Nenhum diagnóstico registrado.
-                </div>
-              )}
-
-              {ordemDetalhada.diagnosticos?.map((diagnostico, index) => (
-                <div className="historico-detail-card" key={diagnostico.id}>
-                  <div className="historico-detail-title">
-                    <strong>Diagnóstico {index + 1}</strong>
-                  </div>
-
-                  <p>
-                    {diagnostico.nomeDiagnostico ||
-                      diagnostico.descricao ||
-                      'Diagnóstico sem descrição'}
-                  </p>
-
-                  {diagnostico.observacoes && (
-                    <small>{diagnostico.observacoes}</small>
-                  )}
-
-                  {diagnostico.servicos?.length > 0 && (
-                    <div className="historico-nested">
-                      <strong>Serviços vinculados</strong>
-
-                      {diagnostico.servicos.map((servico) => (
-                        <div className="historico-nested-item" key={servico.id}>
-                          <span>
-                            {servico.nomeServico ||
-                              servico.descricao ||
-                              'Serviço sem descrição'}
-                          </span>
-
-                          <small>
-                            {servico.tipo || '-'} | Responsável:{' '}
-                            {servico.responsavel || '-'}
-                          </small>
-
-                          {servico.pecas?.length > 0 && (
-                            <div className="historico-pecas-list">
-                              {servico.pecas.map((peca) => (
-                                <div key={peca.id}>
-                                  <b>{peca.nomePeca || peca.descricao}</b>
-                                  <span>
-                                    Qtd: {peca.quantidade || 1}
-                                    {peca.fornecedorNome
-                                      ? ` | Fornecedor: ${peca.fornecedorNome}`
-                                      : ''}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </section>
-
-            <section className="historico-modal-section">
-              <div className="historico-section-title">
-                <h3>Resumo técnico</h3>
-                <span>Itens encontrados na OS</span>
-              </div>
-
-              <div className="historico-stats">
-                <div>
-                  <span>Diagnósticos</span>
-                  <strong>{ordemDetalhada.diagnosticos?.length || 0}</strong>
-                </div>
-
-                <div>
-                  <span>Serviços</span>
-                  <strong>{contarServicos(ordemDetalhada)}</strong>
-                </div>
-
-                <div>
-                  <span>Peças</span>
-                  <strong>{contarPecas(ordemDetalhada)}</strong>
-                </div>
-              </div>
-
-              <div className="historico-section-title historico-margin-top">
-                <h3>Serviços</h3>
-                <span>{ordemDetalhada.servicos?.length || 0} registro(s)</span>
-              </div>
-
-              {(!ordemDetalhada.servicos ||
-                ordemDetalhada.servicos.length === 0) && (
-                <div className="historico-empty-box">
-                  Nenhum serviço sem diagnóstico registrado.
-                </div>
-              )}
-
-              {ordemDetalhada.servicos?.map((servico) => (
-                <div className="historico-detail-card" key={servico.id}>
-                  <div className="historico-detail-title">
-                    <strong>
-                      {servico.nomeServico ||
-                        servico.descricao ||
-                        'Serviço sem descrição'}
-                    </strong>
-                  </div>
-
-                  <p>
-                    Tipo: {servico.tipo || '-'} | Responsável:{' '}
-                    {servico.responsavel || '-'}
-                  </p>
-                </div>
-              ))}
-
-              <div className="historico-section-title historico-margin-top">
-                <h3>Peças</h3>
-                <span>{ordemDetalhada.pecas?.length || 0} registro(s)</span>
-              </div>
-
-              {(!ordemDetalhada.pecas || ordemDetalhada.pecas.length === 0) && (
-                <div className="historico-empty-box">
-                  Nenhuma peça avulsa registrada.
-                </div>
-              )}
-
-              {ordemDetalhada.pecas?.map((peca) => (
-                <div className="historico-detail-card" key={peca.id}>
-                  <div className="historico-detail-title">
-                    <strong>{peca.nomePeca || peca.descricao || '-'}</strong>
-                  </div>
-
-                  <p>
-                    Fornecedor: {peca.fornecedorNome || '-'} | Qtd:{' '}
-                    {peca.quantidade || 1}
-                  </p>
-                </div>
-              ))}
-            </section>
-          </div>
+          <ConteudoOrdemTecnica ordem={ordemDetalhada} />
         </div>
       </div>
     );
@@ -567,27 +381,28 @@ function HistoricoVeicular() {
         <section className="historico-veicular-card">
           <div className="historico-veicular-search">
             <div>
-              <label>Pesquisar histórico</label>
+              <label>Veículo vinculado</label>
 
               <input
                 value={busca}
-                onChange={(event) => setBusca(event.target.value)}
+                readOnly
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
                     buscarHistorico();
                   }
                 }}
-                placeholder="Digite placa, cliente ou modelo do veículo"
+                placeholder="Selecione um veículo pelo painel técnico"
               />
             </div>
 
-            <button type="button" onClick={buscarHistorico}>
-              Buscar
+            <button type="button" onClick={buscarHistorico} disabled={!veiculoSelecionado?.id || carregando}>
+              Atualizar histórico
             </button>
           </div>
         </section>
 
         <section className="historico-resumo-grid historico-resumo-grid-three">
+          {consulta.erro && <p className="os-tecnica-erro" role="alert">{consulta.erro}</p>}
           <div>
             <span>Diagnósticos</span>
             <strong>{totaisHistorico.totalDiagnosticos}</strong>
@@ -623,7 +438,7 @@ function HistoricoVeicular() {
           </div>
         </section>
 
-        {renderDetalhesOrdem()}
+        {!consulta.erro && renderDetalhesOrdem()}
       </main>
     </Layout>
   );

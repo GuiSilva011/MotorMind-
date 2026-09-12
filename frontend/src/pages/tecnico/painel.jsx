@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
-import api from '../../services/api';
+import useConsultaTickets from '../../hooks/useConsultaTickets';
 import '../../styles/tecnicoStyles/painel.css';
 
 /**
- * Painel responsável por listar e pesquisar veículos,
+ * Painel responsável por listar e pesquisar veículos de OS atribuídas ao técnico,
  * permitindo acessar novas checklists, checklists anteriores
  * e o histórico veicular.
  *
@@ -16,36 +16,13 @@ import '../../styles/tecnicoStyles/painel.css';
 function Painel() {
   const navigate = useNavigate();
 
-  const [veiculos, setVeiculos] = useState([]);
+  const [versao, setVersao] = useState(0);
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState('todos');
-  const [carregando, setCarregando] = useState(false);
-
-  // Carrega os veiculos assim que o painel tecnico abre.
-  useEffect(() => {
-    carregarVeiculos();
-  }, []);
-
-/**
- * Busca na API todos os veículos cadastrados.
- *
- * @async
- * @returns {Promise<void>}
- */
-  async function carregarVeiculos() {
-    try {
-      setCarregando(true);
-
-      const response = await api.get('/veiculos');
-
-      setVeiculos(response.data || []);
-    } catch (error) {
-      console.error('Erro ao carregar veículos:', error);
-      setVeiculos([]);
-    } finally {
-      setCarregando(false);
-    }
-  }
+  const consulta = useConsultaTickets('/tecnico/veiculos', 15000, versao);
+  const veiculos = useMemo(() => consulta.dados || [], [consulta.dados]);
+  const carregando = consulta.carregando;
+  function carregarVeiculos() { setVersao(v => v + 1); }
 
 /**
  * Monta o ano do veículo combinando o ano de fabricação
@@ -122,7 +99,7 @@ function Painel() {
 
 /**
  * Lista de veículos filtrada pelo termo de pesquisa
- * e pelo vínculo com cliente.
+ * e pelo status das OS atribuídas.
  *
  * @type {Array<Object>}
  */
@@ -142,19 +119,12 @@ function Painel() {
         modelo.includes(termo) ||
         fabricante.includes(termo) ||
         cliente.includes(termo) ||
-        chassi.includes(termo);
+        chassi.includes(termo) ||
+        veiculo.ordensServico.some(ordem => ordem.codigo.toLowerCase().includes(termo));
 
       if (filtro === 'todos') return bateBusca;
 
-      if (filtro === 'com-cliente') {
-        return bateBusca && Boolean(veiculo.cliente?.nome);
-      }
-
-      if (filtro === 'sem-cliente') {
-        return bateBusca && !veiculo.cliente?.nome;
-      }
-
-      return bateBusca;
+      return bateBusca && veiculo.ordensServico.some(ordem => ordem.status === filtro);
     });
   }, [veiculos, busca, filtro]);
 
@@ -165,8 +135,8 @@ function Painel() {
           <div>
             <h1>Painel Técnico</h1>
             <p>
-              Consulte os veículos cadastrados e acesse checklist ou histórico
-              veicular.
+              Veículos com ordens de serviço salvas e atribuídas a você.
+              Acesse a checklist, o histórico e os itens da OS.
             </p>
 
             {carregando && <small>Carregando veículos...</small>}
@@ -181,10 +151,10 @@ function Painel() {
         <section className="painel-tecnico-card">
           <div className="painel-tecnico-card-header">
             <div>
-              <h2>Veículos cadastrados</h2>
+              <h2>Meus veículos em atendimento</h2>
               <span>
                 Escolha um veículo para abrir checklist, consultar checklists
-                antigas ou ver histórico.
+                antigas, ver histórico ou exibir a ordem de serviço.
               </span>
             </div>
           </div>
@@ -196,7 +166,7 @@ function Painel() {
               <input
                 value={busca}
                 onChange={(event) => setBusca(event.target.value)}
-                placeholder="Buscar por placa, cliente, marca, modelo ou chassi"
+                placeholder="Buscar por placa, cliente, veículo ou código da OS"
               />
             </div>
 
@@ -207,9 +177,10 @@ function Painel() {
                 value={filtro}
                 onChange={(event) => setFiltro(event.target.value)}
               >
-                <option value="todos">Todos os veículos</option>
-                <option value="com-cliente">Com cliente vinculado</option>
-                <option value="sem-cliente">Sem cliente vinculado</option>
+                <option value="todos">Todas as minhas OS ativas</option>
+                <option value="ABERTA">Aberta</option>
+                <option value="EM_ANDAMENTO">Em andamento</option>
+                <option value="AGUARDANDO_PECA">Aguardando peça</option>
               </select>
             </div>
 
@@ -224,9 +195,10 @@ function Painel() {
           </div>
 
           <div className="painel-tecnico-list">
-            {veiculosFiltrados.length === 0 && (
+            {consulta.erro && <p className="painel-tecnico-erro" role="alert">{consulta.erro}</p>}
+            {!carregando && !consulta.erro && veiculosFiltrados.length === 0 && (
               <div className="painel-tecnico-empty">
-                Nenhum veículo encontrado.
+                Nenhum veículo vinculado neste filtro. O operador precisa selecionar seu nome e salvar a OS para vinculá-la a você.
               </div>
             )}
 
@@ -303,8 +275,15 @@ function Painel() {
                     className="painel-tecnico-btn painel-tecnico-btn-dark"
                     onClick={() => abrirHistorico(veiculo)}
                   >
-                    Histórico
+                    Histórico veicular
                   </button>
+                  {veiculo.ordensServico.filter(ordem => filtro === 'todos' || ordem.status === filtro).map(ordem => (
+                    <button type="button" key={ordem.id} className="painel-tecnico-btn painel-tecnico-btn-orange"
+                      onClick={() => navigate(`/tecnico/ordens-servico/${ordem.id}`)}>
+                      Exibir ordem de serviço
+                      <small>{ordem.codigo} · {ordem.status.replaceAll('_', ' ')}</small>
+                    </button>
+                  ))}
                 </div>
               </article>
             ))}

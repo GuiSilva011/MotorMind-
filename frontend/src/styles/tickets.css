@@ -52,6 +52,16 @@
 .ticket-chat form > button { margin-top: 12px; }
 .ticket-dialog { width: min(720px, calc(100vw - 32px)); box-sizing: border-box; max-height: 90vh; border: 0; border-radius: 14px; padding: 26px; color: #102440; }
 .ticket-dialog::backdrop { background: #08162ca6; }
+.ticket-imagem { width: 280px; max-width: 100%; margin-top: 10px; }
+.ticket-imagem .ticket-imagem-previa { display: block; width: 100%; padding: 0; overflow: hidden; cursor: zoom-in; }
+.ticket-imagem-previa img { display: block; width: 100%; height: 200px; object-fit: contain; background: #eaf0f7; }
+.ticket-imagem-previa span { display: block; padding: 8px; font-size: 12px; color: #254971; }
+.ticket-imagem-carregando, .ticket-imagem-falha { box-sizing: border-box; min-height: 234px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; border: 1px solid #cad5e4; border-radius: 8px; color: #496079; font-size: 13px; text-align: center; }
+.ticket-imagem-dialog { width: min(1000px, calc(100vw - 32px)); padding: 18px; }
+.ticket-imagem-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.ticket-imagem-cabecalho strong { min-width: 0; overflow-wrap: anywhere; }
+.ticket-imagem-cabecalho button { flex-shrink: 0; }
+.ticket-imagem-dialog > img { display: block; width: 100%; max-height: 70vh; object-fit: contain; }
 .ticket-dialog fieldset { border: 0; padding: 0; margin: 0; }
 .ticket-dialog legend { font-weight: 700; }
 .ticket-item-form { display: grid; grid-template-columns: minmax(0, 1fr) 100px auto; gap: 10px; align-items: center; }

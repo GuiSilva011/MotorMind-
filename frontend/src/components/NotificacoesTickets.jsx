@@ -19,7 +19,8 @@ export default function NotificacoesTickets() {
     try {
       await api.patch(`/tickets/notificacoes/${item.id}/lida`);
       setVersao(v => v + 1); setAberto(false);
-      navigate(item.notificacao.requisicaoPecaId ? `/tickets/${item.notificacao.requisicaoPecaId}` : '/tickets');
+      navigate(item.notificacao.requisicaoPecaId ? `/tickets/${item.notificacao.requisicaoPecaId}`
+        : usuario.Role === 'TECNICO' && item.notificacao.ordemServicoId ? `/tecnico/ordens-servico/${item.notificacao.ordemServicoId}` : '/tickets');
     } catch { toast.error('Não foi possível marcar a notificação como lida.'); }
     finally { setMarcando(false); }
   }

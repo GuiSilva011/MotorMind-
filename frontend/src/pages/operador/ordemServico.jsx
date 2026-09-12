@@ -3510,6 +3510,7 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                 <option value="">Sem atribuição</option>
                 {(catalogos.tecnicosOS || []).map(tecnico => <option key={tecnico.id} value={tecnico.id}>{tecnico.Nome}</option>)}
               </select>
+              <small>O vínculo com o mecânico só é confirmado ao salvar a OS.</small>
               {ordem.id && <button type="button" className="os-small-btn os-blue" onClick={() => navigate(`/tickets?ordem=${ordem.id}`)}>Tickets desta OS</button>}
             </div>
           </div>
