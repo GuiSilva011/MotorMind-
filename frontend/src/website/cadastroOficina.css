@@ -1,0 +1,344 @@
+.cadastro-oficina-page .cadastro-oficina-main {
+  padding-top: 30px;
+  padding-bottom: 70px;
+}
+
+.cadastro-oficina-page .cadastro-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .85rem;
+  color: #516078;
+  margin-bottom: 32px;
+}
+
+.cadastro-oficina-page .cadastro-titulo {
+  max-width: 760px;
+  margin-bottom: 38px;
+}
+
+.cadastro-oficina-page .cadastro-titulo h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.cadastro-oficina-page .cadastro-titulo>p:last-child {
+  color: #516078;
+}
+
+.cadastro-oficina-page .cadastro-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.cadastro-oficina-page .cadastro-form {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 32px;
+  background: white;
+  border: 1px solid #dce2eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px #0e183005;
+}
+
+.cadastro-oficina-page .cadastro-obrigatorios {
+  font-size: .78rem;
+  color: #647088;
+  margin-bottom: 30px;
+}
+
+.cadastro-oficina-page .cadastro-form fieldset {
+  min-width: 0;
+  padding: 0 0 30px;
+  margin: 0 0 30px;
+  border: 0;
+  border-bottom: 1px solid #e5eaf0;
+}
+
+.cadastro-oficina-page .cadastro-form legend {
+  font-weight: 750;
+  font-size: 1.15rem;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.cadastro-oficina-page .cadastro-form legend span {
+  color: #1f6cb3;
+  font-size: .85rem;
+  margin-right: 10px;
+}
+
+.cadastro-oficina-page .cadastro-grupo-descricao {
+  font-size: .82rem;
+  color: #647088;
+  margin-bottom: 24px;
+}
+
+.cadastro-oficina-page .cadastro-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.cadastro-oficina-page .cadastro-campo {
+  min-width: 0;
+}
+
+.cadastro-oficina-page .cadastro-campo.largo {
+  grid-column: 1 / -1;
+}
+
+.cadastro-oficina-page .cadastro-campo label {
+  display: block;
+  margin-bottom: 7px;
+  color: #273650;
+  font-size: .83rem;
+  font-weight: 650;
+}
+
+.cadastro-oficina-page .cadastro-campo :is(input, select) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #c6cfdd;
+  background: white;
+  color: #0e1830;
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: .9rem;
+}
+
+.cadastro-oficina-page .cadastro-campo input::placeholder {
+  color: #7b879a;
+}
+
+.cadastro-oficina-page .cadastro-campo :is(input, select):focus {
+  border-color: #2f8fe0;
+  outline: 2px solid #2f8fe025;
+  outline-offset: 1px;
+}
+
+.cadastro-oficina-page .cadastro-campo [aria-invalid="true"] {
+  border-color: #bf3340;
+}
+
+.cadastro-oficina-page .cadastro-campo-erro {
+  display: block;
+  color: #a32535;
+  font-size: .78rem;
+  margin-top: 7px;
+}
+
+.cadastro-oficina-page .cadastro-erro-geral {
+  background: #fff2f3;
+  border: 1px solid #e8b9bd;
+  border-radius: 6px;
+  color: #932331;
+  padding: 14px;
+  font-size: .85rem;
+  margin-bottom: 26px;
+}
+
+.cadastro-oficina-page .cadastro-senha-ajuda {
+  margin: 14px 0 10px;
+  font-size: .78rem;
+  color: #647088;
+}
+
+.cadastro-oficina-page .cadastro-mostrar-senha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  font-size: .83rem;
+  cursor: pointer;
+}
+
+.cadastro-oficina-page .cadastro-mostrar-senha input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #1f6cb3;
+}
+
+.cadastro-oficina-page .cadastro-envio p {
+  font-size: .82rem;
+  color: #516078;
+}
+
+.cadastro-oficina-page .cadastro-envio .landing-btn {
+  padding-block: 16px;
+}
+
+.cadastro-oficina-page .cadastro-resumo {
+  position: sticky;
+  top: 112px;
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  padding: 32px;
+  border-radius: 12px;
+}
+
+.cadastro-oficina-page .cadastro-resumo h2 {
+  font-size: 1.85rem;
+  margin-bottom: 28px;
+}
+
+.cadastro-oficina-page .cadastro-resumo .landing-license-badge {
+  color: #8bcafd;
+  background: #2f8fe020;
+}
+
+.cadastro-oficina-page .cadastro-resumo li {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 18px;
+  font-size: .86rem;
+  color: var(--lp-muted);
+}
+
+.cadastro-oficina-page .cadastro-resumo li svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+  color: var(--lp-orange);
+}
+
+.cadastro-oficina-page .cadastro-resumo-nota {
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid #ffffff20;
+  padding-top: 24px;
+  margin-top: 28px;
+  font-size: .84rem;
+}
+
+.cadastro-oficina-page .cadastro-resumo-nota>svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+  color: #70bafa;
+}
+
+.cadastro-oficina-page .cadastro-resumo-nota p {
+  color: var(--lp-muted);
+  margin-top: 8px;
+}
+
+.cadastro-oficina-page .cadastro-resumo>a {
+  display: inline-block;
+  color: #8bcafd;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-size: .8rem;
+  margin-top: 16px;
+}
+
+.cadastro-oficina-page .cadastro-rodape {
+  text-align: center;
+  border-top: 1px solid #dce2eb;
+  padding: 25px;
+  color: #647088;
+  font-size: .78rem;
+}
+
+.cadastro-oficina-page .cadastro-sucesso {
+  max-width: 720px;
+  margin: 10px auto 40px;
+  padding: 45px;
+  border: 1px solid #dce2eb;
+  border-radius: 12px;
+  background: white;
+  text-align: center;
+}
+
+.cadastro-oficina-page .cadastro-sucesso h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+}
+
+.cadastro-oficina-page .cadastro-sucesso-icone {
+  width: 48px;
+  height: 48px;
+  color: #1d7b62;
+  margin-bottom: 24px;
+}
+
+.cadastro-oficina-page .cadastro-aviso {
+  margin: 28px 0;
+  padding: 22px;
+  text-align: left;
+  border-left: 3px solid #f5730c;
+  background: #fff7ed;
+  font-size: .9rem;
+}
+
+.cadastro-oficina-page .cadastro-aviso p {
+  margin: 10px 0 0;
+}
+
+@media (max-width: 850px) {
+  .cadastro-oficina-page .cadastro-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cadastro-oficina-page .cadastro-resumo {
+    position: static;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .cadastro-oficina-page .cadastro-form,
+  .cadastro-oficina-page .cadastro-resumo,
+  .cadastro-oficina-page .cadastro-sucesso {
+    padding: 24px 20px;
+  }
+
+  .cadastro-oficina-page .cadastro-campos {
+    grid-template-columns: 1fr;
+  }
+
+  .cadastro-oficina-page .landing-header .landing-btn {
+    padding: 9px 10px;
+    font-size: .78rem;
+  }
+}
+
+.cadastro-oficina-page .cadastro-confirmacao-link {
+  margin-top: 24px;
+  font-size: .85rem;
+}
+
+.cadastro-oficina-page .cadastro-confirmacao-link :is(a, button) {
+  color: #2365a3;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cadastro-oficina-page .cadastro-confirmacao-link button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.cadastro-oficina-page .confirmacao-card {
+  margin-top: 40px;
+}
+
+.cadastro-oficina-page .confirmacao-form {
+  text-align: left;
+  max-width: 430px;
+  margin: 28px auto 0;
+}
+
+.cadastro-oficina-page .confirmacao-form button {
+  margin-top: 24px;
+}
+
+.cadastro-oficina-page .cadastro-aviso {
+  overflow-wrap: anywhere;
+}

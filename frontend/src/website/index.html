@@ -1,436 +1,461 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MotorMind — Sistema de Gestão para Oficinas Mecânicas</title>
-<meta name="description" content="MotorMind: o sistema completo para sua oficina controlar ordens de serviço, orçamentos, estoque e clientes em um só lugar. Teste grátis por 14 dias.">
-<link rel="icon" href="assets/logo.png" type="image/png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MotorMind — Sistema de Gestão para Oficinas Mecânicas</title>
+  <meta name="description"
+    content="MotorMind: o sistema completo para sua oficina controlar ordens de serviço, orçamentos, estoque e clientes em um só lugar. Teste grátis por 14 dias.">
+  <link rel="icon" href="assets/logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="flag-strip" aria-hidden="true"></div>
+  <div class="flag-strip" aria-hidden="true"></div>
 
-<!-- HEADER -->
-<header class="site-header" id="topo">
-  <div class="container header-inner">
-    <a href="#topo" class="brand">
-      <img src="assets/logo.png" alt="MotorMind" class="brand-logo">
-    </a>
+  <!-- HEADER -->
+  <header class="site-header" id="topo">
+    <div class="container header-inner">
+      <a href="#topo" class="brand">
+        <img src="assets/logo.png" alt="MotorMind" class="brand-logo">
+      </a>
 
-    <nav class="nav" id="mainNav">
-      <a href="#funcionalidades">Funcionalidades</a>
-      <a href="#planos">Planos</a>
-      <a href="#depoimentos">Depoimentos</a>
-      <a href="#faq">Dúvidas</a>
-    </nav>
+      <nav class="nav" id="mainNav">
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#planos">Planos</a>
+        <a href="#depoimentos">Depoimentos</a>
+        <a href="#faq">Dúvidas</a>
+      </nav>
 
-    <div class="header-actions">
-      <a href="#planos" class="btn btn-ghost">Ver planos</a>
-      <a href="#teste-gratis" class="btn btn-primary">Teste grátis</a>
-    </div>
-
-    <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</header>
-
-<!-- HERO -->
-<section class="hero" id="hero">
-  <div class="hero-bg" aria-hidden="true"></div>
-  <div class="container hero-inner">
-    <div class="hero-copy">
-      <p class="eyebrow"><span class="eyebrow-dot"></span> Sistema para oficinas mecânicas</p>
-      <h1>Pare de gerenciar sua oficina <span class="text-orange">no caderno.</span></h1>
-      <p class="hero-sub">O MotorMind organiza ordens de serviço, orçamentos, estoque de peças e histórico de clientes em um só sistema — simples de usar, rápido de implantar, feito para o dia a dia real de uma oficina.</p>
-      <div class="hero-cta">
-        <a href="#teste-gratis" class="btn btn-primary btn-lg">Testar grátis por 14 dias</a>
-        <a href="#funcionalidades" class="btn btn-outline btn-lg">Ver como funciona</a>
+      <div class="header-actions">
+        <a href="#planos" class="btn btn-ghost">Ver planos</a>
+        <a href="#teste-gratis" class="btn btn-primary">Teste grátis</a>
       </div>
-      <div class="hero-trust">
-        <div><strong>+340</strong><span>oficinas usando</span></div>
-        <div class="divider"></div>
-        <div><strong>-38%</strong><span>tempo em burocracia</span></div>
-        <div class="divider"></div>
-        <div><strong>4.9/5</strong><span>avaliação dos clientes</span></div>
-      </div>
-    </div>
 
-    <div class="hero-visual" aria-hidden="true">
-      <div class="dashboard-mock">
-        <div class="dashboard-topbar">
-          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-          <span class="dashboard-title">Painel MotorMind</span>
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="container hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Sistema para oficinas mecânicas</p>
+        <h1>Pare de gerenciar sua oficina <span class="text-orange">no caderno.</span></h1>
+        <p class="hero-sub">O MotorMind organiza ordens de serviço, orçamentos, estoque de peças e histórico de clientes
+          em um só sistema — simples de usar, rápido de implantar, feito para o dia a dia real de uma oficina.</p>
+        <div class="hero-cta">
+          <a href="#teste-gratis" class="btn btn-primary btn-lg">Testar grátis por 14 dias</a>
+          <a href="#funcionalidades" class="btn btn-outline btn-lg">Ver como funciona</a>
         </div>
-        <div class="dashboard-body">
-          <div class="dashboard-row">
-            <div class="dashboard-card">
-              <span class="dashboard-card-label">OS abertas</span>
-              <span class="dashboard-card-value">14</span>
+        <div class="hero-trust">
+          <div><strong>+340</strong><span>oficinas usando</span></div>
+          <div class="divider"></div>
+          <div><strong>-38%</strong><span>tempo em burocracia</span></div>
+          <div class="divider"></div>
+          <div><strong>4.9/5</strong><span>avaliação dos clientes</span></div>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="dashboard-mock">
+          <div class="dashboard-topbar">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="dashboard-title">Painel MotorMind</span>
+          </div>
+          <div class="dashboard-body">
+            <div class="dashboard-row">
+              <div class="dashboard-card">
+                <span class="dashboard-card-label">OS abertas</span>
+                <span class="dashboard-card-value">14</span>
+              </div>
+              <div class="dashboard-card">
+                <span class="dashboard-card-label">Faturamento (mês)</span>
+                <span class="dashboard-card-value">R$ 38.2k</span>
+              </div>
             </div>
-            <div class="dashboard-card">
-              <span class="dashboard-card-label">Faturamento (mês)</span>
-              <span class="dashboard-card-value">R$ 38.2k</span>
+            <div class="dashboard-list">
+              <div class="dashboard-list-item">
+                <span class="status-dot status-progress"></span>
+                <span>Onix 2020 — Troca de correia</span>
+                <span class="dashboard-tag">Em andamento</span>
+              </div>
+              <div class="dashboard-list-item">
+                <span class="status-dot status-done"></span>
+                <span>HB20 2019 — Revisão completa</span>
+                <span class="dashboard-tag tag-done">Concluída</span>
+              </div>
+              <div class="dashboard-list-item">
+                <span class="status-dot status-wait"></span>
+                <span>Corolla 2021 — Diagnóstico</span>
+                <span class="dashboard-tag tag-wait">Aguardando peça</span>
+              </div>
             </div>
           </div>
-          <div class="dashboard-list">
-            <div class="dashboard-list-item">
-              <span class="status-dot status-progress"></span>
-              <span>Onix 2020 — Troca de correia</span>
-              <span class="dashboard-tag">Em andamento</span>
-            </div>
-            <div class="dashboard-list-item">
-              <span class="status-dot status-done"></span>
-              <span>HB20 2019 — Revisão completa</span>
-              <span class="dashboard-tag tag-done">Concluída</span>
-            </div>
-            <div class="dashboard-list-item">
-              <span class="status-dot status-wait"></span>
-              <span>Corolla 2021 — Diagnóstico</span>
-              <span class="dashboard-tag tag-wait">Aguardando peça</span>
-            </div>
+        </div>
+        <div class="flag-chip">⚡ Implantação em 1 dia</div>
+      </div>
+    </div>
+    <div class="hero-flag-bottom" aria-hidden="true"></div>
+  </section>
+
+  <!-- LOGOS DE CONFIANÇA -->
+  <section class="marquee-wrap" aria-label="Oficinas parceiras">
+    <div class="marquee-track">
+      <span>OFICINA SANTOS</span><span>AUTO CENTER RJ</span><span>GARAGEM 24H</span><span>MECÂNICA PRIME</span><span>TOP
+        CAR SERVICE</span><span>OFICINA BRASIL</span>
+      <span>OFICINA SANTOS</span><span>AUTO CENTER RJ</span><span>GARAGEM 24H</span><span>MECÂNICA PRIME</span><span>TOP
+        CAR SERVICE</span><span>OFICINA BRASIL</span>
+    </div>
+  </section>
+
+  <!-- PROBLEMA / SOLUÇÃO -->
+  <section class="why" id="problema">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow center"><span class="eyebrow-dot"></span> O problema que resolvemos</p>
+        <h2>Sua oficina fatura mais do que aparece na planilha.</h2>
+      </div>
+
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon">📋</div>
+          <h3>Ordem de serviço perdida</h3>
+          <p>Papel se perde, WhatsApp lota, caderno some. Sem controle, dá pra esquecer serviço, peça e prazo.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">💸</div>
+          <h3>Orçamento sem histórico</h3>
+          <p>Cliente pergunta o que foi feito há 6 meses e ninguém lembra. Sem histórico, sem argumento de venda.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">📦</div>
+          <h3>Estoque no olhômetro</h3>
+          <p>Peça que acabou sem avisar atrasa serviço e trava o pátio. Falta de controle custa tempo e cliente.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">📱</div>
+          <h3>Cliente sem retorno</h3>
+          <p>Sem aviso automático, o cliente liga toda hora perguntando do carro — ou pior, não volta mais.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUNCIONALIDADES -->
+  <section class="services" id="funcionalidades">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow center"><span class="eyebrow-dot"></span> O que o sistema faz</p>
+        <h2>Tudo que sua oficina precisa, em um só lugar</h2>
+        <p class="section-sub">Sem planilha, sem papel perdido, sem depender de memória. O MotorMind organiza o fluxo
+          inteiro da oficina.</p>
+      </div>
+
+      <div class="services-grid">
+        <article class="service-card">
+          <div class="service-num">01</div>
+          <h3>Ordens de serviço digitais</h3>
+          <p>Abra, edite e acompanhe cada OS em tempo real, do orçamento até a entrega do veículo.</p>
+        </article>
+        <article class="service-card">
+          <div class="service-num">02</div>
+          <h3>Orçamento em segundos</h3>
+          <p>Monte orçamentos com peças e mão de obra pré-cadastradas e envie direto pro WhatsApp do cliente.</p>
+        </article>
+        <article class="service-card">
+          <div class="service-num">03</div>
+          <h3>Controle de estoque</h3>
+          <p>Saiba exatamente o que tem no estoque e receba alerta automático quando uma peça estiver acabando.</p>
+        </article>
+        <article class="service-card">
+          <div class="service-num">04</div>
+          <h3>Histórico do cliente</h3>
+          <p>Cada veículo com seu histórico completo de serviços — útil pra revisão, garantia e fidelização.</p>
+        </article>
+        <article class="service-card">
+          <div class="service-num">05</div>
+          <h3>Avisos automáticos</h3>
+          <p>Notifique o cliente por WhatsApp quando o carro estiver pronto ou quando faltar aprovação.</p>
+        </article>
+        <article class="service-card">
+          <div class="service-num">06</div>
+          <h3>Relatórios financeiros</h3>
+          <p>Veja faturamento, ticket médio e serviços mais vendidos com relatórios prontos, sem planilha.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- NÚMEROS -->
+  <section class="stats" id="numeros">
+    <div class="container stats-inner">
+      <div class="stats-text">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Resultado real</p>
+        <h2>Menos tempo em burocracia, mais tempo no pátio.</h2>
+        <p>Oficinas que migram do caderno e das planilhas pro MotorMind relatam menos retrabalho, menos peça perdida e
+          clientes voltando com mais frequência — porque o sistema lembra por eles. Você continua fazendo o que sabe
+          fazer: consertar carro. O MotorMind cuida da organização.</p>
+        <a href="#teste-gratis" class="btn btn-primary">Começar teste grátis</a>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <span class="stat-number" data-target="340">0</span><span class="stat-suffix">+</span>
+          <p>oficinas ativas</p>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number" data-target="38">0</span><span class="stat-suffix">%</span>
+          <p>menos tempo em burocracia</p>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number" data-target="14">0</span>
+          <p>dias de teste grátis</p>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number" data-target="98">0</span><span class="stat-suffix">%</span>
+          <p>clientes satisfeitos</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANOS -->
+  <section class="pricing" id="planos">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow center"><span class="eyebrow-dot"></span> Planos</p>
+        <h2>Um plano do tamanho da sua oficina</h2>
+        <p class="section-sub">Sem contrato de fidelidade. Cancele quando quiser.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h3>Básico</h3>
+          <p class="pricing-desc">Pra quem está começando a organizar a oficina.</p>
+          <div class="pricing-price"><span class="price-currency">R$</span><span class="price-value">89</span><span
+              class="price-period">/mês</span></div>
+          <ul class="pricing-features">
+            <li>Até 50 ordens de serviço/mês</li>
+            <li>Orçamento digital</li>
+            <li>1 usuário</li>
+            <li>Suporte por e-mail</li>
+          </ul>
+          <a href="#teste-gratis" class="btn btn-outline btn-block">Começar agora</a>
+        </div>
+
+        <div class="pricing-card pricing-featured">
+          <span class="pricing-badge">Mais popular</span>
+          <h3>Profissional</h3>
+          <p class="pricing-desc">Pra oficinas com fluxo constante de clientes.</p>
+          <div class="pricing-price"><span class="price-currency">R$</span><span class="price-value">179</span><span
+              class="price-period">/mês</span></div>
+          <ul class="pricing-features">
+            <li>Ordens de serviço ilimitadas</li>
+            <li>Controle de estoque</li>
+            <li>Até 5 usuários</li>
+            <li>Avisos automáticos por WhatsApp</li>
+            <li>Relatórios financeiros</li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <a href="#teste-gratis" class="btn btn-primary btn-block">Começar agora</a>
+        </div>
+
+        <div class="pricing-card">
+          <h3>Rede</h3>
+          <p class="pricing-desc">Pra quem tem mais de uma unidade.</p>
+          <div class="pricing-price"><span class="price-currency">R$</span><span class="price-value">349</span><span
+              class="price-period">/mês</span></div>
+          <ul class="pricing-features">
+            <li>Tudo do Profissional</li>
+            <li>Múltiplas unidades</li>
+            <li>Usuários ilimitados</li>
+            <li>Gerente de conta dedicado</li>
+          </ul>
+          <a href="#teste-gratis" class="btn btn-outline btn-block">Falar com vendas</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEPOIMENTOS -->
+  <section class="testimonials" id="depoimentos">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow center"><span class="eyebrow-dot"></span> Depoimentos</p>
+        <h2>Quem já usa não volta pro caderno</h2>
+      </div>
+
+      <div class="testimonials-grid">
+        <blockquote class="testimonial-card">
+          <p>"Reduzi pela metade o tempo que eu gastava passando orçamento por telefone. Hoje mando tudo pelo sistema
+            direto no WhatsApp do cliente."</p>
+          <cite>— Roberto S., Auto Center RJ</cite>
+        </blockquote>
+        <blockquote class="testimonial-card">
+          <p>"Nunca mais perdi uma peça no estoque. O alerta automático avisa antes de faltar, então nunca mais atrasei
+            um serviço por isso."</p>
+          <cite>— Camila F., Garagem 24h</cite>
+        </blockquote>
+        <blockquote class="testimonial-card">
+          <p>"Migrei do caderno pro MotorMind em uma tarde. Minha equipe usa sem dificuldade nenhuma, e o cliente elogia
+            o retorno mais rápido."</p>
+          <cite>— Diego M., Mecânica Prime</cite>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow center"><span class="eyebrow-dot"></span> Dúvidas frequentes</p>
+        <h2>Perguntas que toda oficina faz antes de assinar</h2>
+      </div>
+
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Preciso instalar algum programa?</summary>
+          <p>Não. O MotorMind funciona direto pelo navegador, no computador ou celular. Não precisa instalar nada nem
+            comprar equipamento especial.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Quanto tempo leva pra implantar na minha oficina?</summary>
+          <p>A maioria das oficinas está usando o sistema no mesmo dia. Nossa equipe ajuda a cadastrar peças, serviços e
+            usuários no início.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Posso cancelar quando quiser?</summary>
+          <p>Sim. Não existe contrato de fidelidade. Você pode cancelar a qualquer momento direto pelo painel.</p>
+        </details>
+        <details class="faq-item">
+          <summary>O sistema funciona pra oficina pequena, com um mecânico só?</summary>
+          <p>Sim, o plano Básico foi feito exatamente pra isso — organizar o fluxo mesmo com uma equipe enxuta.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Meus dados ficam seguros?</summary>
+          <p>Sim, todos os dados são armazenados com criptografia e backups automáticos diários.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL / TESTE GRÁTIS -->
+  <section class="contact" id="teste-gratis">
+    <div class="container contact-inner">
+      <div class="contact-info">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Teste grátis por 14 dias</p>
+        <h2>Organize sua oficina a partir de hoje.</h2>
+        <p class="section-sub">Preencha o formulário e nossa equipe libera seu acesso em poucos minutos. Sem cartão de
+          crédito, sem compromisso.</p>
+
+        <ul class="contact-list">
+          <li>
+            <span class="contact-icon">✅</span>
+            <div><strong>14 dias grátis</strong><br>Acesso completo, sem custo</div>
+          </li>
+          <li>
+            <span class="contact-icon">✅</span>
+            <div><strong>Sem cartão de crédito</strong><br>Você só paga se quiser continuar</div>
+          </li>
+          <li>
+            <span class="contact-icon">✅</span>
+            <div><strong>Suporte na implantação</strong><br>Ajudamos a configurar tudo</div>
+          </li>
+        </ul>
+      </div>
+
+      <form class="contact-form" id="contactForm" novalidate>
+        <div class="form-row">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" name="nome" placeholder="Seu nome completo" required>
+        </div>
+        <div class="form-row form-row-2">
+          <div>
+            <label for="telefone">Telefone</label>
+            <input type="tel" id="telefone" name="telefone" placeholder="(11) 90000-0000" required>
+          </div>
+          <div>
+            <label for="oficina">Nome da oficina</label>
+            <input type="text" id="oficina" name="oficina" placeholder="Ex: Auto Center Silva">
           </div>
         </div>
-      </div>
-      <div class="flag-chip">⚡ Implantação em 1 dia</div>
-    </div>
-  </div>
-  <div class="hero-flag-bottom" aria-hidden="true"></div>
-</section>
-
-<!-- LOGOS DE CONFIANÇA -->
-<section class="marquee-wrap" aria-label="Oficinas parceiras">
-  <div class="marquee-track">
-    <span>OFICINA SANTOS</span><span>AUTO CENTER RJ</span><span>GARAGEM 24H</span><span>MECÂNICA PRIME</span><span>TOP CAR SERVICE</span><span>OFICINA BRASIL</span>
-    <span>OFICINA SANTOS</span><span>AUTO CENTER RJ</span><span>GARAGEM 24H</span><span>MECÂNICA PRIME</span><span>TOP CAR SERVICE</span><span>OFICINA BRASIL</span>
-  </div>
-</section>
-
-<!-- PROBLEMA / SOLUÇÃO -->
-<section class="why" id="problema">
-  <div class="container">
-    <div class="section-head">
-      <p class="eyebrow center"><span class="eyebrow-dot"></span> O problema que resolvemos</p>
-      <h2>Sua oficina fatura mais do que aparece na planilha.</h2>
-    </div>
-
-    <div class="why-grid">
-      <div class="why-card">
-        <div class="why-icon">📋</div>
-        <h3>Ordem de serviço perdida</h3>
-        <p>Papel se perde, WhatsApp lota, caderno some. Sem controle, dá pra esquecer serviço, peça e prazo.</p>
-      </div>
-      <div class="why-card">
-        <div class="why-icon">💸</div>
-        <h3>Orçamento sem histórico</h3>
-        <p>Cliente pergunta o que foi feito há 6 meses e ninguém lembra. Sem histórico, sem argumento de venda.</p>
-      </div>
-      <div class="why-card">
-        <div class="why-icon">📦</div>
-        <h3>Estoque no olhômetro</h3>
-        <p>Peça que acabou sem avisar atrasa serviço e trava o pátio. Falta de controle custa tempo e cliente.</p>
-      </div>
-      <div class="why-card">
-        <div class="why-icon">📱</div>
-        <h3>Cliente sem retorno</h3>
-        <p>Sem aviso automático, o cliente liga toda hora perguntando do carro — ou pior, não volta mais.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FUNCIONALIDADES -->
-<section class="services" id="funcionalidades">
-  <div class="container">
-    <div class="section-head">
-      <p class="eyebrow center"><span class="eyebrow-dot"></span> O que o sistema faz</p>
-      <h2>Tudo que sua oficina precisa, em um só lugar</h2>
-      <p class="section-sub">Sem planilha, sem papel perdido, sem depender de memória. O MotorMind organiza o fluxo inteiro da oficina.</p>
-    </div>
-
-    <div class="services-grid">
-      <article class="service-card">
-        <div class="service-num">01</div>
-        <h3>Ordens de serviço digitais</h3>
-        <p>Abra, edite e acompanhe cada OS em tempo real, do orçamento até a entrega do veículo.</p>
-      </article>
-      <article class="service-card">
-        <div class="service-num">02</div>
-        <h3>Orçamento em segundos</h3>
-        <p>Monte orçamentos com peças e mão de obra pré-cadastradas e envie direto pro WhatsApp do cliente.</p>
-      </article>
-      <article class="service-card">
-        <div class="service-num">03</div>
-        <h3>Controle de estoque</h3>
-        <p>Saiba exatamente o que tem no estoque e receba alerta automático quando uma peça estiver acabando.</p>
-      </article>
-      <article class="service-card">
-        <div class="service-num">04</div>
-        <h3>Histórico do cliente</h3>
-        <p>Cada veículo com seu histórico completo de serviços — útil pra revisão, garantia e fidelização.</p>
-      </article>
-      <article class="service-card">
-        <div class="service-num">05</div>
-        <h3>Avisos automáticos</h3>
-        <p>Notifique o cliente por WhatsApp quando o carro estiver pronto ou quando faltar aprovação.</p>
-      </article>
-      <article class="service-card">
-        <div class="service-num">06</div>
-        <h3>Relatórios financeiros</h3>
-        <p>Veja faturamento, ticket médio e serviços mais vendidos com relatórios prontos, sem planilha.</p>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- NÚMEROS -->
-<section class="stats" id="numeros">
-  <div class="container stats-inner">
-    <div class="stats-text">
-      <p class="eyebrow"><span class="eyebrow-dot"></span> Resultado real</p>
-      <h2>Menos tempo em burocracia, mais tempo no pátio.</h2>
-      <p>Oficinas que migram do caderno e das planilhas pro MotorMind relatam menos retrabalho, menos peça perdida e clientes voltando com mais frequência — porque o sistema lembra por eles. Você continua fazendo o que sabe fazer: consertar carro. O MotorMind cuida da organização.</p>
-      <a href="#teste-gratis" class="btn btn-primary">Começar teste grátis</a>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-box">
-        <span class="stat-number" data-target="340">0</span><span class="stat-suffix">+</span>
-        <p>oficinas ativas</p>
-      </div>
-      <div class="stat-box">
-        <span class="stat-number" data-target="38">0</span><span class="stat-suffix">%</span>
-        <p>menos tempo em burocracia</p>
-      </div>
-      <div class="stat-box">
-        <span class="stat-number" data-target="14">0</span>
-        <p>dias de teste grátis</p>
-      </div>
-      <div class="stat-box">
-        <span class="stat-number" data-target="98">0</span><span class="stat-suffix">%</span>
-        <p>clientes satisfeitos</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- PLANOS -->
-<section class="pricing" id="planos">
-  <div class="container">
-    <div class="section-head">
-      <p class="eyebrow center"><span class="eyebrow-dot"></span> Planos</p>
-      <h2>Um plano do tamanho da sua oficina</h2>
-      <p class="section-sub">Sem contrato de fidelidade. Cancele quando quiser.</p>
-    </div>
-
-    <div class="pricing-grid">
-      <div class="pricing-card">
-        <h3>Básico</h3>
-        <p class="pricing-desc">Pra quem está começando a organizar a oficina.</p>
-        <div class="pricing-price"><span class="price-currency">R$</span><span class="price-value">89</span><span class="price-period">/mês</span></div>
-        <ul class="pricing-features">
-          <li>Até 50 ordens de serviço/mês</li>
-          <li>Orçamento digital</li>
-          <li>1 usuário</li>
-          <li>Suporte por e-mail</li>
-        </ul>
-        <a href="#teste-gratis" class="btn btn-outline btn-block">Começar agora</a>
-      </div>
-
-      <div class="pricing-card pricing-featured">
-        <span class="pricing-badge">Mais popular</span>
-        <h3>Profissional</h3>
-        <p class="pricing-desc">Pra oficinas com fluxo constante de clientes.</p>
-        <div class="pricing-price"><span class="price-currency">R$</span><span class="price-value">179</span><span class="price-period">/mês</span></div>
-        <ul class="pricing-features">
-          <li>Ordens de serviço ilimitadas</li>
-          <li>Controle de estoque</li>
-          <li>Até 5 usuários</li>
-          <li>Avisos automáticos por WhatsApp</li>
-          <li>Relatórios financeiros</li>
-          <li>Suporte prioritário</li>
-        </ul>
-        <a href="#teste-gratis" class="btn btn-primary btn-block">Começar agora</a>
-      </div>
-
-      <div class="pricing-card">
-        <h3>Rede</h3>
-        <p class="pricing-desc">Pra quem tem mais de uma unidade.</p>
-        <div class="pricing-price"><span class="price-currency">R$</span><span class="price-value">349</span><span class="price-period">/mês</span></div>
-        <ul class="pricing-features">
-          <li>Tudo do Profissional</li>
-          <li>Múltiplas unidades</li>
-          <li>Usuários ilimitados</li>
-          <li>Gerente de conta dedicado</li>
-        </ul>
-        <a href="#teste-gratis" class="btn btn-outline btn-block">Falar com vendas</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- DEPOIMENTOS -->
-<section class="testimonials" id="depoimentos">
-  <div class="container">
-    <div class="section-head">
-      <p class="eyebrow center"><span class="eyebrow-dot"></span> Depoimentos</p>
-      <h2>Quem já usa não volta pro caderno</h2>
-    </div>
-
-    <div class="testimonials-grid">
-      <blockquote class="testimonial-card">
-        <p>"Reduzi pela metade o tempo que eu gastava passando orçamento por telefone. Hoje mando tudo pelo sistema direto no WhatsApp do cliente."</p>
-        <cite>— Roberto S., Auto Center RJ</cite>
-      </blockquote>
-      <blockquote class="testimonial-card">
-        <p>"Nunca mais perdi uma peça no estoque. O alerta automático avisa antes de faltar, então nunca mais atrasei um serviço por isso."</p>
-        <cite>— Camila F., Garagem 24h</cite>
-      </blockquote>
-      <blockquote class="testimonial-card">
-        <p>"Migrei do caderno pro MotorMind em uma tarde. Minha equipe usa sem dificuldade nenhuma, e o cliente elogia o retorno mais rápido."</p>
-        <cite>— Diego M., Mecânica Prime</cite>
-      </blockquote>
-    </div>
-  </div>
-</section>
-
-<!-- FAQ -->
-<section class="faq" id="faq">
-  <div class="container">
-    <div class="section-head">
-      <p class="eyebrow center"><span class="eyebrow-dot"></span> Dúvidas frequentes</p>
-      <h2>Perguntas que toda oficina faz antes de assinar</h2>
-    </div>
-
-    <div class="faq-list">
-      <details class="faq-item">
-        <summary>Preciso instalar algum programa?</summary>
-        <p>Não. O MotorMind funciona direto pelo navegador, no computador ou celular. Não precisa instalar nada nem comprar equipamento especial.</p>
-      </details>
-      <details class="faq-item">
-        <summary>Quanto tempo leva pra implantar na minha oficina?</summary>
-        <p>A maioria das oficinas está usando o sistema no mesmo dia. Nossa equipe ajuda a cadastrar peças, serviços e usuários no início.</p>
-      </details>
-      <details class="faq-item">
-        <summary>Posso cancelar quando quiser?</summary>
-        <p>Sim. Não existe contrato de fidelidade. Você pode cancelar a qualquer momento direto pelo painel.</p>
-      </details>
-      <details class="faq-item">
-        <summary>O sistema funciona pra oficina pequena, com um mecânico só?</summary>
-        <p>Sim, o plano Básico foi feito exatamente pra isso — organizar o fluxo mesmo com uma equipe enxuta.</p>
-      </details>
-      <details class="faq-item">
-        <summary>Meus dados ficam seguros?</summary>
-        <p>Sim, todos os dados são armazenados com criptografia e backups automáticos diários.</p>
-      </details>
-    </div>
-  </div>
-</section>
-
-<!-- CTA FINAL / TESTE GRÁTIS -->
-<section class="contact" id="teste-gratis">
-  <div class="container contact-inner">
-    <div class="contact-info">
-      <p class="eyebrow"><span class="eyebrow-dot"></span> Teste grátis por 14 dias</p>
-      <h2>Organize sua oficina a partir de hoje.</h2>
-      <p class="section-sub">Preencha o formulário e nossa equipe libera seu acesso em poucos minutos. Sem cartão de crédito, sem compromisso.</p>
-
-      <ul class="contact-list">
-        <li>
-          <span class="contact-icon">✅</span>
-          <div><strong>14 dias grátis</strong><br>Acesso completo, sem custo</div>
-        </li>
-        <li>
-          <span class="contact-icon">✅</span>
-          <div><strong>Sem cartão de crédito</strong><br>Você só paga se quiser continuar</div>
-        </li>
-        <li>
-          <span class="contact-icon">✅</span>
-          <div><strong>Suporte na implantação</strong><br>Ajudamos a configurar tudo</div>
-        </li>
-      </ul>
-    </div>
-
-    <form class="contact-form" id="contactForm" novalidate>
-      <div class="form-row">
-        <label for="nome">Nome</label>
-        <input type="text" id="nome" name="nome" placeholder="Seu nome completo" required>
-      </div>
-      <div class="form-row form-row-2">
-        <div>
-          <label for="telefone">Telefone</label>
-          <input type="tel" id="telefone" name="telefone" placeholder="(11) 90000-0000" required>
+        <div class="form-row">
+          <label for="plano">Plano de interesse</label>
+          <select id="plano" name="plano">
+            <option value="">Selecione um plano</option>
+            <option>Básico</option>
+            <option>Profissional</option>
+            <option>Rede</option>
+            <option>Ainda não sei</option>
+          </select>
         </div>
-        <div>
-          <label for="oficina">Nome da oficina</label>
-          <input type="text" id="oficina" name="oficina" placeholder="Ex: Auto Center Silva">
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Começar teste grátis</button>
+        <p class="form-feedback" id="formFeedback" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="flag-strip small" aria-hidden="true"></div>
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="MotorMind" class="footer-logo">
+        <p>O sistema de gestão feito para o ritmo real de uma oficina mecânica.</p>
+        <div class="social-links">
+          <a href="#" aria-label="Instagram">IG</a>
+          <a href="#" aria-label="LinkedIn">IN</a>
+          <a href="https://wa.me/5511999999999" aria-label="WhatsApp" target="_blank" rel="noopener">WA</a>
         </div>
       </div>
-      <div class="form-row">
-        <label for="plano">Plano de interesse</label>
-        <select id="plano" name="plano">
-          <option value="">Selecione um plano</option>
-          <option>Básico</option>
-          <option>Profissional</option>
-          <option>Rede</option>
-          <option>Ainda não sei</option>
-        </select>
-      </div>
-      <button type="submit" class="btn btn-primary btn-lg btn-block">Começar teste grátis</button>
-      <p class="form-feedback" id="formFeedback" role="status"></p>
-    </form>
-  </div>
-</section>
 
-<!-- FOOTER -->
-<footer class="site-footer">
-  <div class="flag-strip small" aria-hidden="true"></div>
-  <div class="container footer-inner">
-    <div class="footer-brand">
-      <img src="assets/logo.png" alt="MotorMind" class="footer-logo">
-      <p>O sistema de gestão feito para o ritmo real de uma oficina mecânica.</p>
-      <div class="social-links">
-        <a href="#" aria-label="Instagram">IG</a>
-        <a href="#" aria-label="LinkedIn">IN</a>
-        <a href="https://wa.me/5511999999999" aria-label="WhatsApp" target="_blank" rel="noopener">WA</a>
+      <div class="footer-col">
+        <h4>Produto</h4>
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#planos">Planos</a>
+        <a href="#depoimentos">Depoimentos</a>
+        <a href="#faq">Dúvidas</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <a href="#">Sobre nós</a>
+        <a href="#">Blog</a>
+        <a href="#">Trabalhe conosco</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>Contato</h4>
+        <p>vendas@motormind.com.br</p>
+        <p>(11) 99999-9999</p>
+        <p>Seg a Sex, 9h–18h</p>
       </div>
     </div>
-
-    <div class="footer-col">
-      <h4>Produto</h4>
-      <a href="#funcionalidades">Funcionalidades</a>
-      <a href="#planos">Planos</a>
-      <a href="#depoimentos">Depoimentos</a>
-      <a href="#faq">Dúvidas</a>
+    <div class="footer-bottom">
+      <p>© <span id="year"></span> MotorMind Sistemas. Todos os direitos reservados.</p>
     </div>
+  </footer>
 
-    <div class="footer-col">
-      <h4>Empresa</h4>
-      <a href="#">Sobre nós</a>
-      <a href="#">Blog</a>
-      <a href="#">Trabalhe conosco</a>
-    </div>
+  <a href="https://wa.me/5511999999999" class="whatsapp-float" target="_blank" rel="noopener"
+    aria-label="Falar no WhatsApp">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+      <path
+        d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2m0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.22 8.22 0 0 1-1.26-4.35c0-4.55 3.71-8.26 8.27-8.26 2.21 0 4.28.86 5.84 2.42a8.2 8.2 0 0 1 2.42 5.85c0 4.56-3.71 8.23-8.27 8.23m4.53-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.24-.64.81-.78.97-.15.17-.29.19-.53.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.24-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.25-.42.08-.16.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.16 0-.43.06-.66.31-.22.24-.87.85-.87 2.07 0 1.22.89 2.4 1.02 2.57.12.16 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.07-.11-.23-.17-.48-.29" />
+    </svg>
+  </a>
 
-    <div class="footer-col">
-      <h4>Contato</h4>
-      <p>vendas@motormind.com.br</p>
-      <p>(11) 99999-9999</p>
-      <p>Seg a Sex, 9h–18h</p>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <p>© <span id="year"></span> MotorMind Sistemas. Todos os direitos reservados.</p>
-  </div>
-</footer>
-
-<a href="https://wa.me/5511999999999" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
-  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2m0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.22 8.22 0 0 1-1.26-4.35c0-4.55 3.71-8.26 8.27-8.26 2.21 0 4.28.86 5.84 2.42a8.2 8.2 0 0 1 2.42 5.85c0 4.56-3.71 8.23-8.27 8.23m4.53-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.24-.64.81-.78.97-.15.17-.29.19-.53.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.24-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.25-.42.08-.16.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.16 0-.43.06-.66.31-.22.24-.87.85-.87 2.07 0 1.22.89 2.4 1.02 2.57.12.16 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.07-.11-.23-.17-.48-.29"/></svg>
-</a>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
+
 </html>

@@ -6,22 +6,26 @@ const problemas = [
   {
     icone: "OS",
     titulo: "Ordens espalhadas",
-    texto: "Centralize diagnósticos, serviços, peças e responsáveis em uma ordem de serviço digital.",
+    texto:
+      "Centralize diagnósticos, serviços, peças e responsáveis em uma ordem de serviço digital.",
   },
   {
     icone: "CX",
     titulo: "Histórico difícil de consultar",
-    texto: "Encontre clientes, veículos, checklists e atendimentos anteriores sem depender de papéis.",
+    texto:
+      "Encontre clientes, veículos, checklists e atendimentos anteriores sem depender de papéis.",
   },
   {
     icone: "ES",
     titulo: "Estoque sem controle",
-    texto: "Acompanhe os itens disponíveis, registre movimentações e identifique saldos abaixo do mínimo.",
+    texto:
+      "Acompanhe os itens disponíveis, registre movimentações e identifique saldos abaixo do mínimo.",
   },
   {
     icone: "EQ",
     titulo: "Equipe desconectada",
-    texto: "Vincule o mecânico à OS e organize solicitações de peças entre técnico e operador.",
+    texto:
+      "Vincule o mecânico à OS e organize solicitações de peças entre técnico e operador.",
   },
 ];
 
@@ -29,7 +33,8 @@ const funcionalidades = [
   {
     numero: "01",
     titulo: "Ordens de serviço",
-    texto: "Cadastre diagnósticos, serviços e peças e gere a OS para impressão ou PDF.",
+    texto:
+      "Cadastre diagnósticos, serviços e peças e gere a OS para impressão ou PDF.",
   },
   {
     numero: "02",
@@ -39,22 +44,26 @@ const funcionalidades = [
   {
     numero: "03",
     titulo: "Controle de estoque",
-    texto: "Consulte saldos, movimente peças e faça a retirada vinculada à ordem de serviço.",
+    texto:
+      "Consulte saldos, movimente peças e faça a retirada vinculada à ordem de serviço.",
   },
   {
     numero: "04",
     titulo: "Painel técnico",
-    texto: "Cada mecânico visualiza os veículos e as ordens de serviço atribuídas a ele.",
+    texto:
+      "Cada mecânico visualiza os veículos e as ordens de serviço atribuídas a ele.",
   },
   {
     numero: "05",
     titulo: "Checklists e histórico",
-    texto: "Registre a inspeção técnica e consulte o histórico de cada veículo.",
+    texto:
+      "Registre a inspeção técnica e consulte o histórico de cada veículo.",
   },
   {
     numero: "06",
     titulo: "Solicitações de peças",
-    texto: "Abra tickets dentro da OS e converse com o operador pelo chat do atendimento.",
+    texto:
+      "Abra tickets dentro da OS e converse com o operador pelo chat do atendimento.",
   },
 ];
 
@@ -72,18 +81,21 @@ const recursosLicenca = [
 const etapas = [
   {
     numero: "1",
-    titulo: "Adquira a licença",
-    texto: "O MotorMind seguirá o modelo de pagamento único, sem mensalidade recorrente.",
+    titulo: "Inicie a aquisição",
+    texto:
+      "Escolha o MotorMind para sua oficina: uma licença, sem mensalidade recorrente.",
   },
   {
     numero: "2",
     titulo: "Cadastre sua oficina",
-    texto: "Após a confirmação da compra, informe os dados da oficina e do primeiro responsável.",
+    texto:
+      "Informe os dados da oficina e crie o acesso do primeiro responsável.",
   },
   {
     numero: "3",
     titulo: "Acesse o sistema",
-    texto: "Com a licença ativada, sua equipe entra em um ambiente exclusivo da oficina.",
+    texto:
+      "Confirme seu e-mail para ativar a oficina e entrar com seu acesso de administrador.",
   },
 ];
 
@@ -111,7 +123,7 @@ const perguntas = [
   {
     pergunta: "Como funcionará o cadastro da oficina?",
     resposta:
-      "O cadastro será vinculado à compra e criará a oficina, a licença e o primeiro acesso responsável. Essa integração será a próxima etapa do projeto.",
+      "Clique em Adquirir o MotorMind e preencha os dados da oficina e do responsável. Confirme o link enviado ao e-mail de acesso para ativar a oficina. O mesmo e-mail e senha serão usados pelo administrador. O cadastro não realiza cobrança.",
   },
 ];
 
@@ -143,9 +155,7 @@ function LandingPage() {
     <div className="landing-page" id="topo">
       <div className="landing-flag-strip" aria-hidden="true" />
 
-      <header
-        className={`landing-header${cabecalhoElevado ? " elevado" : ""}`}
-      >
+      <header className={`landing-header${cabecalhoElevado ? " elevado" : ""}`}>
         <div className="landing-container landing-header-inner">
           <a className="landing-brand" href="#topo" onClick={fecharMenu}>
             <span className="landing-brand-mark" aria-hidden="true">
@@ -177,9 +187,9 @@ function LandingPage() {
             <Link className="landing-btn landing-btn-ghost" to="/login">
               Entrar
             </Link>
-            <a className="landing-btn landing-btn-primary" href="#licenca">
-              Conhecer a licença
-            </a>
+            <Link className="landing-btn landing-btn-primary" to="/cadastro-oficina">
+              Adquirir o MotorMind
+            </Link>
           </div>
 
           <button
@@ -214,12 +224,12 @@ function LandingPage() {
                 e equipe com uma operação conectada do atendimento ao pátio.
               </p>
               <div className="landing-hero-actions">
-                <a
+                <Link
                   className="landing-btn landing-btn-primary landing-btn-large"
-                  href="#licenca"
+                  to="/cadastro-oficina"
                 >
-                  Ver licença de acesso
-                </a>
+                  Adquirir o MotorMind
+                </Link>
                 <a
                   className="landing-btn landing-btn-outline landing-btn-large"
                   href="#funcionalidades"
@@ -272,7 +282,9 @@ function LandingPage() {
                   </div>
                 </div>
               </div>
-              <div className="landing-dashboard-chip">Fluxo simples e integrado</div>
+              <div className="landing-dashboard-chip">
+                Fluxo simples e integrado
+              </div>
             </div>
           </div>
           <div className="landing-hero-stripe" aria-hidden="true" />
@@ -340,12 +352,12 @@ function LandingPage() {
               </p>
               <h2>Uma compra. A gestão completa da sua oficina.</h2>
               <p>
-                O MotorMind terá uma única modalidade de acesso, vinculada à
-                oficina cadastrada e liberada após a confirmação da compra.
+                Uma única modalidade de acesso, vinculada à sua oficina.
+                Comece pelo cadastro dos dados do negócio e do responsável.
               </p>
               <div className="landing-license-note">
-                O valor e a etapa de pagamento serão conectados ao fluxo de
-                compra na próxima fase de implementação.
+                O cadastro não realiza cobrança. Confirme o link enviado ao
+                seu e-mail para ativar a oficina e acessar o sistema.
               </div>
             </div>
 
@@ -364,29 +376,26 @@ function LandingPage() {
                   <li key={recurso}>{recurso}</li>
                 ))}
               </ul>
-              <a
+              <Link
                 className="landing-btn landing-btn-primary landing-btn-block"
-                href="#como-funciona"
+                to="/cadastro-oficina"
               >
-                Ver como adquirir
-              </a>
+                Adquirir o MotorMind
+              </Link>
             </article>
           </div>
         </section>
 
-        <section
-          className="landing-section landing-steps"
-          id="como-funciona"
-        >
+        <section className="landing-section landing-steps" id="como-funciona">
           <div className="landing-container">
             <div className="landing-section-heading">
               <p className="landing-eyebrow centralizado">
                 <span className="landing-eyebrow-dot" /> Próximos passos
               </p>
-              <h2>Da compra ao primeiro acesso</h2>
+              <h2>Do cadastro ao primeiro acesso</h2>
               <p>
-                O ingresso de uma nova oficina será simples, seguro e vinculado
-                à licença adquirida.
+                Cadastre sua oficina e seu responsável. Confirme seu e-mail
+                para ativar a licença e acessar o sistema como administrador.
               </p>
             </div>
             <ol className="landing-steps-grid">
@@ -400,10 +409,10 @@ function LandingPage() {
             </ol>
             <div className="landing-next-step">
               <div>
-                <strong>Fluxo de compra e cadastro em preparação</strong>
+                <strong>Pronto para organizar sua oficina?</strong>
                 <p>
-                  Nesta etapa, a landing page apresenta o produto. A compra e o
-                  formulário seguro de cadastro serão conectados passo a passo.
+                  Preencha o cadastro para iniciar a aquisição. Se sua oficina
+                  já possui acesso ativo, entre com seu e-mail e senha.
                 </p>
               </div>
               <Link className="landing-btn landing-btn-outline" to="/login">
@@ -452,7 +461,7 @@ function LandingPage() {
             <a href="#faq">Dúvidas</a>
           </nav>
           <div className="landing-footer-access">
-            <strong>Área do cliente</strong>
+            <strong>Acesso da oficina</strong>
             <Link to="/login">Acessar o MotorMind</Link>
           </div>
         </div>

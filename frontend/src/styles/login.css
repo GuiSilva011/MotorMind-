@@ -260,3 +260,13 @@
     transition: none;
   }
 }
+.login-public-links {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+  font-size: .85rem;
+}
+
+.login-public-links a { color: #2365a3; text-decoration: underline; text-underline-offset: 3px; }

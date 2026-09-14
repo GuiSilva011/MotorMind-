@@ -60,6 +60,7 @@ model Oficina {
 
   licenca      Licenca?
   configuracao ConfiguracaoOficina?
+  confirmacoesEmail ConfirmacaoEmailOficina[]
 }
 
 enum StatusOficina {
@@ -139,6 +140,7 @@ model Usuario {
   UpdatedAt DateTime @updatedAt
 
   funcionario Funcionario?
+  confirmacoesEmail ConfirmacaoEmailOficina[]
 
   ordensComoOperador OrdemServico[] @relation("OrdemOperador")
   ordensComoTecnico  OrdemServico[] @relation("OrdemTecnico")
@@ -161,6 +163,26 @@ enum Role {
   ADMIN
   OPERADOR
   TECNICO
+}
+
+model ConfirmacaoEmailOficina {
+  id Int @id @default(autoincrement())
+
+  oficinaId Int
+  oficina Oficina @relation(fields: [oficinaId], references: [id], onDelete: Cascade)
+  usuarioId Int
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  email String @db.VarChar(120)
+  tokenHash String @unique @db.VarChar(64)
+  expiraEm DateTime
+  criadoEm DateTime @default(now())
+  enviadoEm DateTime?
+  consumidoEm DateTime?
+  invalidadoEm DateTime?
+
+  @@index([oficinaId, criadoEm])
+  @@index([usuarioId])
 }
 
 // ======================================================

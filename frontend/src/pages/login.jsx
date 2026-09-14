@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import '../styles/login.css';
@@ -127,7 +127,7 @@ function Login() {
 
       const response = await api.post('/auth/login', {
         Email: form.Email.trim(),
-        Senha: form.Senha.trim(),
+        Senha: form.Senha,
       });
 
       const usuario = response.data?.usuario;
@@ -146,8 +146,6 @@ function Login() {
 
       navigate(obterRotaInicialPorRole(usuario.Role));
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
-
       toast.error(
         error.response?.data?.erro ||
           error.response?.data?.detalhe ||
@@ -195,6 +193,11 @@ function Login() {
               {carregando ? 'Entrando...' : 'Acessar sistema'}
             </button>
           </form>
+          <div className="login-public-links">
+            <Link to="/">Voltar ao site</Link>
+            <Link to="/cadastro-oficina">Cadastrar minha oficina</Link>
+            <Link to="/confirmar-oficina">Reenviar confirmação de e-mail</Link>
+          </div>
 
           <div className="login-test-users">
             <div className="login-test-header">

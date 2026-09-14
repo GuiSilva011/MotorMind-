@@ -5,6 +5,9 @@ import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./Routes/ProtectedRoutes";
 
 import Login from "./pages/login";
+import LandingPage from "./website/LandingPage";
+import CadastroOficina from "./website/CadastroOficina";
+import ConfirmarOficina from "./website/ConfirmarOficina";
 
 import CadastroCliente from "./pages/operador/cadastroCliente";
 import VisualizarClientes from "./pages/operador/visualizarClientes";
@@ -47,6 +50,8 @@ function App() {
       {/* Define todas as rotas da aplicação e protege áreas por perfil. */}
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/cadastro-oficina" element={<CadastroOficina />} />
+        <Route path="/confirmar-oficina" element={<ConfirmarOficina />} />
         <Route
           path="/tecnico/ordens-servico/:id"
           element={
@@ -80,11 +85,7 @@ function App() {
           }
         />
 
-        {/* Redireciona a raiz para a primeira tela principal do operador. */}
-        <Route
-          path="/"
-          element={<Navigate to="/operador/ordem-servico" replace />}
-        />
+        <Route path="/" element={<LandingPage />} />
 
         <Route
           path="/operador/clientes/cadastro"

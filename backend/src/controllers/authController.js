@@ -4,26 +4,20 @@ import prisma from "../config/prisma.js";
 
 export async function login(req, res) {
   try {
-    const { Email, Senha } = req.body;
+    const { Email, Senha } = req.body || {};
 
-    if (!Email?.trim() || !Senha) {
+    if (typeof Email !== "string" || !Email.trim() || typeof Senha !== "string" || !Senha) {
       return res.status(400).json({
         erro: "Email e senha são obrigatórios.",
       });
     }
 
-    const usuario = await prisma.usuario.findUnique({
-      where: {
-        Email: Email.trim(),
-      },
-      include: {
-        oficina: {
-          include: {
-            licenca: true,
-          },
-        },
-      },
-    });
+    const include = { oficina: { include: { licenca: true } } };
+    // Preserva a conta exata de cadastros antigos e tolera capitalização no novo acesso.
+    const usuario = await prisma.usuario.findUnique({ where: { Email: Email.trim() }, include })
+      || await prisma.usuario.findFirst({
+        where: { Email: { equals: Email.trim(), mode: "insensitive" } }, include,
+      });
 
     if (!usuario) {
       return res.status(401).json({
@@ -50,7 +44,10 @@ export async function login(req, res) {
 
     if (usuario.oficina.status !== "ATIVA") {
       return res.status(403).json({
-        erro: "Oficina sem acesso ao MotorMind.",
+        erro: usuario.oficina.status === "PENDENTE"
+          ? "Sua oficina aguarda ativação. Confirme seu e-mail pelo link recebido ou solicite um novo envio."
+          : "Oficina sem acesso ao MotorMind.",
+        ...(usuario.oficina.status === "PENDENTE" ? { codigo: "CONFIRMACAO_EMAIL_PENDENTE" } : {}),
       });
     }
 

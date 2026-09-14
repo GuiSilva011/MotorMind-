@@ -10,7 +10,7 @@ Atualização de 12/09/2026: primeira etapa de tickets e chat implementada. O t�
 
 Continuidade do painel técnico: o vínculo só é confirmado quando o operador salva a OS. O painel agora lista somente veículos com OS que não estejam `FINALIZADA`, `FECHADA` ou `CANCELADA` e que estejam atribuídas ao técnico. **Exibir ordem de serviço** abre os itens salvos em somente leitura; **Solicitar peça ao operador**, dentro dessa visualização, cria o ticket e leva à conversa. A lista geral de tickets serve para acompanhamento, não para abrir pedidos fora da OS. Detalhes na seção 6.7.
 
-Próxima fase definida por Guilherme: adicionar uma landing page pública do MotorMind, a partir da qual o usuário poderá iniciar a “compra” do sistema e cadastrar sua oficina. Guilherme adicionará a base da landing page ao projeto, e a integração será desenvolvida passo a passo. Até que o fluxo comercial, o provedor de pagamento e a ativação sejam definidos e implementados, não tratar botões, formulários ou telas visuais como compra real concluída. Consulte a seção 7.1.
+Atualização de 13/09/2026: landing page React integrada à rota pública `/`, com **Adquirir o MotorMind** levando a `/cadastro-oficina`. O cadastro público cria oficina, responsável `OWNER`, licença e configurações em uma transação, com oficina/licença `PENDENTE`. Login permanece condicionado à ativação de ambas. Não há pagamento, compra confirmada ou ativação automática nesta etapa. Consulte `CADASTRO-OFICINA-LEIA-ME.md` e a seção 7.1.
 
 Antes de alterar código:
 
@@ -300,13 +300,16 @@ O operador não recebe botões de ação na tela e não pode consultar o histór
 
 Estoque, integração da OS, painel técnico e primeira etapa de tickets/chat são considerados concluídos para a fase atual. As evoluções técnicas que ainda aparecem neste roteiro permanecem registradas, mas não devem ser iniciadas automaticamente. A próxima fase ativa é a landing page e o ingresso de uma nova oficina; seguir cada solicitação de Guilherme passo a passo.
 
-### 7.1. Landing page, “compra” e cadastro da oficina — próxima fase ativa
+### 7.1. Landing page, “compra” e cadastro da oficina — fase ativa
 
 Objetivo definido: disponibilizar uma landing page pública do MotorMind onde o interessado conhece o sistema, inicia a “compra” e pode cadastrar sua oficina para obter acesso ao ambiente correspondente.
 
 Estado atual desta fase:
 
-- Guilherme adicionará a base da landing page ao repositório. Antes de editar, localizar e inspecionar os arquivos recebidos, suas rotas, estilos e recursos; não recriar a página nem substituir sua identidade visual sem pedido.
+- Em 13/09/2026, a versão React recebida foi integrada à rota `/`. `LandingPage.jsx` ganhou os links de aquisição e o CSS ausente, mantendo paleta e identidade da base. Os HTML/CSS/JS estáticos recebidos continuam como referência; o ponto de entrada é o frontend Vite.
+- `/cadastro-oficina` envia para `POST /auth/cadastro-oficina`. Campos obrigatórios: nome da oficina, telefone, nome do responsável, e-mail de acesso, senha e confirmação. Demais dados comerciais/endereço são opcionais. O backend valida e cria `Oficina`, `Usuario` (`OWNER`), `Licenca` e `ConfiguracaoOficina` em transação; oficina/licença ficam `PENDENTE`, sem JWT ou pagamento.
+- Duplicação por e-mail/CNPJ é bloqueada inclusive sob concorrência, com bloqueios transacionais e restrições únicas. Reenvios recebem `409`, sem novo cadastro. Senha bcrypt, lista explícita de campos aceitos e limite de tentativas por IP protegem a operação pública. O login conserva as verificações de oficina/licença ativas.
+- Não houve alteração de schema, migration ou dependência. Build, lint focado, 18 testes de regras e 11 cenários HTTP/PostgreSQL em schema descartável passaram. Navegador integrado indisponível: validação visual/manual pendente. Detalhes, limites e comandos em `CADASTRO-OFICINA-LEIA-ME.md`.
 - Nenhum checkout, pagamento, webhook, cadastro público de oficina ou ativação automática deve ser considerado pronto apenas por existir uma interface.
 - O desenvolvimento será incremental. Implementar somente a etapa solicitada em cada conversa e validar sua integração com o projeto existente.
 - O modelo comercial de referência continua sendo compra única, sem assinatura recorrente, salvo decisão posterior de Guilherme.
@@ -315,7 +318,7 @@ Fluxo de produto pretendido, ainda sujeito às decisões de cada etapa:
 
 1. O visitante acessa a landing page pública e consulta a apresentação do MotorMind.
 2. Uma ação de compra conduz ao fluxo comercial que for definido.
-3. Depois da condição de compra/aprovação definida, o usuário informa os dados necessários para cadastrar a oficina e seu primeiro acesso responsável.
+3. Nesta etapa, o usuário já pode cadastrar a oficina e seu primeiro responsável, ficando pendente de ativação. A associação com compra aprovada será definida na etapa comercial.
 4. O backend cria os registros necessários de oficina, usuário inicial e licença de forma consistente, mantendo o isolamento por `oficinaId`.
 5. Com a oficina e a licença em estado autorizado, o usuário pode seguir para o login e acessar somente o ambiente da própria oficina.
 
