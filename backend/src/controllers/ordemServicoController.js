@@ -1,6 +1,6 @@
 import prisma from '../config/prisma.js';
 import { EstoqueError, reconciliarEstoqueOrdem } from '../services/estoqueService.js';
-import { TicketError, OS_ENCERRADA } from '../services/ticketRegras.js';
+import { TicketError, OS_ENCERRADA } from '../utils/ticketRegras.js';
 import { sincronizarAtribuicao } from '../services/ordemAtribuicaoService.js';
 import { criarTecnicoService } from '../services/tecnicoService.js';
 

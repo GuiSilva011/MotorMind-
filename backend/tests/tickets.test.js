@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { TicketError, inteiro, texto, chave, validarItens, validarAcesso, validarChat, validarTransicao, PRAZO_CHAT_MS, OS_ENCERRADA } from '../src/services/ticketRegras.js';
-import { arquivosTicket, caminhoAnexo, limparChatExpirado, tipoArquivo } from '../src/services/ticketArquivos.js';
-import { criarTicketService, notificarTicket } from '../src/services/ticketService.js';
+import { TicketError, inteiro, texto, chave, validarItens, validarAcesso, validarChat, validarTransicao, PRAZO_CHAT_MS, OS_ENCERRADA } from '../src/utils/ticketRegras.js';
+import { arquivosTicket, caminhoAnexo, limparChatExpirado, tipoArquivo } from '../src/utils/ticketArquivos.js';
+import prisma from '../src/config/prisma.js';
+import { assumirTicket } from '../src/controllers/ticketController.js';
+import { notificarTicket } from '../src/utils/notificacaoTicket.js';
 
 const tecnico = { id: 1, oficinaId: 10, role: 'TECNICO' };
 const operador = { id: 2, oficinaId: 10, role: 'OPERADOR' };
@@ -83,13 +85,17 @@ test('falha na remoção do arquivo preserva a mensagem para nova tentativa', as
   assert.equal(await limparChatExpirado(db, { remover: async () => { throw new Error('Sem acesso'); } }), 0);
   assert.equal(apagou, false);
 });
-test('assumir usa atualização condicionada e rejeita disputa sem criar histórico', async () => {
+test('assumir usa atualização condicionada e rejeita disputa sem criar histórico', async t => {
   let condicao;
   const db = {
     $transaction: async fn => fn(db), $queryRaw: async () => [{ id: 5 }],
     requisicaoPeca: { findFirst: async () => ({ ...ticket, responsavelId: null, status: 'ABERTA' }), updateMany: async args => { condicao = args.where; return { count: 0 }; } },
   };
-  await assert.rejects(criarTicketService(db).assumir(operador, 5), erro(409));
+  t.mock.method(prisma, '$transaction', async fn => fn(db));
+  let falha;
+  const res = { json: () => assert.fail('Não pode confirmar um ticket assumido por outro operador.') };
+  await assumirTicket({ user: operador, params: { id: '5' } }, res, error => { falha = error; });
+  assert.ok(erro(409)(falha));
   assert.deepEqual(condicao, { id: 5, oficinaId: 10, responsavelId: null, status: 'ABERTA' });
 });
 test('notificação respeita configuração e limita destinatários à oficina', async () => {

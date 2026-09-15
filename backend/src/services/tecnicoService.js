@@ -1,4 +1,4 @@
-import { inteiro, OS_ENCERRADA, TicketError } from './ticketRegras.js';
+import { inteiro, OS_ENCERRADA, TicketError } from '../utils/ticketRegras.js';
 
 export function filtroOrdensTecnico(usuario) {
   return { oficinaId: usuario.oficinaId, tecnicoId: usuario.id, status: { notIn: OS_ENCERRADA } };

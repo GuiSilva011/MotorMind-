@@ -2,7 +2,7 @@ import express from 'express';
 import prisma from '../config/prisma.js';
 import { authMiddleware, authorizeRoles } from '../middlewares/authMiddleware.js';
 import { criarTecnicoService } from '../services/tecnicoService.js';
-import { TicketError } from '../services/ticketRegras.js';
+import { TicketError } from '../utils/ticketRegras.js';
 
 const router = express.Router();
 const service = criarTecnicoService(prisma);

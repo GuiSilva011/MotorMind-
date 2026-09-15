@@ -17,7 +17,7 @@ import estoqueRoutes from '../routes/estoqueRoutes.js';
 import ticketRoutes from '../routes/ticketRoutes.js';
 import tecnicoRoutes from '../routes/tecnicoRoutes.js';
 import prisma from '../config/prisma.js';
-import { iniciarLimpezaChat } from '../services/ticketArquivos.js';
+import { iniciarLimpezaChat } from '../utils/ticketArquivos.js';
 
 
 

@@ -1,5 +1,5 @@
-import { TicketError, OS_ENCERRADA, STATUS_FINAIS } from './ticketRegras.js';
-import { notificarTicket } from './ticketService.js';
+import { TicketError, OS_ENCERRADA, STATUS_FINAIS } from '../utils/ticketRegras.js';
+import { notificarTicket } from '../utils/notificacaoTicket.js';
 
 export async function sincronizarAtribuicao(tx, ordem, tecnicoId, status, usuario) {
   const encerrada = OS_ENCERRADA.includes(status);

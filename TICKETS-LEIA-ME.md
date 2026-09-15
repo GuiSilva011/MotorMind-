@@ -1,5 +1,13 @@
 # Tickets de peças e chat — 12/09/2026
 
+## Organização do backend — 14/09/2026
+
+O módulo segue o fluxo `ticketRoutes.js` → `ticketController.js` → Prisma. As rotas declaram os endpoints e seus middlewares; o controller recebe `req`/`res`, executa as operações de tickets, chat e leitura de notificações e retorna as respostas HTTP.
+
+`ticketService.js` foi removido. Validações, arquivos privados/limpeza e geração compartilhada de notificações ficam em `backend/src/utils/`. O middleware de tickets concentra validação de sessão, configuração de upload e tratamento de erros. A autorização do chat continua sendo executada antes de receber anexos e é revalidada dentro da transação de envio.
+
+Foram preservados os endpoints, formatos de resposta, permissões, transações, histórico, idempotência e expiração de 48 horas. Esta reorganização não exige migration nem dependência nova.
+
 ## Como usar
 
 1. Reinicie o backend após a atualização. A migration `20260912120000_tickets_chat` já foi aplicada no banco local e o Prisma Client foi regenerado.
@@ -31,12 +39,14 @@ Esta atualização do painel não exige nova migration nem instalação de depen
 | Arquivo | Responsabilidade |
 | --- | --- |
 | `backend/prisma/schema.prisma` e nova migration | Histórico permanente, chaves de repetição e proteção da OS |
-| `backend/src/services/ticketRegras.js` | Validação de entrada, participação e transições |
-| `backend/src/services/ticketService.js` | Tickets, responsabilidade transacional, chat e notificações |
-| `backend/src/services/ticketArquivos.js` | Arquivos privados e limpeza automática |
+| `backend/src/controllers/ticketController.js` | Operações e respostas HTTP de tickets, atendimento transacional, chat, anexos e leitura de notificações |
+| `backend/src/middlewares/ticketMiddleware.js` | Validação de sessão, limites de upload e tratamento de erros |
+| `backend/src/utils/ticketRegras.js` | Validação de entrada, participação e transições compartilhadas |
+| `backend/src/utils/ticketArquivos.js` | Arquivos privados e limpeza automática |
+| `backend/src/utils/notificacaoTicket.js` | Geração de notificações reutilizada por tickets e atribuições de OS |
 | `backend/src/services/ordemAtribuicaoService.js` | Atribuição e encerramento com histórico |
 | `backend/src/services/tecnicoService.js` e `backend/src/routes/tecnicoRoutes.js` | Veículos vinculados, OS técnica somente leitura e histórico autorizado |
-| `backend/src/routes/ticketRoutes.js` | Rotas autenticadas, upload, download e leitura de avisos |
+| `backend/src/routes/ticketRoutes.js` | Declaração de endpoints e composição dos middlewares e controllers |
 | `backend/src/controllers/ordemServicoController.js` | Integração da atribuição e preservação de registros |
 | `backend/src/server/server.js` | Registro das rotas e início da limpeza |
 | `frontend/src/pages/tickets.jsx` e `frontend/src/styles/tickets.css` | Fila, solicitações, atendimento e chat |
@@ -74,6 +84,8 @@ Todas exigem JWT e oficina da sessão. IDs de usuário/oficina recebidos no corp
 | `PATCH /tickets/notificacoes/lidas` | Marca avisos próprios de tickets/atribuição como lidos |
 
 ## Validação
+
+Na reorganização de 14/09/2026, passaram os 13 testes de regras e os 17 cenários HTTP/PostgreSQL (18 testes contando o agrupador). Foram acrescentadas verificações das consultas por perfil/oficina, sessão inválida, erros JSON, filtros da fila e autorização anterior ao processamento de uploads. Sintaxe e imports relativos dos 49 arquivos JavaScript do backend também foram conferidos. O schema descartável e seus anexos foram removidos ao final da suíte. A validação desta alteração foi de backend; não houve nova conferência visual.
 
 No diretório `backend`, testes de regras sem acesso ao banco:
 

@@ -29,7 +29,7 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
     const migration = spawnSync(process.execPath, ['node_modules/prisma/build/index.js', 'migrate', 'deploy'], { env: process.env, encoding: 'utf8', windowsHide: true, timeout: 60000 });
     assert.equal(migration.status, 0, 'Não foi possível aplicar as migrations no schema descartável. Nenhum schema de negócio foi alterado.');
     db = (await import('../src/config/prisma.js')).default;
-    arquivos = await import('../src/services/ticketArquivos.js');
+    arquivos = await import('../src/utils/ticketArquivos.js');
     const tickets = (await import('../src/routes/ticketRoutes.js')).default;
     const ordens = (await import('../src/routes/ordemServicoRoutes.js')).default;
     const tecnicoRoutes = (await import('../src/routes/tecnicoRoutes.js')).default;
@@ -160,6 +160,21 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
       assert.equal((await call(tecnicoOutra, 'GET', `/tecnico/veiculos/${veiculo.id}/historico/${antiga.id}`)).status, 404);
       assert.equal((await call(tecnico2, 'POST', '/tickets', { ordemServicoId: antiga.id, chaveAbertura: randomUUID(), itens: [{ nomePeca: 'Não permitido', quantidadeSolicitada: 1 }] })).status, 409);
     });
+    await t.test('rotas de consulta mantêm perfil, oficina, validação de sessão e respostas JSON', async () => {
+      const tecnicos = await call(op1, 'GET', '/tickets/tecnicos');
+      assert.equal(tecnicos.status, 200);
+      assert.deepEqual(tecnicos.data.map(u => u.id).sort(), [tecnico.id, tecnico2.id].sort());
+      assert.equal(tecnicos.headers.get('cache-control'), 'no-store');
+      assert.equal((await call(tecnico, 'GET', '/tickets/tecnicos')).status, 403);
+      assert.equal((await call(op1, 'GET', '/tickets/ordens')).status, 403);
+      assert.equal((await call(tecnico, 'GET', '/tickets/ordens')).data.some(o => o.id === os.id), true);
+      assert.equal((await call({ ...op1, oficinaId: 0 }, 'GET', '/tickets')).status, 401);
+      for (const rota of ['/tickets?pagina=0', '/tickets?status=INVALIDO', '/tickets/invalido', '/tickets/notificacoes/invalido/lida']) {
+        const resposta = await call(op1, rota.endsWith('/lida') ? 'PATCH' : 'GET', rota);
+        assert.equal(resposta.status, 400);
+        assert.equal(typeof resposta.data.erro, 'string');
+      }
+    });
     await t.test('autenticação, oficina, técnico atribuído e quantidade são validados', async () => {
       assert.equal((await call(null, 'GET', '/tickets')).status, 401);
       assert.equal((await call(op1, 'POST', '/tickets', pedido)).status, 403);
@@ -189,6 +204,16 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
       assert.equal(await db.requisicaoPecaHistorico.count({ where: { requisicaoPecaId: ticket.id } }), 2);
       assert.equal((await call(outroOperador, 'GET', `/tickets/${ticket.id}/mensagens`)).status, 403);
     });
+    await t.test('fila mantém filtros e separa tickets do técnico e do responsável', async () => {
+      const meus = await call(responsavel, 'GET', `/tickets?meus=true&ordemServicoId=${os.id}&status=EM_ATENDIMENTO`);
+      assert.equal(meus.status, 200);
+      assert.equal(meus.data.total, 1);
+      assert.equal(meus.data.pagina, 1);
+      assert.deepEqual(meus.data.itens.map(item => item.id), [ticket.id]);
+      assert.equal((await call(outroOperador, 'GET', '/tickets?meus=true')).data.total, 0);
+      assert.equal((await call(tecnico2, 'GET', '/tickets?status=TODOS')).data.total, 0);
+      assert.equal((await call(tecnico, 'GET', '/tickets?status=TODOS')).data.total, 1);
+    });
     await t.test('OS com ticket pendente não pode fechar, trocar técnico ou ser excluída', async () => {
       assert.equal((await call(op1, 'PUT', `/ordens-servico/${os.id}`, { status: 'FECHADA' })).status, 409);
       assert.equal((await call(op1, 'PUT', `/ordens-servico/${os.id}`, { tecnicoId: tecnico2.id })).status, 409);
@@ -204,6 +229,20 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
       assert.ok(Math.abs(prazo - 172800000) < 2000);
       assert.equal((await call(responsavel, 'GET', `/tickets/${ticket.id}/mensagens`)).data.itens.length, 1);
       assert.equal((await call(outroOperador, 'POST', `/tickets/${ticket.id}/mensagens`, body)).status, 403);
+    });
+    await t.test('upload autoriza o participante antes de processar anexos e mantém os limites', async () => {
+      const totalMensagens = await db.mensagemTicket.count();
+      function formulario() {
+        const form = new FormData();
+        form.append('chaveEnvio', randomUUID());
+        for (let i = 0; i < 4; i++) form.append('anexos', new Blob(['%PDF-1.4\n%%EOF'], { type: 'application/pdf' }), `teste-${i}.pdf`);
+        return form;
+      }
+      assert.equal((await call(outroOperador, 'POST', `/tickets/${ticket.id}/mensagens`, formulario())).status, 403);
+      const excesso = await call(responsavel, 'POST', `/tickets/${ticket.id}/mensagens`, formulario());
+      assert.equal(excesso.status, 400);
+      assert.match(excesso.data.erro, /até 3 anexos/);
+      assert.equal(await db.mensagemTicket.count(), totalMensagens);
     });
     await t.test('anexos são privados, expiram e são removidos sem apagar o ticket/histórico', async () => {
       const form = new FormData(); form.append('chaveEnvio', randomUUID()); form.append('conteudo', 'Anexo sintético');
