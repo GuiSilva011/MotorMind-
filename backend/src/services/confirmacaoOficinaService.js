@@ -49,10 +49,11 @@ export async function solicitarConfirmacaoOficina(db, emailInformado, { enviarEm
 export async function confirmarOficina(db, token) {
   if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) throw new ErroAtivacaoOficina("Link de confirmação inválido.");
   const tokenHash = hashToken(token);
-  const inicial = await db.confirmacaoEmailOficina.findUnique({ where: { tokenHash }, select: { oficinaId: true } });
+  const inicial = await db.confirmacaoEmailOficina.findUnique({ where: { tokenHash }, select: { oficinaId: true, usuarioId: true } });
   if (!inicial) throw new ErroAtivacaoOficina("Link de confirmação inválido.");
   return db.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM "Oficina" WHERE id = ${inicial.oficinaId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM "Usuario" WHERE id = ${inicial.usuarioId} AND "oficinaId" = ${inicial.oficinaId} FOR UPDATE`;
     const registro = await tx.confirmacaoEmailOficina.findUnique({ where: { tokenHash }, include: { usuario: { select: { id: true, oficinaId: true, Email: true } } } });
     const agora = new Date();
     if (!registro || registro.consumidoEm || registro.invalidadoEm || registro.expiraEm <= agora) {

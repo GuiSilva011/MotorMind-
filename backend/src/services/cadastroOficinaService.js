@@ -39,11 +39,18 @@ export function validarCadastroOficina(body) {
     return digitos;
   }
 
+  const emailCadastro = email("Email", "E-mail da oficina", true);
+  // Recusa formulários antigos com dois destinos diferentes, sem escolher silenciosamente um deles.
+  if (body.email != null && body.email !== "") {
+    if (typeof body.email !== "string" || body.email.trim().toLowerCase() !== emailCadastro) {
+      campos.Email = "Use um único e-mail para a oficina e o acesso. Atualize a página e revise o cadastro.";
+    }
+  }
   const oficina = {
     nomeFantasia: texto("nomeFantasia", "Nome da oficina", 120, true),
     razaoSocial: texto("razaoSocial", "Razão social", 150),
     cnpj: texto("cnpj", "CNPJ", 18)?.replace(/[./-]/g, "").toUpperCase() || null,
-    email: email("email", "E-mail da oficina"),
+    email: emailCadastro,
     telefone: telefone("telefone", "Telefone", true),
     whatsapp: telefone("whatsapp", "WhatsApp"),
     cep: texto("cep", "CEP", 9)?.replace(/-/g, "") || null,
@@ -61,7 +68,7 @@ export function validarCadastroOficina(body) {
 
   const responsavel = {
     Nome: texto("Nome", "Nome do responsável", 120, true),
-    Email: email("Email", "E-mail de acesso", true),
+    Email: emailCadastro,
   };
   const senha = body.Senha;
   if (typeof senha !== "string" || senha.trim().length < 8 || Buffer.byteLength(senha, "utf8") > 72) {
@@ -109,7 +116,7 @@ export async function cadastrarOficina(db, body) {
           licenca: { create: { status: "PENDENTE" } },
           configuracao: { create: {} },
         },
-        select: { nomeFantasia: true, status: true, licenca: { select: { status: true } } },
+        select: { nomeFantasia: true, email: true, status: true, licenca: { select: { status: true } } },
       });
       return { mensagem: "Cadastro recebido. Confirme seu e-mail para ativar a oficina e liberar o acesso de administrador.", oficina: criada };
     });

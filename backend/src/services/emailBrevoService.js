@@ -1,18 +1,23 @@
 export class ErroEnvioEmail extends Error {
-  constructor(message = "Não foi possível enviar o e-mail de confirmação. Tente novamente em alguns minutos.") {
+  constructor(message = "Não foi possível enviar o e-mail de confirmação. Tente novamente em alguns minutos.", codigo = "EMAIL_INDISPONIVEL") {
     super(message);
     this.status = 503;
+    this.codigo = codigo;
   }
+}
+
+function erroConfiguracao() {
+  return new ErroEnvioEmail("O e-mail de confirmação não foi enviado porque o serviço de envio precisa de ajuste. Entre em contato com o suporte do MotorMind e solicite um novo envio após a correção.", "EMAIL_CONFIGURACAO");
 }
 
 export function configuracaoEmail(env = process.env) {
   let url;
-  try { url = new URL(env.FRONTEND_URL); } catch { throw new ErroEnvioEmail(); }
+  try { url = new URL(env.FRONTEND_URL); } catch { throw erroConfiguracao(); }
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
   if (!env.BREVO_API_KEY?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.BREVO_SENDER_EMAIL || "")
     || (url.protocol !== "https:" && !(local && url.protocol === "http:"))
     || url.username || url.password || url.search || url.hash || url.pathname !== "/") {
-    throw new ErroEnvioEmail();
+    throw erroConfiguracao();
   }
   return { apiKey: env.BREVO_API_KEY, remetente: env.BREVO_SENDER_EMAIL, nome: env.BREVO_SENDER_NAME || "MotorMind", frontend: url.origin };
 }
@@ -39,9 +44,10 @@ export async function enviarConfirmacaoBrevo({ email, nome, oficina, token }, { 
         htmlContent: `<html lang="pt-BR"><body style="font-family:Arial,sans-serif;color:#0e1830;line-height:1.6"><h1>Ative sua oficina no MotorMind</h1><p>${escaparHtml(mensagem)}</p><p><a href="${escaparHtml(link)}" style="display:inline-block;background:#2f8fe0;color:#0e1830;padding:14px 22px;text-decoration:none;border-radius:6px">Confirmar e ativar oficina</a></p><p>Se o botão não funcionar, copie este endereço:<br>${escaparHtml(link)}</p></body></html>`,
       }),
     });
+    if (resposta.status === 401 || resposta.status === 403) throw erroConfiguracao();
     if (!resposta.ok || !(await resposta.json()).messageId) throw new ErroEnvioEmail();
-  } catch {
+  } catch (error) {
     // Não propaga respostas/erros externos que possam conter destinatários, chave ou link.
-    throw new ErroEnvioEmail();
+    throw error instanceof ErroEnvioEmail ? error : new ErroEnvioEmail();
   }
 }

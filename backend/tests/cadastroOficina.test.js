@@ -14,6 +14,7 @@ test("normaliza contatos e documento, mantém campos opcionais nulos e não acei
   assert.equal(resultado.oficina.cep, "01001000");
   assert.equal(resultado.oficina.endereco, null);
   assert.equal(resultado.responsavel.Email, "teste@example.invalid");
+  assert.equal(resultado.oficina.email, resultado.responsavel.Email);
   assert.equal(resultado.oficina.oficinaId, undefined);
   assert.equal(resultado.oficina.status, undefined);
   assert.equal(resultado.responsavel.Role, undefined);
@@ -22,7 +23,7 @@ test("normaliza contatos e documento, mantém campos opcionais nulos e não acei
 test("rejeita dados inválidos antes de persistir", async t => {
   const casos = [
     ["nomeFantasia", " "], ["nomeFantasia", "x".repeat(121)], ["telefone", "123"],
-    ["Nome", {}], ["Email", "email-invalido"], ["email", "email-invalido"],
+    ["Nome", {}], ["Email", "email-invalido"], ["Email", ""],
     ["cnpj", "12"], ["cep", "123"], ["uf", "XX"], ["numero", "x".repeat(11)],
     ["Senha", "curta"], ["Senha", "á".repeat(37)], ["Senha", {}], ["confirmarSenha", "diferente"],
   ];
@@ -32,6 +33,15 @@ test("rejeita dados inválidos antes de persistir", async t => {
     });
   }
   for (const body of [null, undefined, [], "texto"]) assert.throws(() => validarCadastroOficina(body), ErroCadastroOficina);
+});
+
+test("cadastro usa um único e-mail e recusa destinos divergentes de formulários antigos", () => {
+  for (const email of ["outro@example.invalid", "invalido", {}]) {
+    assert.throws(() => validarCadastroOficina({ ...dados(), email }), error => error instanceof ErroCadastroOficina && Boolean(error.campos.Email));
+  }
+  const resultado = validarCadastroOficina({ ...dados(), email: " TESTE@EXAMPLE.INVALID " });
+  assert.equal(resultado.oficina.email, "teste@example.invalid");
+  assert.equal(resultado.oficina.email, resultado.responsavel.Email);
 });
 
 test("preserva espaços na senha e aceita o limite de 72 bytes sem truncar", () => {

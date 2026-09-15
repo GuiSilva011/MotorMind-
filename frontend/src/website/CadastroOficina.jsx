@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiArrowLeft, FiCheck, FiCheckCircle, FiLock } from "react-icons/fi";
 import api from "../services/api";
+import { camposComMascara, formatarCampoCadastro, posicaoCursorMascara, selecionarExclusaoMascara } from "./mascarasCadastroOficina";
 import "./landingPage.css";
 import "./cadastroOficina.css";
 
@@ -28,6 +29,8 @@ const grupos = [
         label: "CNPJ",
         maxLength: 18,
         placeholder: "00.000.000/0000-00",
+        autoCapitalize: "characters",
+        spellCheck: false,
       },
       {
         name: "telefone",
@@ -36,19 +39,25 @@ const grupos = [
         type: "tel",
         maxLength: 20,
         autoComplete: "tel",
+        inputMode: "tel",
+        placeholder: "(11) 99999-9999",
       },
       {
         name: "whatsapp",
         label: "WhatsApp com DDD",
         type: "tel",
         maxLength: 20,
+        inputMode: "tel",
+        placeholder: "(11) 99999-9999",
       },
       {
-        name: "email",
+        name: "Email",
         label: "E-mail da oficina",
         type: "email",
+        required: true,
         maxLength: 120,
-        autoComplete: "section-oficina email",
+        autoComplete: "username",
+        ajuda: "Este e-mail receberá a confirmação e será usado para entrar como administrador.",
         largo: true,
       },
     ],
@@ -97,7 +106,7 @@ const grupos = [
   {
     titulo: "Responsável e acesso",
     descricao:
-      "Este será o administrador da oficina. Enviaremos a confirmação para o e-mail de acesso.",
+      "Este será o administrador da oficina. O acesso usará o e-mail da oficina informado acima.",
     campos: [
       {
         name: "Nome",
@@ -105,15 +114,6 @@ const grupos = [
         required: true,
         maxLength: 120,
         autoComplete: "name",
-        largo: true,
-      },
-      {
-        name: "Email",
-        label: "E-mail de acesso",
-        type: "email",
-        required: true,
-        maxLength: 120,
-        autoComplete: "username",
         largo: true,
       },
       {
@@ -177,6 +177,24 @@ export default function CadastroOficina() {
       if (primeiro) formulario.current?.elements.namedItem(primeiro)?.focus();
       else resultado.current?.focus();
     });
+  }
+
+  function atualizarCampo(event, campo) {
+    const input = event.currentTarget;
+    const digitado = input.value;
+    const formatado = formatarCampoCadastro(campo, digitado);
+    const cursor = input.selectionStart;
+    const apagando = event.nativeEvent.inputType?.startsWith("delete");
+    setForm((prev) => ({ ...prev, [campo]: formatado }));
+    setErros((prev) => ({ ...prev, [campo]: undefined }));
+    if (camposComMascara.has(campo) && cursor != null) {
+      const novaPosicao = posicaoCursorMascara(digitado, formatado, cursor, apagando);
+      requestAnimationFrame(() => {
+        if (document.activeElement === input && input.value === formatado) {
+          input.setSelectionRange(novaPosicao, novaPosicao);
+        }
+      });
+    }
   }
 
   async function cadastrar(event) {
@@ -260,9 +278,12 @@ export default function CadastroOficina() {
               <strong>
                 {concluido.confirmacao?.enviado
                   ? "Confirme seu e-mail para ativar"
-                  : "Confirmação de e-mail pendente"}
+                  : "E-mail de confirmação não enviado"}
               </strong>
               <p>
+                E-mail da oficina e de acesso: <strong>{concluido.email}</strong>
+              </p>
+              <p role={concluido.confirmacao?.enviado ? undefined : "alert"}>
                 {concluido.confirmacao?.mensagem ||
                   "Solicite o e-mail de confirmação para ativar a oficina."}
               </p>
@@ -321,7 +342,7 @@ export default function CadastroOficina() {
                       {grupo.descricao}
                     </p>
                     <div className="cadastro-campos">
-                      {grupo.campos.map(({ label, largo, ...campo }) => (
+                      {grupo.campos.map(({ label, largo, ajuda, ...campo }) => (
                         <div
                           className={`cadastro-campo${largo ? " largo" : ""}`}
                           key={campo.name}
@@ -368,26 +389,19 @@ export default function CadastroOficina() {
                                   ? "text"
                                   : campo.type || "text"
                               }
-                              onChange={(e) => {
-                                setForm((prev) => ({
-                                  ...prev,
-                                  [campo.name]: e.target.value,
-                                }));
-                                setErros((prev) => ({
-                                  ...prev,
-                                  [campo.name]: undefined,
-                                }));
-                              }}
+                              onChange={(e) => atualizarCampo(e, campo.name)}
+                              onKeyDown={camposComMascara.has(campo.name) ? selecionarExclusaoMascara : undefined}
                               aria-invalid={Boolean(erros[campo.name])}
                               aria-describedby={
                                 erros[campo.name]
                                   ? `erro-${campo.name}`
                                   : campo.type === "password"
                                     ? "cadastro-senha-ajuda"
-                                    : undefined
+                                    : ajuda ? `ajuda-${campo.name}` : undefined
                               }
                             />
                           )}
+                          {ajuda && <p className="cadastro-senha-ajuda" id={`ajuda-${campo.name}`}>{ajuda}</p>}
                           {erros[campo.name] && (
                             <span
                               className="cadastro-campo-erro"

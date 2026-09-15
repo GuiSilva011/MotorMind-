@@ -31,6 +31,18 @@ test("integração Brevo envia confirmação HTML escapada, sem senha, com token
   assert.equal(chamada.body.htmlContent.includes("<script>"), false);
 });
 
+test("falha de autenticação informa ajuste do serviço sem expor a resposta do provedor", async () => {
+  for (const status of [401, 403]) {
+    await assert.rejects(enviarConfirmacaoBrevo(dados, { env, fetchImpl: async () => new Response("detalhe privado", { status }) }), error => {
+      assert.equal(error.codigo, "EMAIL_CONFIGURACAO");
+      assert.match(error.message, /serviço de envio precisa de ajuste/);
+      assert.equal(error.message.includes("privado"), false);
+      assert.equal(error.message.includes(env.BREVO_API_KEY), false);
+      return true;
+    });
+  }
+});
+
 test("rejeição, timeout e resposta sem messageId nunca são tratados como envio confirmado", async () => {
   for (const fetchImpl of [
     async () => new Response("falha privada", { status: 401 }),

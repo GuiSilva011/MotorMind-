@@ -14,7 +14,8 @@ test("cadastro público via HTTP/PostgreSQL isolado", { skip: process.env.MOTORM
   const segredoOriginal = process.env.JWT_SECRET;
   const brevoOriginal = process.env.BREVO_API_KEY;
   const envioOriginal = Object.fromEntries(["BREVO_SENDER_EMAIL", "BREVO_SENDER_NAME", "FRONTEND_URL"].map(nome => [nome, process.env[nome]]));
-  delete process.env.BREVO_API_KEY;
+  // Valor vazio impede que a carga automática de .env pelo Prisma restaure a chave real.
+  process.env.BREVO_API_KEY = "";
   assert.ok(urlOriginal, "Configure o PostgreSQL de desenvolvimento.");
   const schemaTeste = `cadastro_test_${randomUUID().replaceAll("-", "")}`;
   assert.match(schemaTeste, /^cadastro_test_[a-f0-9]{32}$/);
@@ -41,6 +42,21 @@ test("cadastro público via HTTP/PostgreSQL isolado", { skip: process.env.MOTORM
     servidor = app.listen(0, "127.0.0.1");
     await new Promise(resolve => servidor.once("listening", resolve));
     const base = `http://127.0.0.1:${servidor.address().port}`;
+    const fetchOriginal = globalThis.fetch;
+    const emails = [];
+    let falharEnvio = false;
+    let simularBrevo = false;
+    t.mock.method(globalThis, "fetch", async (url, options) => {
+      if (url === "https://api.brevo.com/v3/smtp/email") {
+        assert.ok(simularBrevo, "O envio deve permanecer desabilitado antes de configurar o simulador.");
+        const body = JSON.parse(options.body);
+        const tokenEmail = body.htmlContent.match(/#token=([a-f0-9]{64})/)[1];
+        emails.push({ email: body.to[0].email, token: tokenEmail });
+        return new Response(JSON.stringify(falharEnvio ? { message: "Falha sintética" } : { messageId: randomUUID() }), { status: falharEnvio ? 503 : 201 });
+      }
+      assert.ok(String(url).startsWith(base), "O teste só pode acessar o servidor local ou o simulador do Brevo.");
+      return fetchOriginal(url, options);
+    });
     async function call(method, path, body, token) {
       const response = await fetch(`${base}${path}`, { method, headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
       return { status: response.status, data: await response.json() };
@@ -55,6 +71,10 @@ test("cadastro público via HTTP/PostgreSQL isolado", { skip: process.env.MOTORM
       assert.equal(result.status, 400);
       assert.ok(result.data.campos.Email && result.data.campos.Senha && result.data.campos.uf);
       assert.deepEqual(await contagens(), [0, 0, 0, 0]);
+      const divergente = await call("POST", "/auth/cadastro-oficina", { ...dados(), email: "outro@example.invalid" });
+      assert.equal(divergente.status, 400);
+      assert.ok(divergente.data.campos.Email);
+      assert.deepEqual(await contagens(), [0, 0, 0, 0]);
     });
     await t.test("cadastro é público, cria responsável e licença pendentes e ignora vínculos/status forjados", async () => {
       const result = await call("POST", "/auth/cadastro-oficina", { ...dados(), oficinaId: 99999, Role: "ADMIN", status: "ATIVA", licenca: { status: "ATIVA", valor: 0 }, codigoCompra: "forjado", ativadaEm: new Date().toISOString() });
@@ -65,6 +85,11 @@ test("cadastro público via HTTP/PostgreSQL isolado", { skip: process.env.MOTORM
       assert.equal(JSON.stringify(result.data).includes(senha), false);
       primeira = await db.oficina.findFirst({ include: { usuarios: true, licenca: true, configuracao: true } });
       assert.equal(primeira.usuarios.length, 1);
+      assert.equal(primeira.email, "oficina@example.invalid");
+      assert.equal(primeira.email, primeira.usuarios[0].Email);
+      assert.equal(result.data.oficina.email, primeira.email);
+      assert.equal(result.data.confirmacao.enviado, false);
+      assert.match(result.data.confirmacao.mensagem, /serviço de envio precisa de ajuste/);
       assert.equal(primeira.usuarios[0].Role, "ADMIN");
       assert.equal(primeira.usuarios[0].oficinaId, primeira.id);
       assert.equal(await bcrypt.compare(senha, primeira.usuarios[0].Senha), true);
@@ -157,19 +182,7 @@ test("cadastro público via HTTP/PostgreSQL isolado", { skip: process.env.MOTORM
     process.env.BREVO_API_KEY = "chave-de-teste-sem-acesso-externo";
     process.env.BREVO_SENDER_EMAIL = "envio@example.invalid";
     process.env.FRONTEND_URL = "https://motormind.example.invalid";
-    const fetchOriginal = globalThis.fetch;
-    const emails = [];
-    let falharEnvio = false;
-    t.mock.method(globalThis, "fetch", async (url, options) => {
-      if (url === "https://api.brevo.com/v3/smtp/email") {
-        const body = JSON.parse(options.body);
-        const tokenEmail = body.htmlContent.match(/#token=([a-f0-9]{64})/)[1];
-        emails.push({ email: body.to[0].email, token: tokenEmail });
-        return new Response(JSON.stringify(falharEnvio ? { message: "Falha sintética" } : { messageId: randomUUID() }), { status: falharEnvio ? 503 : 201 });
-      }
-      assert.ok(String(url).startsWith(base), "O teste só pode acessar o servidor local ou o simulador do Brevo.");
-      return fetchOriginal(url, options);
-    });
+    simularBrevo = true;
     const { solicitarConfirmacaoOficina } = await import("../src/services/confirmacaoOficinaService.js");
     const tokenPara = email => emails.findLast(item => item.email === email).token;
     async function usuarioPorEmail(email) { return db.usuario.findUnique({ where: { Email: email } }); }
@@ -185,14 +198,18 @@ test("cadastro público via HTTP/PostgreSQL isolado", { skip: process.env.MOTORM
     let novo;
 
     await t.test("cadastro envia link e persiste somente hash/validade; login aguarda confirmação", async () => {
-      const result = await call("POST", "/auth/cadastro-oficina", dados("novo@example.invalid"));
+      const result = await call("POST", "/auth/cadastro-oficina", dados(" NOVO@EXAMPLE.INVALID "));
       assert.equal(result.status, 201);
       assert.equal(result.data.confirmacao.enviado, true);
       assert.equal(result.data.oficina.status, "PENDENTE");
       novo = await usuarioPorEmail("novo@example.invalid");
       assert.equal(novo.Role, "ADMIN");
+      assert.equal(result.data.oficina.email, novo.Email);
+      assert.equal((await db.oficina.findUnique({ where: { id: novo.oficinaId } })).email, novo.Email);
+      assert.equal(emails.at(-1).email, novo.Email);
       const tokenEmail = tokenPara(novo.Email);
       const registro = await db.confirmacaoEmailOficina.findFirst({ where: { usuarioId: novo.id } });
+      assert.equal(registro.email, novo.Email);
       assert.equal(registro.tokenHash, createHash("sha256").update(tokenEmail).digest("hex"));
       assert.ok(registro.enviadoEm);
       assert.equal(registro.consumidoEm, null);

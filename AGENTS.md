@@ -10,7 +10,7 @@ Atualização de 12/09/2026: primeira etapa de tickets e chat implementada. O t�
 
 Continuidade do painel técnico: o vínculo só é confirmado quando o operador salva a OS. O painel agora lista somente veículos com OS que não estejam `FINALIZADA`, `FECHADA` ou `CANCELADA` e que estejam atribuídas ao técnico. **Exibir ordem de serviço** abre os itens salvos em somente leitura; **Solicitar peça ao operador**, dentro dessa visualização, cria o ticket e leva à conversa. A lista geral de tickets serve para acompanhamento, não para abrir pedidos fora da OS. Detalhes na seção 6.7.
 
-Atualização de 13/09/2026: landing page React integrada à rota pública `/`, com **Adquirir o MotorMind** levando a `/cadastro-oficina`. O cadastro público cria oficina, responsável `OWNER`, licença e configurações em uma transação, com oficina/licença `PENDENTE`. Login permanece condicionado à ativação de ambas. Não há pagamento, compra confirmada ou ativação automática nesta etapa. Consulte `CADASTRO-OFICINA-LEIA-ME.md` e a seção 7.1.
+Atualização de 14/09/2026: landing page pública `/` e cadastro `/cadastro-oficina` integrados à confirmação de e-mail pelo Brevo. Por decisão de Guilherme, o responsável usa o mesmo e-mail/senha como `ADMIN`. Oficina e licença nascem `PENDENTE`; o link válido libera ambas em transação e permite login. Cadastros pendentes anteriores com responsável `OWNER` também podem solicitar o link, passando esse responsável a `ADMIN` na confirmação. Não há pagamento nem compra confirmada nesta etapa. Consulte `CADASTRO-OFICINA-LEIA-ME.md` e a seção 7.1.
 
 Antes de alterar código:
 
@@ -308,9 +308,13 @@ Objetivo definido: disponibilizar uma landing page pública do MotorMind onde o 
 Estado atual desta fase:
 
 - Em 13/09/2026, a versão React recebida foi integrada à rota `/`. `LandingPage.jsx` ganhou os links de aquisição e o CSS ausente, mantendo paleta e identidade da base. Os HTML/CSS/JS estáticos recebidos continuam como referência; o ponto de entrada é o frontend Vite.
-- `/cadastro-oficina` envia para `POST /auth/cadastro-oficina`. Campos obrigatórios: nome da oficina, telefone, nome do responsável, e-mail de acesso, senha e confirmação. Demais dados comerciais/endereço são opcionais. O backend valida e cria `Oficina`, `Usuario` (`OWNER`), `Licenca` e `ConfiguracaoOficina` em transação; oficina/licença ficam `PENDENTE`, sem JWT ou pagamento.
+- `/cadastro-oficina` envia para `POST /auth/cadastro-oficina`. Campos obrigatórios: nome da oficina, telefone, nome do responsável, e-mail de acesso, senha e confirmação. Demais dados comerciais/endereço são opcionais. O backend valida e cria `Oficina`, `Usuario` (`ADMIN`, conforme decisão de Guilherme), `Licenca` e `ConfiguracaoOficina` em transação; oficina/licença ficam `PENDENTE`, sem JWT ou pagamento.
 - Duplicação por e-mail/CNPJ é bloqueada inclusive sob concorrência, com bloqueios transacionais e restrições únicas. Reenvios recebem `409`, sem novo cadastro. Senha bcrypt, lista explícita de campos aceitos e limite de tentativas por IP protegem a operação pública. O login conserva as verificações de oficina/licença ativas.
-- Não houve alteração de schema, migration ou dependência. Build, lint focado, 18 testes de regras e 11 cenários HTTP/PostgreSQL em schema descartável passaram. Navegador integrado indisponível: validação visual/manual pendente. Detalhes, limites e comandos em `CADASTRO-OFICINA-LEIA-ME.md`.
+- Em 14/09/2026, confirmação via Brevo integrada. `/confirmar-oficina` abre a tela do link ou do reenvio; `POST /auth/confirmar-oficina` valida token e ativa oficina/licença/ADMIN na mesma transação. `POST /auth/reenviar-confirmacao` atende o responsável inicial de oficina pendente, inclusive cadastro antigo com `OWNER`, preservando senha/e-mail e sem criar outro usuário.
+- `ConfirmacaoEmailOficina` armazena hash, validade de 24 h e datas de envio/consumo/invalidação. Links são de uso único; reenvios respeitam 1 minuto e 5 por hora/oficina. Falha no provedor preserva cadastro e links anteriores, sem registrar envio fictício. Não é recuperação de senha nem aprovação de pagamento. Os demais módulos e proprietários existentes não são convertidos em massa.
+- O cadastro público tem um único **E-mail da oficina**, obrigatório, usado também para confirmação e login ADMIN. A entrada `Email` grava o mesmo endereço normalizado em `Oficina.email` e `Usuario.Email`; a resposta exibe o endereço persistido. Formulários antigos com dois e-mails divergentes são recusados. Credenciais de cadastros anteriores não são alteradas automaticamente.
+- `npm run email:verificar`, no backend, confere a autenticação e o remetente no Brevo sem enviar e-mails ou imprimir credenciais. A nova consulta real em 14/09/2026, após Guilherme informar atualização do `.env`, ainda retornou `401` (chave não reconhecida). A interface agora distingue falha de configuração/autorização do provedor de indisponibilidade temporária. Não afirmar entrega real validada até essa pendência ser resolvida.
+- Migration `20260913180000_confirmacao_email_oficina` aplicada no banco local em 14/09/2026 e Prisma Client atualizado; nenhuma dependência adicionada. Após a unificação do e-mail, passaram build, lint focado, 23 testes de regras/contrato e 22 cenários HTTP/PostgreSQL isolados com Brevo simulado (23 testes com agrupador). Validação visual/manual e entrega real na caixa de entrada devem ser distinguidas desses testes. Detalhes em `CADASTRO-OFICINA-LEIA-ME.md`.
 - Nenhum checkout, pagamento, webhook, cadastro público de oficina ou ativação automática deve ser considerado pronto apenas por existir uma interface.
 - O desenvolvimento será incremental. Implementar somente a etapa solicitada em cada conversa e validar sua integração com o projeto existente.
 - O modelo comercial de referência continua sendo compra única, sem assinatura recorrente, salvo decisão posterior de Guilherme.
@@ -319,7 +323,7 @@ Fluxo de produto pretendido, ainda sujeito às decisões de cada etapa:
 
 1. O visitante acessa a landing page pública e consulta a apresentação do MotorMind.
 2. Uma ação de compra conduz ao fluxo comercial que for definido.
-3. Nesta etapa, o usuário já pode cadastrar a oficina e seu primeiro responsável, ficando pendente de ativação. A associação com compra aprovada será definida na etapa comercial.
+3. Nesta etapa, o usuário cadastra a oficina e seu primeiro responsável e confirma o e-mail para liberar acesso. A associação com compra aprovada será definida na etapa comercial.
 4. O backend cria os registros necessários de oficina, usuário inicial e licença de forma consistente, mantendo o isolamento por `oficinaId`.
 5. Com a oficina e a licença em estado autorizado, o usuário pode seguir para o login e acessar somente o ambiente da própria oficina.
 
@@ -329,7 +333,7 @@ Decisões que devem ser confirmadas antes das respectivas implementações:
 - Qual provedor, meio de pagamento, valor, confirmação, cancelamento e tratamento de falhas serão usados, caso exista integração real.
 - Em que momento o cadastro da oficina será liberado e como uma compra aprovada será associada com segurança a um único cadastro.
 - Quais dados da oficina e do primeiro usuário serão obrigatórios, além das regras de aceite, verificação e recuperação de acesso.
-- Quais estados e regras de ativação serão aplicados a `Oficina` e `Licenca` e se haverá alguma tela administrativa para aprovação.
+- Como a futura aprovação comercial será combinada à confirmação de e-mail já entregue e se haverá tela administrativa para aprovação de compra.
 
 Garantias que devem permanecer em todas as etapas:
 
