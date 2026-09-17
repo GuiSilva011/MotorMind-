@@ -1,5 +1,5 @@
 import prisma from '../config/prisma.js';
-import { bloquearVinculoVeiculo, filtroVeiculoTecnico } from '../services/tecnicoService.js';
+import { bloquearVinculoVeiculo, filtroVeiculoTecnico } from '../utils/tecnicoRegras.js';
 import { TicketError } from '../utils/ticketRegras.js';
 
 function obterOficinaId(req, res) {

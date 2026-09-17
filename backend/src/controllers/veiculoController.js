@@ -1,5 +1,5 @@
 import prisma from '../config/prisma.js';
-import { criarTecnicoService, filtroVeiculoTecnico } from '../services/tecnicoService.js';
+import { consultaVeiculosTecnico, filtroVeiculoTecnico } from '../utils/tecnicoRegras.js';
 
 function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
@@ -96,7 +96,10 @@ export async function listarVeiculo(req, res) {
   try {
     const oficinaId = obterOficinaId(req, res);
     if (!oficinaId) return;
-    if (req.user.role === 'TECNICO') return res.json(await criarTecnicoService(prisma).veiculos(req.user));
+    if (req.user.role === 'TECNICO') {
+      const veiculos = await prisma.veiculo.findMany(consultaVeiculosTecnico(req.user));
+      return res.json(veiculos);
+    }
 
     const veiculos = await prisma.veiculo.findMany({
       where: { oficinaId },

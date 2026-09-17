@@ -1,8 +1,8 @@
 import prisma from '../config/prisma.js';
 import { EstoqueError, reconciliarEstoqueOrdem } from '../services/estoqueService.js';
-import { TicketError, OS_ENCERRADA } from '../utils/ticketRegras.js';
+import { TicketError, OS_ENCERRADA, inteiro } from '../utils/ticketRegras.js';
 import { sincronizarAtribuicao } from '../services/ordemAtribuicaoService.js';
-import { criarTecnicoService } from '../services/tecnicoService.js';
+import { filtroOrdensTecnico, selecaoOrdemTecnica } from '../utils/tecnicoRegras.js';
 
 function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
@@ -609,7 +609,14 @@ export async function buscarOrdemServicoPorId(req, res) {
   try {
     const oficinaId = obterOficinaId(req, res);
     if (!oficinaId) return;
-    if (req.user.role === 'TECNICO') return res.json(await criarTecnicoService(prisma).ordem(req.user, req.params.id));
+    if (req.user.role === 'TECNICO') {
+      const ordem = await prisma.ordemServico.findFirst({
+        where: { id: inteiro(req.params.id), ...filtroOrdensTecnico(req.user) },
+        select: selecaoOrdemTecnica,
+      });
+      if (!ordem) throw new TicketError(404, 'OS não encontrada ou não está mais atribuída a você.');
+      return res.json(ordem);
+    }
 
     const ordem = await buscarOrdemCompleta(
       prisma,

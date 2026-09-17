@@ -77,6 +77,9 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
     await t.test('painel só recebe veículos de OS salvas e atribuídas; filtro também protege a listagem antiga', async () => {
       const painel = await call(tecnico, 'GET', '/tecnico/veiculos');
       assert.equal(painel.status, 200);
+      assert.equal(painel.headers.get('cache-control'), 'no-store');
+      assert.equal((await call(null, 'GET', '/tecnico/veiculos')).status, 401);
+      assert.deepEqual((await call(tecnico, 'GET', '/veiculos')).data, painel.data);
       assert.deepEqual(painel.data.map(v => v.id), [veiculo.id]);
       assert.deepEqual(painel.data[0].ordensServico.map(o => o.id), [os.id]);
       assert.equal((await call(tecnico2, 'GET', '/tecnico/veiculos')).data.length, 0);
@@ -112,6 +115,7 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
       const leitura = await call(tecnico, 'GET', `/tecnico/ordens/${rascunho.id}`);
       assert.equal(leitura.status, 200);
       const ordem = leitura.data;
+      assert.deepEqual((await call(tecnico, 'GET', `/ordens-servico/${rascunho.id}`)).data, ordem);
       assert.equal(ordem.diagnosticos[0].nomeDiagnostico, 'Diagnóstico salvo');
       assert.equal(ordem.diagnosticos[0].servicos[0].pecas[0].quantidade, 2);
       assert.equal(ordem.diagnosticos[0].pecas.length, 1);
@@ -122,6 +126,7 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
       assert.doesNotMatch(JSON.stringify(ordem), /precoVenda|custoUnitario|valorTotal|Senha|Alteração posterior/);
       assert.equal((await call(tecnico2, 'GET', `/tecnico/ordens/${rascunho.id}`)).status, 404);
       assert.equal((await call(tecnicoOutra, 'GET', `/tecnico/ordens/${rascunho.id}`)).status, 404);
+      assert.equal((await call(tecnicoOutra, 'GET', `/ordens-servico/${rascunho.id}`)).status, 404);
       assert.equal((await call(tecnico, 'PUT', `/ordens-servico/${rascunho.id}`, {})).status, 403);
       const segunda = (await call(op1, 'POST', '/ordens-servico', { codigo: 'OS-SEGUNDA', veiculoId: veiculoExtra.id, tecnicoId: tecnico.id })).data;
       let painel = (await call(tecnico, 'GET', '/tecnico/veiculos')).data;
@@ -159,6 +164,23 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
       assert.equal((await call(tecnico2, 'GET', `/tecnico/veiculos/${veiculo.id}/historico`)).status, 404);
       assert.equal((await call(tecnicoOutra, 'GET', `/tecnico/veiculos/${veiculo.id}/historico/${antiga.id}`)).status, 404);
       assert.equal((await call(tecnico2, 'POST', '/tickets', { ordemServicoId: antiga.id, chaveAbertura: randomUUID(), itens: [{ nomePeca: 'Não permitido', quantidadeSolicitada: 1 }] })).status, 409);
+    });
+    await t.test('consultas técnicas preservam validação de IDs, erros JSON e ausência de cache', async () => {
+      const consultas = [
+        ['/tecnico/ordens/invalido', 400],
+        ['/tecnico/ordens/0', 400],
+        ['/tecnico/ordens/2147483647', 404],
+        ['/tecnico/veiculos/invalido/historico', 400],
+        ['/tecnico/veiculos/2147483647/historico', 404],
+        [`/tecnico/veiculos/${veiculo.id}/historico/invalido`, 400],
+        [`/tecnico/veiculos/${veiculo.id}/historico/2147483647`, 404],
+      ];
+      for (const [rota, status] of consultas) {
+        const resposta = await call(tecnico, 'GET', rota);
+        assert.equal(resposta.status, status, rota);
+        assert.equal(typeof resposta.data.erro, 'string', rota);
+        assert.equal(resposta.headers.get('cache-control'), 'no-store', rota);
+      }
     });
     await t.test('rotas de consulta mantêm perfil, oficina, validação de sessão e respostas JSON', async () => {
       const tecnicos = await call(op1, 'GET', '/tickets/tecnicos');
@@ -307,7 +329,9 @@ test('tickets e chat via HTTP/PostgreSQL isolado', { skip: process.env.MOTORMIND
       assert.equal((await call(op1, 'PUT', `/ordens-servico/${os.id}`, { status: 'FECHADA' })).status, 200);
       assert.equal((await call(tecnico, 'GET', '/tickets/ordens')).data.length, 0);
       assert.equal((await call(tecnico, 'GET', '/tecnico/veiculos')).data.length, 0);
+      assert.equal((await call(tecnico, 'GET', '/veiculos')).data.length, 0);
       assert.equal((await call(tecnico, 'GET', `/tecnico/ordens/${os.id}`)).status, 404);
+      assert.equal((await call(tecnico, 'GET', `/ordens-servico/${os.id}`)).status, 404);
       assert.equal((await call(tecnico, 'GET', `/tecnico/veiculos/${veiculo.id}/historico`)).status, 404);
       assert.equal((await call(tecnico, 'POST', '/checklists', { veiculoId: veiculo.id })).status, 404);
       assert.equal(await db.ordemServicoAtribuicao.count({ where: { ordemServicoId: os.id, ativa: true } }), 0);

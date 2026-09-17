@@ -8,6 +8,8 @@ O módulo segue o fluxo `ticketRoutes.js` → `ticketController.js` → Prisma. 
 
 Foram preservados os endpoints, formatos de resposta, permissões, transações, histórico, idempotência e expiração de 48 horas. Esta reorganização não exige migration nem dependência nova.
 
+Em 16/09/2026, o módulo do técnico passou a seguir o mesmo padrão: `tecnicoRoutes.js` → `tecnicoController.js` → Prisma. O antigo `tecnicoService.js` foi removido. O controller atende painel, OS e histórico; `utils/tecnicoRegras.js` mantém os filtros e seleções compartilhados com veículos/OS e o bloqueio usado pela checklist. `middlewares/tecnicoMiddleware.js` mantém as respostas sem cache e o tratamento de erros. As URLs, permissões e respostas continuam iguais.
+
 ## Como usar
 
 1. Reinicie o backend após a atualização. A migration `20260912120000_tickets_chat` já foi aplicada no banco local e o Prisma Client foi regenerado.
@@ -45,7 +47,8 @@ Esta atualização do painel não exige nova migration nem instalação de depen
 | `backend/src/utils/ticketArquivos.js` | Arquivos privados e limpeza automática |
 | `backend/src/utils/notificacaoTicket.js` | Geração de notificações reutilizada por tickets e atribuições de OS |
 | `backend/src/services/ordemAtribuicaoService.js` | Atribuição e encerramento com histórico |
-| `backend/src/services/tecnicoService.js` e `backend/src/routes/tecnicoRoutes.js` | Veículos vinculados, OS técnica somente leitura e histórico autorizado |
+| `backend/src/controllers/tecnicoController.js` e `backend/src/routes/tecnicoRoutes.js` | Consultas e respostas HTTP de veículos vinculados, OS técnica somente leitura e histórico autorizado |
+| `backend/src/utils/tecnicoRegras.js` e `backend/src/middlewares/tecnicoMiddleware.js` | Filtros, seleções e bloqueio de vínculo compartilhados; controle de cache e tratamento de erros |
 | `backend/src/routes/ticketRoutes.js` | Declaração de endpoints e composição dos middlewares e controllers |
 | `backend/src/controllers/ordemServicoController.js` | Integração da atribuição e preservação de registros |
 | `backend/src/server/server.js` | Registro das rotas e início da limpeza |
@@ -84,6 +87,8 @@ Todas exigem JWT e oficina da sessão. IDs de usuário/oficina recebidos no corp
 | `PATCH /tickets/notificacoes/lidas` | Marca avisos próprios de tickets/atribuição como lidos |
 
 ## Validação
+
+Na reorganização do técnico de 16/09/2026, passaram os 13 testes de regras e os 18 cenários HTTP/PostgreSQL (19 testes com o agrupador). Foram verificadas também a equivalência das respostas pelas rotas antigas de veículos/OS, a perda de acesso após encerramento, a validação dos IDs, os erros JSON e a ausência de cache nas consultas técnicas. A suíte removeu seu schema descartável e anexos. O frontend não foi alterado; não houve nova validação visual.
 
 Na reorganização de 14/09/2026, passaram os 13 testes de regras e os 17 cenários HTTP/PostgreSQL (18 testes contando o agrupador). Foram acrescentadas verificações das consultas por perfil/oficina, sessão inválida, erros JSON, filtros da fila e autorização anterior ao processamento de uploads. Sintaxe e imports relativos dos 49 arquivos JavaScript do backend também foram conferidos. O schema descartável e seus anexos foram removidos ao final da suíte. A validação desta alteração foi de backend; não houve nova conferência visual.
 
