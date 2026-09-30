@@ -8,12 +8,18 @@ export class ErroCadastroOficina extends Error {
   }
 }
 
-const estados = new Set("AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" "));
+const estados = new Set(
+  "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(
+    " ",
+  ),
+);
 const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validarCadastroOficina(body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
-    throw new ErroCadastroOficina("Informe os dados da oficina e do responsável.");
+    throw new ErroCadastroOficina(
+      "Informe os dados da oficina e do responsável.",
+    );
   }
   const campos = {};
   function texto(campo, rotulo, limite, obrigatorio = false) {
@@ -24,32 +30,40 @@ export function validarCadastroOficina(body) {
     }
     const limpo = valor?.trim() || "";
     if (obrigatorio && !limpo) campos[campo] = `${rotulo} é obrigatório.`;
-    if (limpo.length > limite) campos[campo] = `${rotulo}: use até ${limite} caracteres.`;
+    if (limpo.length > limite)
+      campos[campo] = `${rotulo}: use até ${limite} caracteres.`;
     return limpo || null;
   }
   function email(campo, rotulo, obrigatorio = false) {
     const valor = texto(campo, rotulo, 120, obrigatorio)?.toLowerCase() || null;
-    if (valor && !emailValido.test(valor)) campos[campo] = "Informe um e-mail válido.";
+    if (valor && !emailValido.test(valor))
+      campos[campo] = "Informe um e-mail válido.";
     return valor;
   }
   function telefone(campo, rotulo, obrigatorio = false) {
     const valor = texto(campo, rotulo, 20, obrigatorio);
     const digitos = valor?.replace(/[\s()+.-]/g, "") || null;
-    if (digitos && !/^\d{10,13}$/.test(digitos)) campos[campo] = "Informe um telefone com DDD.";
+    if (digitos && !/^\d{10,13}$/.test(digitos))
+      campos[campo] = "Informe um telefone com DDD.";
     return digitos;
   }
 
   const emailCadastro = email("Email", "E-mail da oficina", true);
   // Recusa formulários antigos com dois destinos diferentes, sem escolher silenciosamente um deles.
   if (body.email != null && body.email !== "") {
-    if (typeof body.email !== "string" || body.email.trim().toLowerCase() !== emailCadastro) {
-      campos.Email = "Use um único e-mail para a oficina e o acesso. Atualize a página e revise o cadastro.";
+    if (
+      typeof body.email !== "string" ||
+      body.email.trim().toLowerCase() !== emailCadastro
+    ) {
+      campos.Email =
+        "Use um único e-mail para a oficina e o acesso. Atualize a página e revise o cadastro.";
     }
   }
   const oficina = {
     nomeFantasia: texto("nomeFantasia", "Nome da oficina", 120, true),
     razaoSocial: texto("razaoSocial", "Razão social", 150),
-    cnpj: texto("cnpj", "CNPJ", 18)?.replace(/[./-]/g, "").toUpperCase() || null,
+    cnpj:
+      texto("cnpj", "CNPJ", 18)?.replace(/[./-]/g, "").toUpperCase() || null,
     email: emailCadastro,
     telefone: telefone("telefone", "Telefone", true),
     whatsapp: telefone("whatsapp", "WhatsApp"),
@@ -62,27 +76,41 @@ export function validarCadastroOficina(body) {
     uf: texto("uf", "Estado", 2)?.toUpperCase() || null,
   };
   // Valida o formato; não consulta a situação cadastral do documento.
-  if (oficina.cnpj && !/^[A-Z0-9]{12}\d{2}$/.test(oficina.cnpj)) campos.cnpj = "Informe o CNPJ completo, com 14 caracteres.";
-  if (oficina.cep && !/^\d{8}$/.test(oficina.cep)) campos.cep = "Informe um CEP com 8 dígitos.";
-  if (oficina.uf && !estados.has(oficina.uf)) campos.uf = "Selecione um estado válido.";
+  if (oficina.cnpj && !/^[A-Z0-9]{12}\d{2}$/.test(oficina.cnpj))
+    campos.cnpj = "Informe o CNPJ completo, com 14 caracteres.";
+  if (oficina.cep && !/^\d{8}$/.test(oficina.cep))
+    campos.cep = "Informe um CEP com 8 dígitos.";
+  if (oficina.uf && !estados.has(oficina.uf))
+    campos.uf = "Selecione um estado válido.";
 
   const responsavel = {
     Nome: texto("Nome", "Nome do responsável", 120, true),
     Email: emailCadastro,
   };
   const senha = body.Senha;
-  if (typeof senha !== "string" || senha.trim().length < 8 || Buffer.byteLength(senha, "utf8") > 72) {
+  if (
+    typeof senha !== "string" ||
+    senha.trim().length < 8 ||
+    Buffer.byteLength(senha, "utf8") > 72
+  ) {
     campos.Senha = "Use pelo menos 8 caracteres e no máximo 72 bytes na senha.";
   }
-  if (typeof body.confirmarSenha !== "string" || senha !== body.confirmarSenha) {
+  if (
+    typeof body.confirmarSenha !== "string" ||
+    senha !== body.confirmarSenha
+  ) {
     campos.confirmarSenha = "As senhas precisam ser iguais.";
   }
-  if (Object.keys(campos).length) throw new ErroCadastroOficina("Revise os campos indicados.", 400, campos);
+  if (Object.keys(campos).length)
+    throw new ErroCadastroOficina("Revise os campos indicados.", 400, campos);
   return { oficina, responsavel, senha };
 }
 
 function erroDuplicado() {
-  return new ErroCadastroOficina("Já existe um cadastro com este e-mail de acesso ou CNPJ. Se você já se cadastrou, aguarde a ativação ou acesse o login.", 409);
+  return new ErroCadastroOficina(
+    "Já existe um cadastro com este e-mail de acesso ou CNPJ. Se você já se cadastrou, acesse o login.",
+    409,
+  );
 }
 
 export async function cadastrarOficina(db, body) {
@@ -97,13 +125,21 @@ export async function cadastrarOficina(db, body) {
         await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${chave})::bigint)::text`;
       }
       const usuario = await tx.usuario.findFirst({
-        where: { Email: { equals: responsavel.Email, mode: "insensitive" } }, select: { id: true },
+        where: { Email: { equals: responsavel.Email, mode: "insensitive" } },
+        select: { id: true },
       });
       if (usuario) throw erroDuplicado();
       if (oficina.cnpj) {
-        const cnpjFormatado = oficina.cnpj.replace(/^(.{2})(.{3})(.{3})(.{4})(.{2})$/, "$1.$2.$3/$4-$5");
+        const cnpjFormatado = oficina.cnpj.replace(
+          /^(.{2})(.{3})(.{3})(.{4})(.{2})$/,
+          "$1.$2.$3/$4-$5",
+        );
         const existente = await tx.oficina.findFirst({
-          where: { OR: [oficina.cnpj, cnpjFormatado].map(cnpj => ({ cnpj: { equals: cnpj, mode: "insensitive" } })) },
+          where: {
+            OR: [oficina.cnpj, cnpjFormatado].map((cnpj) => ({
+              cnpj: { equals: cnpj, mode: "insensitive" },
+            })),
+          },
           select: { id: true },
         });
         if (existente) throw erroDuplicado();
@@ -111,14 +147,25 @@ export async function cadastrarOficina(db, body) {
       const criada = await tx.oficina.create({
         data: {
           ...oficina,
-          status: "PENDENTE",
-          usuarios: { create: { ...responsavel, Senha: senhaHash, Role: "ADMIN" } },
-          licenca: { create: { status: "PENDENTE" } },
+          status: "ATIVA",
+          usuarios: {
+            create: { ...responsavel, Senha: senhaHash, Role: "ADMIN" },
+          },
+          licenca: { create: { status: "ATIVA", ativadaEm: new Date() } },
           configuracao: { create: {} },
         },
-        select: { nomeFantasia: true, email: true, status: true, licenca: { select: { status: true } } },
+        select: {
+          nomeFantasia: true,
+          email: true,
+          status: true,
+          licenca: { select: { status: true } },
+        },
       });
-      return { mensagem: "Cadastro recebido. Confirme seu e-mail para ativar a oficina e liberar o acesso de administrador.", oficina: criada };
+      return {
+        mensagem:
+          "Cadastro concluído. Entre com seu e-mail e senha para acessar sua oficina.",
+        oficina: criada,
+      };
     });
   } catch (error) {
     if (error.code === "P2002") throw erroDuplicado();

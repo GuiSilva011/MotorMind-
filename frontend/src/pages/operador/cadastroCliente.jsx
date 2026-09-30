@@ -109,6 +109,7 @@ function CadastroCliente() {
 
   const [formData, setFormData] = useState(formClienteCadastro);
   const [clienteEmEdicaoId, setClienteEmEdicaoId] = useState(null);
+  const [podeExcluirCliente, setPodeExcluirCliente] = useState(false);
   const [mensagem, setMensagem] = useState('');
   const [veiculos, setVeiculos] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -240,6 +241,7 @@ function CadastroCliente() {
     if (!cliente) return;
 
     setClienteEmEdicaoId(cliente.id || null);
+    setPodeExcluirCliente(cliente.podeExcluir === true);
 
     setFormData({
       nome: cliente.nome || '',
@@ -1043,13 +1045,15 @@ function CadastroCliente() {
                   Editar
                 </button>
 
-                <button
-                  type="button"
-                  className="btn-delete-cliente"
-                  onClick={handleExcluirCliente}
-                >
-                  Excluir
-                </button>
+                {clienteEmEdicaoId && podeExcluirCliente && !loadingCliente && (
+                  <button
+                    type="button"
+                    className="btn-delete-cliente"
+                    onClick={handleExcluirCliente}
+                  >
+                    Excluir
+                  </button>
+                )}
               </>
             ) : (
               <button type="submit" className="btn-primary">

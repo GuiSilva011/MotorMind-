@@ -10,7 +10,7 @@ Atualização de 12/09/2026: primeira etapa de tickets e chat implementada. O t�
 
 Continuidade do painel técnico: o vínculo só é confirmado quando o operador salva a OS. O painel agora lista somente veículos com OS que não estejam `FINALIZADA`, `FECHADA` ou `CANCELADA` e que estejam atribuídas ao técnico. **Exibir ordem de serviço** abre os itens salvos em somente leitura; **Solicitar peça ao operador**, dentro dessa visualização, cria o ticket e leva à conversa. A lista geral de tickets serve para acompanhamento, não para abrir pedidos fora da OS. Detalhes na seção 6.7.
 
-Atualização de 14/09/2026: landing page pública `/` e cadastro `/cadastro-oficina` integrados à confirmação de e-mail pelo Brevo. Por decisão de Guilherme, o responsável usa o mesmo e-mail/senha como `ADMIN`. Oficina e licença nascem `PENDENTE`; o link válido libera ambas em transação e permite login. Cadastros pendentes anteriores com responsável `OWNER` também podem solicitar o link, passando esse responsável a `ADMIN` na confirmação. Não há pagamento nem compra confirmada nesta etapa. Consulte `CADASTRO-OFICINA-LEIA-ME.md` e a seção 7.1.
+Atualização de 30/09/2026: por decisão de Guilherme, a confirmação de e-mail pelo Brevo foi removida do cadastro. `/cadastro-oficina` cria oficina e licença `ATIVA`, com responsável `ADMIN`, em uma única transação, e redireciona imediatamente para `/login`. O responsável entra com o e-mail/senha cadastrados. Não há envio de e-mail, token de confirmação, pagamento ou sessão automática. Contas anteriores pendentes não foram ativadas em massa; schema e migrations existentes foram preservados. Consulte `CADASTRO-OFICINA-LEIA-ME.md` e a seção 7.1.
 
 Antes de alterar código:
 
@@ -299,6 +299,24 @@ O operador não recebe botões de ação na tela e não pode consultar o histór
 - Arquivos centrais: `backend/src/controllers/tecnicoController.js`, `backend/src/routes/tecnicoRoutes.js`, `backend/src/utils/tecnicoRegras.js`, `backend/src/middlewares/tecnicoMiddleware.js`, controllers de veículos/checklist/OS; `frontend/src/pages/tecnico/painel.jsx`, `ordemServico.jsx`, `historicoVeicular.jsx`, `frontend/src/components/ConteudoOrdemTecnica.jsx` e `NovaSolicitacao.jsx`.
 - Nenhum schema, migration ou dependência foi alterado nesta continuidade. Validação: 14 cenários integrados HTTP/PostgreSQL em schema descartável passaram (15 testes contando o agrupador), incluindo vínculo após salvamento, rollback, múltiplas OS, troca de mecânico, snapshots do catálogo, checklist, histórico e regressão de tickets/chat. Build passou. Validação visual/manual ainda deve ser feita no ambiente local.
 
+### 6.8. Exclusão de funcionários e reset local (30/09/2026)
+
+- A exclusão de operadores/técnicos agora é lógica: `Usuario.excluidoEm` registra a data. Usuário e funcionário são preservados no banco para manter nomes, OS, atribuições, tickets, mensagens e movimentações. A ação remove o funcionário das listas e encerra seu acesso. Não trocar vínculos históricos por exclusão em cascata.
+- `DELETE /funcionarios/:id` exige ADMIN/OWNER e oficina da sessão. Bloqueia exclusão do próprio usuário e de ADMIN/OWNER por esse endpoint. IDs inválidos retornam `400`, outra oficina `404`, e repetir a exclusão retorna sucesso sem mudar a data.
+- Tickets pendentes do solicitante/responsável devem ser concluídos ou cancelados antes da exclusão, com resposta `409` indicando o ticket. A abertura/assunção e a exclusão bloqueiam o usuário em transação para evitar atendimento novo após sua remoção.
+- Login recusa excluídos. O middleware JWT consulta o usuário/oficina a cada requisição, rejeita excluídos ou inexistentes e usa o perfil atual do banco. Tokens anteriores à criação do registro também são recusados, evitando reutilizar IDs recriados após reset.
+- Listas de funcionários/técnicos e novos destinatários de notificações ignoram excluídos. O e-mail continua reservado pelo registro histórico; não há reativação pela interface nesta etapa.
+- OS existentes mantêm os responsáveis e podem ser editadas, encerradas ou transferidas para outro técnico. O seletor identifica o mecânico anterior como fora da equipe. Novas atribuições e reabertura com técnico excluído são recusadas pela API.
+- Cadastro e edição de funcionários também exigem ADMIN/OWNER no backend; a consulta usada pela OS continua autenticada. A API de edição não altera registros excluídos.
+- Migration aditiva `20260930160000_exclusao_logica_usuario` aplicada e Prisma Client regenerado. Testes integrados em schema descartável cobrem permissões, isolamento, histórico, tickets pendentes, sessões antigas, listas, duplicação, edição/reabertura de OS e repetição da exclusão.
+- Reset solicitado por Guilherme executado no PostgreSQL local `localhost:5432`, banco `motormind`, schema `public`, reaplicando as dez migrations, sem seed. O banco ficou vazio para um novo cadastro público. Arquivos de upload não fazem parte do reset do banco.
+- Validação final: zero registros de negócio nas 30 tabelas do schema, dez migrations aplicadas e backend respondendo após o reset. Passaram 32 testes de regras e 37 cenários HTTP/PostgreSQL (72 testes contando subtestes e agrupadores), além de build e lint focado sem erros. Permanecem os avisos anteriores de tamanho do bundle e dependência de `useEffect` na OS; teste visual/manual não realizado nesta sessão.
+
+### 6.9. Botão de exclusão de clientes (30/09/2026)
+
+- A visualização do cliente oculta **Excluir** quando houver agendamento vinculado ao cliente ou OS, checklist ou agendamento de algum de seus veículos. O botão permanece para clientes sem esses vínculos, conforme a regra de exclusão já existente.
+- Listagem e busca por nome retornam `podeExcluir`, calculado pelo backend a partir dos vínculos persistidos. A interface só mostra o botão quando recebe permissão explícita. A operação de exclusão e sua proteção no banco permanecem iguais; não houve migration.
+
 ## 7. Próximos passos
 
 Estoque, integração da OS, painel técnico e primeira etapa de tickets/chat são considerados concluídos para a fase atual. As evoluções técnicas que ainda aparecem neste roteiro permanecem registradas, mas não devem ser iniciadas automaticamente. A próxima fase ativa é a landing page e o ingresso de uma nova oficina; seguir cada solicitação de Guilherme passo a passo.
@@ -310,13 +328,12 @@ Objetivo definido: disponibilizar uma landing page pública do MotorMind onde o 
 Estado atual desta fase:
 
 - Em 13/09/2026, a versão React recebida foi integrada à rota `/`. `LandingPage.jsx` ganhou os links de aquisição e o CSS ausente, mantendo paleta e identidade da base. Os HTML/CSS/JS estáticos recebidos continuam como referência; o ponto de entrada é o frontend Vite.
-- `/cadastro-oficina` envia para `POST /auth/cadastro-oficina`. Campos obrigatórios: nome da oficina, telefone, nome do responsável, e-mail de acesso, senha e confirmação. Demais dados comerciais/endereço são opcionais. O backend valida e cria `Oficina`, `Usuario` (`ADMIN`, conforme decisão de Guilherme), `Licenca` e `ConfiguracaoOficina` em transação; oficina/licença ficam `PENDENTE`, sem JWT ou pagamento.
+- `/cadastro-oficina` envia para `POST /auth/cadastro-oficina`. Campos obrigatórios: nome da oficina, telefone, nome do responsável, e-mail de acesso, senha e confirmação da senha. Demais dados comerciais/endereço são opcionais. O backend valida e cria `Oficina`, `Usuario` (`ADMIN`, conforme decisão de Guilherme), `Licenca` e `ConfiguracaoOficina` em transação; oficina/licença ficam `ATIVA`, com `Licenca.ativadaEm` definida pelo servidor, sem JWT ou pagamento. Após o sucesso, a interface redireciona imediatamente para `/login`.
 - Duplicação por e-mail/CNPJ é bloqueada inclusive sob concorrência, com bloqueios transacionais e restrições únicas. Reenvios recebem `409`, sem novo cadastro. Senha bcrypt, lista explícita de campos aceitos e limite de tentativas por IP protegem a operação pública. O login conserva as verificações de oficina/licença ativas.
-- Em 14/09/2026, confirmação via Brevo integrada. `/confirmar-oficina` abre a tela do link ou do reenvio; `POST /auth/confirmar-oficina` valida token e ativa oficina/licença/ADMIN na mesma transação. `POST /auth/reenviar-confirmacao` atende o responsável inicial de oficina pendente, inclusive cadastro antigo com `OWNER`, preservando senha/e-mail e sem criar outro usuário.
-- `ConfirmacaoEmailOficina` armazena hash, validade de 24 h e datas de envio/consumo/invalidação. Links são de uso único; reenvios respeitam 1 minuto e 5 por hora/oficina. Falha no provedor preserva cadastro e links anteriores, sem registrar envio fictício. Não é recuperação de senha nem aprovação de pagamento. Os demais módulos e proprietários existentes não são convertidos em massa.
-- O cadastro público tem um único **E-mail da oficina**, obrigatório, usado também para confirmação e login ADMIN. A entrada `Email` grava o mesmo endereço normalizado em `Oficina.email` e `Usuario.Email`; a resposta exibe o endereço persistido. Formulários antigos com dois e-mails divergentes são recusados. Credenciais de cadastros anteriores não são alteradas automaticamente.
-- `npm run email:verificar`, no backend, confere a autenticação e o remetente no Brevo sem enviar e-mails ou imprimir credenciais. A nova consulta real em 14/09/2026, após Guilherme informar atualização do `.env`, ainda retornou `401` (chave não reconhecida). A interface agora distingue falha de configuração/autorização do provedor de indisponibilidade temporária. Não afirmar entrega real validada até essa pendência ser resolvida.
-- Migration `20260913180000_confirmacao_email_oficina` aplicada no banco local em 14/09/2026 e Prisma Client atualizado; nenhuma dependência adicionada. Após a unificação do e-mail, passaram build, lint focado, 23 testes de regras/contrato e 22 cenários HTTP/PostgreSQL isolados com Brevo simulado (23 testes com agrupador). Validação visual/manual e entrega real na caixa de entrada devem ser distinguidas desses testes. Detalhes em `CADASTRO-OFICINA-LEIA-ME.md`.
+- A confirmação via Brevo, integrada em 14/09/2026, foi removida em 30/09/2026 por decisão de Guilherme. Foram retirados os endpoints de confirmação/reenvio, serviços exclusivos, tela, links, textos e ferramentas do provedor. `/confirmar-oficina` no frontend apenas redireciona para `/login`; os antigos POSTs retornam `404`. Não há envio nem geração de tokens no cadastro.
+- `ConfirmacaoEmailOficina` e a migration aplicada `20260913180000_confirmacao_email_oficina` permanecem no banco/schema como histórico, sem novos registros. Contas antigas pendentes mantêm seus estados e credenciais; o login orienta suporte para ativação, sem solicitar confirmação por e-mail. Oficinas suspensas/canceladas e licenças pendentes/canceladas continuam bloqueadas.
+- O cadastro público tem um único **E-mail da oficina**, obrigatório, usado também para login ADMIN. A entrada `Email` grava o mesmo endereço normalizado em `Oficina.email` e `Usuario.Email`; a resposta exibe o endereço persistido. Formulários antigos com dois e-mails divergentes são recusados. Credenciais de cadastros anteriores não são alteradas automaticamente.
+- Validação da remoção: 19 testes de regras (incluindo subtestes), 12 cenários HTTP/PostgreSQL isolados (13 testes com agrupador), build e lint focado passaram. Testes cobrem login imediato, ausência de envio/tokens, estados bloqueados, isolamento, duplicação, concorrência, rollback e remoção das rotas. Sem mudança de schema, migration ou dependências. Navegador indisponível; validação visual/manual pendente. Detalhes em `CADASTRO-OFICINA-LEIA-ME.md`.
 - Nenhum checkout, pagamento, webhook, cadastro público de oficina ou ativação automática deve ser considerado pronto apenas por existir uma interface.
 - O desenvolvimento será incremental. Implementar somente a etapa solicitada em cada conversa e validar sua integração com o projeto existente.
 - O modelo comercial de referência continua sendo compra única, sem assinatura recorrente, salvo decisão posterior de Guilherme.
@@ -325,7 +342,7 @@ Fluxo de produto pretendido, ainda sujeito às decisões de cada etapa:
 
 1. O visitante acessa a landing page pública e consulta a apresentação do MotorMind.
 2. Uma ação de compra conduz ao fluxo comercial que for definido.
-3. Nesta etapa, o usuário cadastra a oficina e seu primeiro responsável e confirma o e-mail para liberar acesso. A associação com compra aprovada será definida na etapa comercial.
+3. Nesta etapa, o usuário cadastra a oficina e seu primeiro responsável, recebe acesso liberado e segue para o login, sem confirmação por e-mail. A associação com compra aprovada será definida na etapa comercial.
 4. O backend cria os registros necessários de oficina, usuário inicial e licença de forma consistente, mantendo o isolamento por `oficinaId`.
 5. Com a oficina e a licença em estado autorizado, o usuário pode seguir para o login e acessar somente o ambiente da própria oficina.
 
@@ -335,7 +352,7 @@ Decisões que devem ser confirmadas antes das respectivas implementações:
 - Qual provedor, meio de pagamento, valor, confirmação, cancelamento e tratamento de falhas serão usados, caso exista integração real.
 - Em que momento o cadastro da oficina será liberado e como uma compra aprovada será associada com segurança a um único cadastro.
 - Quais dados da oficina e do primeiro usuário serão obrigatórios, além das regras de aceite, verificação e recuperação de acesso.
-- Como a futura aprovação comercial será combinada à confirmação de e-mail já entregue e se haverá tela administrativa para aprovação de compra.
+- Como a futura aprovação comercial será combinada à liberação imediata no cadastro e se haverá tela administrativa para aprovação de compra.
 
 Garantias que devem permanecer em todas as etapas:
 

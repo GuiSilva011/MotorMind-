@@ -136,6 +136,8 @@ model Usuario {
   Senha String
   Role  Role
 
+  excluidoEm DateTime?
+
   CreatedAt DateTime @default(now())
   UpdatedAt DateTime @updatedAt
 

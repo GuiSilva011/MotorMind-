@@ -1,5 +1,6 @@
-import bcrypt from 'bcryptjs';
-import prisma from '../config/prisma.js';
+import bcrypt from "bcryptjs";
+import prisma from "../config/prisma.js";
+import { TicketError, inteiro, STATUS_FINAIS } from "../utils/ticketRegras.js";
 
 const SALT_ROUNDS = 12;
 
@@ -7,7 +8,7 @@ function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
 
   if (!oficinaId) {
-    res.status(401).json({ erro: 'Usuário não autenticado.' });
+    res.status(401).json({ erro: "Usuário não autenticado." });
     return null;
   }
 
@@ -15,7 +16,7 @@ function obterOficinaId(req, res) {
 }
 
 function validarRole(role) {
-  return ['OPERADOR', 'TECNICO'].includes(role);
+  return ["OPERADOR", "TECNICO"].includes(role);
 }
 
 function converterData(data) {
@@ -83,13 +84,13 @@ export async function criarFuncionario(req, res) {
 
     if (!Nome?.trim() || !Email?.trim() || !Senha || !Role) {
       return res.status(400).json({
-        erro: 'Nome, email, senha e perfil são obrigatórios.',
+        erro: "Nome, email, senha e perfil são obrigatórios.",
       });
     }
 
     if (!validarRole(Role)) {
       return res.status(400).json({
-        erro: 'Perfil inválido. Use OPERADOR ou TECNICO.',
+        erro: "Perfil inválido. Use OPERADOR ou TECNICO.",
       });
     }
 
@@ -101,7 +102,7 @@ export async function criarFuncionario(req, res) {
 
     if (emailExistente) {
       return res.status(409).json({
-        erro: 'Já existe um usuário cadastrado com este email.',
+        erro: "Já existe um usuário cadastrado com este email.",
       });
     }
 
@@ -117,7 +118,7 @@ export async function criarFuncionario(req, res) {
 
       if (cpfExistente) {
         return res.status(409).json({
-          erro: 'Já existe um funcionário cadastrado com este CPF nesta oficina.',
+          erro: "Já existe um funcionário cadastrado com este CPF nesta oficina.",
         });
       }
     }
@@ -158,20 +159,20 @@ export async function criarFuncionario(req, res) {
     });
 
     return res.status(201).json({
-      mensagem: 'Funcionário cadastrado com sucesso.',
+      mensagem: "Funcionário cadastrado com sucesso.",
       funcionario,
     });
   } catch (error) {
-    console.error('Erro ao cadastrar funcionário:', error);
+    console.error("Erro ao cadastrar funcionário:", error);
 
-    if (error.code === 'P2002') {
+    if (error.code === "P2002") {
       return res.status(409).json({
-        erro: 'Já existe um funcionário com os dados informados.',
+        erro: "Já existe um funcionário com os dados informados.",
       });
     }
 
     return res.status(500).json({
-      erro: 'Erro ao cadastrar funcionário.',
+      erro: "Erro ao cadastrar funcionário.",
       detalhe: error.message,
     });
   }
@@ -186,22 +187,23 @@ export async function listarFuncionarios(req, res) {
       where: {
         oficinaId,
         usuario: {
+          excluidoEm: null,
           Role: {
-            in: ['OPERADOR', 'TECNICO'],
+            in: ["OPERADOR", "TECNICO"],
           },
         },
       },
       select: montarSelectFuncionario(),
       orderBy: {
-        id: 'desc',
+        id: "desc",
       },
     });
 
     return res.json(funcionarios);
   } catch (error) {
-    console.error('Erro ao listar funcionários:', error);
+    console.error("Erro ao listar funcionários:", error);
     return res.status(500).json({
-      erro: 'Erro ao listar funcionários.',
+      erro: "Erro ao listar funcionários.",
       detalhe: error.message,
     });
   }
@@ -216,19 +218,20 @@ export async function buscarFuncionarioPorId(req, res) {
       where: {
         id: Number(req.params.id),
         oficinaId,
+        usuario: { excluidoEm: null },
       },
       select: montarSelectFuncionario(),
     });
 
     if (!funcionario) {
-      return res.status(404).json({ erro: 'Funcionário não encontrado.' });
+      return res.status(404).json({ erro: "Funcionário não encontrado." });
     }
 
     return res.json(funcionario);
   } catch (error) {
-    console.error('Erro ao buscar funcionário:', error);
+    console.error("Erro ao buscar funcionário:", error);
     return res.status(500).json({
-      erro: 'Erro ao buscar funcionário.',
+      erro: "Erro ao buscar funcionário.",
       detalhe: error.message,
     });
   }
@@ -265,6 +268,7 @@ export async function atualizarFuncionario(req, res) {
       where: {
         id,
         oficinaId,
+        usuario: { excluidoEm: null },
       },
       include: {
         usuario: true,
@@ -272,12 +276,12 @@ export async function atualizarFuncionario(req, res) {
     });
 
     if (!funcionarioExistente) {
-      return res.status(404).json({ erro: 'Funcionário não encontrado.' });
+      return res.status(404).json({ erro: "Funcionário não encontrado." });
     }
 
     if (Role && !validarRole(Role)) {
       return res.status(400).json({
-        erro: 'Perfil inválido. Use OPERADOR ou TECNICO.',
+        erro: "Perfil inválido. Use OPERADOR ou TECNICO.",
       });
     }
 
@@ -290,7 +294,7 @@ export async function atualizarFuncionario(req, res) {
 
       if (emailExistente) {
         return res.status(409).json({
-          erro: 'Já existe outro usuário cadastrado com este email.',
+          erro: "Já existe outro usuário cadastrado com este email.",
         });
       }
     }
@@ -312,7 +316,7 @@ export async function atualizarFuncionario(req, res) {
 
       if (cpfExistente) {
         return res.status(409).json({
-          erro: 'Já existe outro funcionário cadastrado com este CPF nesta oficina.',
+          erro: "Já existe outro funcionário cadastrado com este CPF nesta oficina.",
         });
       }
     }
@@ -382,20 +386,20 @@ export async function atualizarFuncionario(req, res) {
     });
 
     return res.json({
-      mensagem: 'Funcionário atualizado com sucesso.',
+      mensagem: "Funcionário atualizado com sucesso.",
       funcionario: funcionarioAtualizado,
     });
   } catch (error) {
-    console.error('Erro ao atualizar funcionário:', error);
+    console.error("Erro ao atualizar funcionário:", error);
 
-    if (error.code === 'P2002') {
+    if (error.code === "P2002") {
       return res.status(409).json({
-        erro: 'Já existe um funcionário com os dados informados.',
+        erro: "Já existe um funcionário com os dados informados.",
       });
     }
 
     return res.status(500).json({
-      erro: 'Erro ao atualizar funcionário.',
+      erro: "Erro ao atualizar funcionário.",
       detalhe: error.message,
     });
   }
@@ -406,35 +410,61 @@ export async function deletarFuncionario(req, res) {
     const oficinaId = obterOficinaId(req, res);
     if (!oficinaId) return;
 
-    const funcionarioExistente = await prisma.funcionario.findFirst({
-      where: {
-        id: Number(req.params.id),
-        oficinaId,
-      },
-    });
-
-    if (!funcionarioExistente) {
-      return res.status(404).json({ erro: 'Funcionário não encontrado.' });
-    }
-
-    if (funcionarioExistente.usuarioId === req.user.id) {
-      return res.status(400).json({
-        erro: 'Você não pode excluir o próprio usuário por esta operação.',
+    const id = inteiro(req.params.id);
+    await prisma.$transaction(async (tx) => {
+      const funcionario = await tx.funcionario.findFirst({
+        where: { id, oficinaId },
       });
-    }
-
-    await prisma.usuario.delete({
-      where: {
-        id: funcionarioExistente.usuarioId,
-      },
+      if (!funcionario)
+        throw new TicketError(404, "Funcionário não encontrado.");
+      if (funcionario.usuarioId === req.user.id) {
+        throw new TicketError(
+          400,
+          "Você não pode excluir o próprio usuário por esta operação.",
+        );
+      }
+      const [usuario] = await tx.$queryRaw`
+        SELECT id, "Role", "excluidoEm" FROM "Usuario"
+        WHERE id = ${funcionario.usuarioId} AND "oficinaId" = ${oficinaId} FOR UPDATE
+      `;
+      if (!usuario) throw new TicketError(404, "Funcionário não encontrado.");
+      if (!validarRole(usuario.Role)) {
+        throw new TicketError(
+          403,
+          "Esta operação permite excluir somente operadores e técnicos.",
+        );
+      }
+      if (usuario.excluidoEm) return;
+      const pendente = await tx.requisicaoPeca.findFirst({
+        where: {
+          oficinaId,
+          status: { notIn: STATUS_FINAIS },
+          OR: [{ solicitanteId: usuario.id }, { responsavelId: usuario.id }],
+        },
+        select: { codigo: true },
+      });
+      if (pendente) {
+        throw new TicketError(
+          409,
+          `Conclua ou cancele o ticket ${pendente.codigo} antes de excluir este funcionário.`,
+        );
+      }
+      await tx.usuario.update({
+        where: { id: usuario.id, oficinaId },
+        data: { excluidoEm: new Date() },
+      });
     });
 
-    return res.json({ mensagem: 'Funcionário deletado com sucesso.' });
+    return res.json({
+      mensagem:
+        "Acesso do funcionário removido. As ordens de serviço e o histórico foram preservados.",
+    });
   } catch (error) {
-    console.error('Erro ao deletar funcionário:', error);
+    if (error instanceof TicketError)
+      return res.status(error.status).json({ erro: error.message });
+    console.error("Erro ao excluir funcionário:", error.code || error.name);
     return res.status(500).json({
-      erro: 'Erro ao deletar funcionário.',
-      detalhe: error.message,
+      erro: "Não foi possível excluir o funcionário.",
     });
   }
 }

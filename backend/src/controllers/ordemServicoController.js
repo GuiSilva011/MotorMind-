@@ -1,14 +1,20 @@
-import prisma from '../config/prisma.js';
-import { EstoqueError, reconciliarEstoqueOrdem } from '../services/estoqueService.js';
-import { TicketError, OS_ENCERRADA, inteiro } from '../utils/ticketRegras.js';
-import { sincronizarAtribuicao } from '../services/ordemAtribuicaoService.js';
-import { filtroOrdensTecnico, selecaoOrdemTecnica } from '../utils/tecnicoRegras.js';
+import prisma from "../config/prisma.js";
+import {
+  EstoqueError,
+  reconciliarEstoqueOrdem,
+} from "../services/estoqueService.js";
+import { TicketError, OS_ENCERRADA, inteiro } from "../utils/ticketRegras.js";
+import { sincronizarAtribuicao } from "../services/ordemAtribuicaoService.js";
+import {
+  filtroOrdensTecnico,
+  selecaoOrdemTecnica,
+} from "../utils/tecnicoRegras.js";
 
 function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
 
   if (!oficinaId) {
-    res.status(401).json({ erro: 'Usuário não autenticado.' });
+    res.status(401).json({ erro: "Usuário não autenticado." });
     return null;
   }
 
@@ -16,7 +22,7 @@ function obterOficinaId(req, res) {
 }
 
 function toNumberOrNull(valor) {
-  if (valor === undefined || valor === null || valor === '') return null;
+  if (valor === undefined || valor === null || valor === "") return null;
   return Number(valor);
 }
 
@@ -44,6 +50,7 @@ function letraDiagnostico(index) {
 
 function montarIncludeOrdemCompleta() {
   return {
+    tecnico: { select: { id: true, Nome: true } },
     veiculo: {
       include: {
         cliente: true,
@@ -73,7 +80,7 @@ function montarIncludeOrdemCompleta() {
 
 function criarErroReferencia(mensagem) {
   const error = new Error(mensagem);
-  error.code = 'REFERENCIA_FORA_DA_OFICINA';
+  error.code = "REFERENCIA_FORA_DA_OFICINA";
   return error;
 }
 
@@ -88,7 +95,9 @@ async function buscarServicoCatalogo(tx, servicoCatalogoId, oficinaId) {
   });
 
   if (!servico) {
-    throw criarErroReferencia('Serviço do catálogo não encontrado nesta oficina.');
+    throw criarErroReferencia(
+      "Serviço do catálogo não encontrado nesta oficina.",
+    );
   }
 
   return servico;
@@ -105,7 +114,7 @@ async function buscarPecaCatalogo(tx, pecaCatalogoId, oficinaId) {
   });
 
   if (!peca) {
-    throw criarErroReferencia('Peça do catálogo não encontrada nesta oficina.');
+    throw criarErroReferencia("Peça do catálogo não encontrada nesta oficina.");
   }
 
   return peca;
@@ -119,7 +128,7 @@ async function buscarPecaEstoque(tx, estoquePecaId, oficinaId) {
   });
 
   if (!peca) {
-    throw criarErroReferencia('Peça do estoque não encontrada nesta oficina.');
+    throw criarErroReferencia("Peça do estoque não encontrada nesta oficina.");
   }
 
   return peca;
@@ -127,33 +136,53 @@ async function buscarPecaEstoque(tx, estoquePecaId, oficinaId) {
 
 function quantidadePeca(valor) {
   const quantidade = Number(valor ?? 1);
-  if (!Number.isInteger(quantidade) || quantidade < 1 || quantidade > 2147483647) {
-    const error = new Error('A quantidade da peça deve ser um número inteiro maior que zero.');
-    error.code = 'DADOS_INVALIDOS';
+  if (
+    !Number.isInteger(quantidade) ||
+    quantidade < 1 ||
+    quantidade > 2147483647
+  ) {
+    const error = new Error(
+      "A quantidade da peça deve ser um número inteiro maior que zero.",
+    );
+    error.code = "DADOS_INVALIDOS";
     throw error;
   }
   return quantidade;
 }
 
-function obterPecasDoPayload(diagnosticos = [], servicosSemDiagnostico = [], pecasAvulsas = []) {
+function obterPecasDoPayload(
+  diagnosticos = [],
+  servicosSemDiagnostico = [],
+  pecasAvulsas = [],
+) {
   const pecasDiagnosticos = diagnosticos.flatMap((diagnostico) =>
-    (diagnostico.servicos || []).flatMap((servico) => servico.pecas || [])
+    (diagnostico.servicos || []).flatMap((servico) => servico.pecas || []),
   );
-  const pecasServicos = servicosSemDiagnostico.flatMap((servico) => servico.pecas || []);
+  const pecasServicos = servicosSemDiagnostico.flatMap(
+    (servico) => servico.pecas || [],
+  );
   return [...pecasDiagnosticos, ...pecasServicos, ...pecasAvulsas];
 }
 
-function montarQuantidadesEstoque(diagnosticos, servicosSemDiagnostico, pecasAvulsas) {
+function montarQuantidadesEstoque(
+  diagnosticos,
+  servicosSemDiagnostico,
+  pecasAvulsas,
+) {
   const quantidades = new Map();
-  for (const peca of obterPecasDoPayload(diagnosticos, servicosSemDiagnostico, pecasAvulsas)) {
+  for (const peca of obterPecasDoPayload(
+    diagnosticos,
+    servicosSemDiagnostico,
+    pecasAvulsas,
+  )) {
     if (!peca.estoquePecaId) continue;
     const estoquePecaId = Number(peca.estoquePecaId);
     if (!Number.isInteger(estoquePecaId) || estoquePecaId < 1) {
-      throw criarErroReferencia('Peça do estoque inválida.');
+      throw criarErroReferencia("Peça do estoque inválida.");
     }
     quantidades.set(
       estoquePecaId,
-      (quantidades.get(estoquePecaId) || 0) + quantidadePeca(peca.quantidade)
+      (quantidades.get(estoquePecaId) || 0) + quantidadePeca(peca.quantidade),
     );
   }
   return quantidades;
@@ -168,7 +197,7 @@ async function buscarQuantidadesEstoqueDaOrdem(tx, ordemServicoId) {
   for (const item of itens) {
     quantidades.set(
       item.estoquePecaId,
-      (quantidades.get(item.estoquePecaId) || 0) + Number(item.quantidade)
+      (quantidades.get(item.estoquePecaId) || 0) + Number(item.quantidade),
     );
   }
   return quantidades;
@@ -186,7 +215,7 @@ async function buscarDiagnosticoCatalogo(tx, diagnosticoCatalogoId, oficinaId) {
 
   if (!diagnostico) {
     throw criarErroReferencia(
-      'Diagnóstico do catálogo não encontrado nesta oficina.'
+      "Diagnóstico do catálogo não encontrado nesta oficina.",
     );
   }
 
@@ -204,7 +233,7 @@ async function buscarFornecedor(tx, fornecedorId, oficinaId) {
   });
 
   if (!fornecedor) {
-    throw criarErroReferencia('Fornecedor não encontrado nesta oficina.');
+    throw criarErroReferencia("Fornecedor não encontrado nesta oficina.");
   }
 
   return fornecedor;
@@ -213,7 +242,8 @@ async function buscarFornecedor(tx, fornecedorId, oficinaId) {
 async function validarUsuarioDaOficina(
   usuarioId,
   oficinaId,
-  rolesPermitidas = []
+  rolesPermitidas = [],
+  permitirExcluido = false,
 ) {
   if (!usuarioId) return null;
 
@@ -221,6 +251,7 @@ async function validarUsuarioDaOficina(
     where: {
       id: Number(usuarioId),
       oficinaId,
+      ...(!permitirExcluido ? { excluidoEm: null } : {}),
       ...(rolesPermitidas.length > 0
         ? {
             Role: {
@@ -234,23 +265,47 @@ async function validarUsuarioDaOficina(
   return usuario;
 }
 
+async function validarNovosResponsaveis(
+  tx,
+  oficinaId,
+  operadorId,
+  tecnicoId,
+  anterior = {},
+) {
+  const novos = [
+    { id: operadorId, anterior: anterior.operadorId },
+    { id: tecnicoId, anterior: anterior.tecnicoId },
+  ].filter((item) => item.id && item.id !== item.anterior);
+  // Serializa a atribuição com a exclusão do funcionário.
+  for (const id of [...new Set(novos.map((item) => item.id))].sort(
+    (a, b) => a - b,
+  )) {
+    const [usuario] =
+      await tx.$queryRaw`SELECT id FROM "Usuario" WHERE id = ${id} AND "oficinaId" = ${oficinaId} AND "excluidoEm" IS NULL FOR UPDATE`;
+    if (!usuario)
+      throw criarErroReferencia(
+        "O responsável selecionado não está mais disponível nesta oficina.",
+      );
+  }
+}
+
 async function montarDadosDiagnostico(
   tx,
   diagnostico,
   diagnosticoIndex,
-  oficinaId
+  oficinaId,
 ) {
   const codigoDiagnostico = letraDiagnostico(diagnosticoIndex);
 
   let nomeDiagnostico =
     diagnostico.nomeDiagnostico ||
     diagnostico.descricao ||
-    'Diagnóstico sem nome';
+    "Diagnóstico sem nome";
 
   const diagnosticoCatalogo = await buscarDiagnosticoCatalogo(
     tx,
     diagnostico.diagnosticoCatalogoId,
-    oficinaId
+    oficinaId,
   );
 
   if (diagnosticoCatalogo) {
@@ -285,12 +340,12 @@ async function montarDadosServico({
     : `S.${servicoIndex + 1}`;
 
   let nomeServico =
-    servico.nomeServico || servico.descricao || 'Serviço sem nome';
+    servico.nomeServico || servico.descricao || "Serviço sem nome";
 
   const servicoCatalogo = await buscarServicoCatalogo(
     tx,
     servico.servicoCatalogoId,
-    oficinaId
+    oficinaId,
   );
 
   if (servicoCatalogo) {
@@ -328,18 +383,20 @@ async function montarDadosPeca({
     ? `${codigoHierarquiaPai}.${pecaIndex + 1}`
     : `P.${pecaIndex + 1}`;
 
-  let nomePeca = peca.nomePeca || peca.descricao || 'Peça sem nome';
+  let nomePeca = peca.nomePeca || peca.descricao || "Peça sem nome";
   let codigoPeca = peca.codigoPeca || null;
   let fornecedorNome = peca.fornecedorNome || null;
 
   if (peca.pecaCatalogoId && peca.estoquePecaId) {
-    throw criarErroReferencia('Escolha a peça pelo catálogo ou pelo estoque, não pelos dois ao mesmo tempo.');
+    throw criarErroReferencia(
+      "Escolha a peça pelo catálogo ou pelo estoque, não pelos dois ao mesmo tempo.",
+    );
   }
 
   const pecaCatalogo = await buscarPecaCatalogo(
     tx,
     peca.pecaCatalogoId,
-    oficinaId
+    oficinaId,
   );
 
   if (pecaCatalogo) {
@@ -347,7 +404,11 @@ async function montarDadosPeca({
     codigoPeca = pecaCatalogo.codigo;
   }
 
-  const pecaEstoque = await buscarPecaEstoque(tx, peca.estoquePecaId, oficinaId);
+  const pecaEstoque = await buscarPecaEstoque(
+    tx,
+    peca.estoquePecaId,
+    oficinaId,
+  );
 
   if (pecaEstoque) {
     nomePeca = pecaEstoque.nome;
@@ -364,9 +425,7 @@ async function montarDadosPeca({
 
   return {
     data: {
-      pecaCatalogoId: peca.pecaCatalogoId
-        ? Number(peca.pecaCatalogoId)
-        : null,
+      pecaCatalogoId: peca.pecaCatalogoId ? Number(peca.pecaCatalogoId) : null,
       estoquePecaId: pecaEstoque ? pecaEstoque.id : null,
       codigoPeca,
       nomePeca,
@@ -469,7 +528,7 @@ async function criarDiagnosticosDaOrdem({
       tx,
       diagnostico,
       diagnosticoIndex,
-      oficinaId
+      oficinaId,
     );
 
     const diagnosticoCriado = await tx.ordemDiagnostico.create({
@@ -588,18 +647,23 @@ export async function listarOrdensServico(req, res) {
     if (!oficinaId) return;
 
     const ordens = await prisma.ordemServico.findMany({
-      where: { oficinaId, ...(req.user.role === 'TECNICO' ? { tecnicoId: req.user.id, status: { notIn: OS_ENCERRADA } } : {}) },
+      where: {
+        oficinaId,
+        ...(req.user.role === "TECNICO"
+          ? { tecnicoId: req.user.id, status: { notIn: OS_ENCERRADA } }
+          : {}),
+      },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
       include: montarIncludeOrdemCompleta(),
     });
 
     return res.json(ordens);
   } catch (error) {
-    console.error('Erro ao listar ordens de serviço:', error);
+    console.error("Erro ao listar ordens de serviço:", error);
     return res.status(500).json({
-      erro: 'Erro ao listar ordens de serviço',
+      erro: "Erro ao listar ordens de serviço",
       detalhe: error.message,
     });
   }
@@ -609,31 +673,39 @@ export async function buscarOrdemServicoPorId(req, res) {
   try {
     const oficinaId = obterOficinaId(req, res);
     if (!oficinaId) return;
-    if (req.user.role === 'TECNICO') {
+    if (req.user.role === "TECNICO") {
       const ordem = await prisma.ordemServico.findFirst({
         where: { id: inteiro(req.params.id), ...filtroOrdensTecnico(req.user) },
         select: selecaoOrdemTecnica,
       });
-      if (!ordem) throw new TicketError(404, 'OS não encontrada ou não está mais atribuída a você.');
+      if (!ordem)
+        throw new TicketError(
+          404,
+          "OS não encontrada ou não está mais atribuída a você.",
+        );
       return res.json(ordem);
     }
 
     const ordem = await buscarOrdemCompleta(
       prisma,
       Number(req.params.id),
-      oficinaId
+      oficinaId,
     );
 
-    if (!ordem || (req.user.role === 'TECNICO' && ordem.tecnicoId !== req.user.id)) {
-      return res.status(404).json({ erro: 'Ordem de serviço não encontrada' });
+    if (
+      !ordem ||
+      (req.user.role === "TECNICO" && ordem.tecnicoId !== req.user.id)
+    ) {
+      return res.status(404).json({ erro: "Ordem de serviço não encontrada" });
     }
 
     return res.json(ordem);
   } catch (error) {
-    console.error('Erro ao buscar ordem de serviço:', error);
-    if (error instanceof TicketError) return res.status(error.status).json({ erro: error.message });
+    console.error("Erro ao buscar ordem de serviço:", error);
+    if (error instanceof TicketError)
+      return res.status(error.status).json({ erro: error.message });
     return res.status(500).json({
-      erro: 'Erro ao buscar ordem de serviço',
+      erro: "Erro ao buscar ordem de serviço",
       detalhe: error.message,
     });
   }
@@ -658,7 +730,7 @@ export async function criarOrdemServico(req, res) {
 
     if (!codigo?.trim() || !veiculoId) {
       return res.status(400).json({
-        erro: 'Código e veículo são obrigatórios',
+        erro: "Código e veículo são obrigatórios",
       });
     }
 
@@ -673,7 +745,7 @@ export async function criarOrdemServico(req, res) {
 
     if (ordemExistente) {
       return res.status(409).json({
-        erro: 'Já existe uma ordem de serviço com esse código nesta oficina',
+        erro: "Já existe uma ordem de serviço com esse código nesta oficina",
       });
     }
 
@@ -685,20 +757,22 @@ export async function criarOrdemServico(req, res) {
     });
 
     if (!veiculoExiste) {
-      return res.status(404).json({ erro: 'Veículo não encontrado' });
+      return res.status(404).json({ erro: "Veículo não encontrado" });
     }
 
-    const operadorIdFinal = operadorId ? Number(operadorId) : Number(req.user.id);
+    const operadorIdFinal = operadorId
+      ? Number(operadorId)
+      : Number(req.user.id);
 
-    const operador = await validarUsuarioDaOficina(
-      operadorIdFinal,
-      oficinaId,
-      ['OWNER', 'ADMIN', 'OPERADOR']
-    );
+    const operador = await validarUsuarioDaOficina(operadorIdFinal, oficinaId, [
+      "OWNER",
+      "ADMIN",
+      "OPERADOR",
+    ]);
 
     if (!operador) {
       return res.status(400).json({
-        erro: 'Operador informado não pertence a esta oficina.',
+        erro: "Operador informado não pertence a esta oficina.",
       });
     }
 
@@ -706,12 +780,12 @@ export async function criarOrdemServico(req, res) {
 
     if (tecnicoId) {
       const tecnico = await validarUsuarioDaOficina(tecnicoId, oficinaId, [
-        'TECNICO',
+        "TECNICO",
       ]);
 
       if (!tecnico) {
         return res.status(400).json({
-          erro: 'Técnico informado não pertence a esta oficina.',
+          erro: "Técnico informado não pertence a esta oficina.",
         });
       }
 
@@ -721,13 +795,26 @@ export async function criarOrdemServico(req, res) {
     const quantidadesEstoque = montarQuantidadesEstoque(
       diagnosticos,
       servicosSemDiagnostico,
-      pecasAvulsas
+      pecasAvulsas,
     );
-    if (quantidadesEstoque.size && !['OWNER', 'ADMIN', 'OPERADOR'].includes(req.user.role)) {
-      return res.status(403).json({ erro: 'Seu perfil não pode retirar peças do estoque pela OS.' });
+    if (
+      quantidadesEstoque.size &&
+      !["OWNER", "ADMIN", "OPERADOR"].includes(req.user.role)
+    ) {
+      return res
+        .status(403)
+        .json({
+          erro: "Seu perfil não pode retirar peças do estoque pela OS.",
+        });
     }
 
     const ordemCriada = await prisma.$transaction(async (tx) => {
+      await validarNovosResponsaveis(
+        tx,
+        oficinaId,
+        operador.id,
+        tecnicoIdFinal,
+      );
       const ordem = await tx.ordemServico.create({
         data: {
           oficinaId,
@@ -736,11 +823,17 @@ export async function criarOrdemServico(req, res) {
           operadorId: operador.id,
           tecnicoId: tecnicoIdFinal,
           observacoes: observacoes || null,
-          status: status || 'ABERTA',
+          status: status || "ABERTA",
         },
       });
 
-      await sincronizarAtribuicao(tx, ordem, tecnicoIdFinal, ordem.status, req.user);
+      await sincronizarAtribuicao(
+        tx,
+        ordem,
+        tecnicoIdFinal,
+        ordem.status,
+        req.user,
+      );
 
       await reconciliarEstoqueOrdem({
         tx,
@@ -765,24 +858,29 @@ export async function criarOrdemServico(req, res) {
 
     return res.status(201).json(ordemCriada);
   } catch (error) {
-    if (!(error instanceof TicketError)) console.error('Erro ao criar ordem de serviço:', error);
+    if (!(error instanceof TicketError))
+      console.error("Erro ao criar ordem de serviço:", error);
 
-    if (error.code === 'P2002') {
+    if (error.code === "P2002") {
       return res.status(409).json({
-        erro: 'Já existe uma ordem de serviço com esse código nesta oficina.',
+        erro: "Já existe uma ordem de serviço com esse código nesta oficina.",
       });
     }
 
-    if (error.code === 'REFERENCIA_FORA_DA_OFICINA') {
+    if (error.code === "REFERENCIA_FORA_DA_OFICINA") {
       return res.status(400).json({ erro: error.message });
     }
 
-    if (error instanceof TicketError || error instanceof EstoqueError || error.code === 'DADOS_INVALIDOS') {
+    if (
+      error instanceof TicketError ||
+      error instanceof EstoqueError ||
+      error.code === "DADOS_INVALIDOS"
+    ) {
       return res.status(error.status || 400).json({ erro: error.message });
     }
 
     return res.status(500).json({
-      erro: 'Erro ao criar ordem de serviço',
+      erro: "Erro ao criar ordem de serviço",
       detalhe: error.message,
     });
   }
@@ -816,7 +914,7 @@ export async function editarOrdemServico(req, res) {
     });
 
     if (!ordemExistente) {
-      return res.status(404).json({ erro: 'Ordem de serviço não encontrada' });
+      return res.status(404).json({ erro: "Ordem de serviço não encontrada" });
     }
 
     const codigoFinal = codigo?.trim() || ordemExistente.codigo;
@@ -832,7 +930,7 @@ export async function editarOrdemServico(req, res) {
 
       if (codigoDuplicado) {
         return res.status(409).json({
-          erro: 'Já existe uma ordem de serviço com esse código nesta oficina',
+          erro: "Já existe uma ordem de serviço com esse código nesta oficina",
         });
       }
     }
@@ -848,7 +946,7 @@ export async function editarOrdemServico(req, res) {
       });
 
       if (!veiculoExiste) {
-        return res.status(404).json({ erro: 'Veículo não encontrado' });
+        return res.status(404).json({ erro: "Veículo não encontrado" });
       }
 
       veiculoIdFinal = veiculoExiste.id;
@@ -857,18 +955,19 @@ export async function editarOrdemServico(req, res) {
     let operadorIdFinal = ordemExistente.operadorId;
 
     if (operadorId !== undefined) {
-      if (operadorId === null || operadorId === '') {
+      if (operadorId === null || operadorId === "") {
         operadorIdFinal = null;
       } else {
         const operador = await validarUsuarioDaOficina(
           operadorId,
           oficinaId,
-          ['OWNER', 'ADMIN', 'OPERADOR']
+          ["OWNER", "ADMIN", "OPERADOR"],
+          Number(operadorId) === ordemExistente.operadorId,
         );
 
         if (!operador) {
           return res.status(400).json({
-            erro: 'Operador informado não pertence a esta oficina.',
+            erro: "Operador informado não pertence a esta oficina.",
           });
         }
 
@@ -879,16 +978,19 @@ export async function editarOrdemServico(req, res) {
     let tecnicoIdFinal = ordemExistente.tecnicoId;
 
     if (tecnicoId !== undefined) {
-      if (tecnicoId === null || tecnicoId === '') {
+      if (tecnicoId === null || tecnicoId === "") {
         tecnicoIdFinal = null;
       } else {
-        const tecnico = await validarUsuarioDaOficina(tecnicoId, oficinaId, [
-          'TECNICO',
-        ]);
+        const tecnico = await validarUsuarioDaOficina(
+          tecnicoId,
+          oficinaId,
+          ["TECNICO"],
+          Number(tecnicoId) === ordemExistente.tecnicoId,
+        );
 
         if (!tecnico) {
           return res.status(400).json({
-            erro: 'Técnico informado não pertence a esta oficina.',
+            erro: "Técnico informado não pertence a esta oficina.",
           });
         }
 
@@ -899,23 +1001,52 @@ export async function editarOrdemServico(req, res) {
     const quantidadesEstoqueAtuais = montarQuantidadesEstoque(
       diagnosticos,
       servicosSemDiagnostico,
-      pecasAvulsas
+      pecasAvulsas,
     );
-    if (quantidadesEstoqueAtuais.size && !['OWNER', 'ADMIN', 'OPERADOR'].includes(req.user.role)) {
-      return res.status(403).json({ erro: 'Seu perfil não pode retirar peças do estoque pela OS.' });
+    if (
+      quantidadesEstoqueAtuais.size &&
+      !["OWNER", "ADMIN", "OPERADOR"].includes(req.user.role)
+    ) {
+      return res
+        .status(403)
+        .json({
+          erro: "Seu perfil não pode retirar peças do estoque pela OS.",
+        });
     }
 
     const ordemAtualizada = await prisma.$transaction(async (tx) => {
       const bloqueio = await tx.$queryRaw`
         SELECT id FROM "OrdemServico" WHERE id = ${id} AND "oficinaId" = ${oficinaId} FOR UPDATE
       `;
-      if (!bloqueio.length) throw criarErroReferencia('Ordem de serviço não encontrada nesta oficina.');
+      if (!bloqueio.length)
+        throw criarErroReferencia(
+          "Ordem de serviço não encontrada nesta oficina.",
+        );
 
-      const ordemBloqueada = await tx.ordemServico.findUnique({ where: { id } });
+      const ordemBloqueada = await tx.ordemServico.findUnique({
+        where: { id },
+      });
+      if (operadorId === undefined) operadorIdFinal = ordemBloqueada.operadorId;
       if (tecnicoId === undefined) tecnicoIdFinal = ordemBloqueada.tecnicoId;
-      await sincronizarAtribuicao(tx, ordemBloqueada, tecnicoIdFinal, status || ordemBloqueada.status, req.user);
+      await validarNovosResponsaveis(
+        tx,
+        oficinaId,
+        operadorIdFinal,
+        tecnicoIdFinal,
+        ordemBloqueada,
+      );
+      await sincronizarAtribuicao(
+        tx,
+        ordemBloqueada,
+        tecnicoIdFinal,
+        status || ordemBloqueada.status,
+        req.user,
+      );
 
-      const quantidadesAnteriores = await buscarQuantidadesEstoqueDaOrdem(tx, id);
+      const quantidadesAnteriores = await buscarQuantidadesEstoqueDaOrdem(
+        tx,
+        id,
+      );
       await reconciliarEstoqueOrdem({
         tx,
         oficinaId,
@@ -961,24 +1092,29 @@ export async function editarOrdemServico(req, res) {
 
     return res.json(ordemAtualizada);
   } catch (error) {
-    if (!(error instanceof TicketError)) console.error('Erro ao editar ordem de serviço:', error);
+    if (!(error instanceof TicketError))
+      console.error("Erro ao editar ordem de serviço:", error);
 
-    if (error.code === 'P2002') {
+    if (error.code === "P2002") {
       return res.status(409).json({
-        erro: 'Já existe uma ordem de serviço com esse código nesta oficina.',
+        erro: "Já existe uma ordem de serviço com esse código nesta oficina.",
       });
     }
 
-    if (error.code === 'REFERENCIA_FORA_DA_OFICINA') {
+    if (error.code === "REFERENCIA_FORA_DA_OFICINA") {
       return res.status(400).json({ erro: error.message });
     }
 
-    if (error instanceof TicketError || error instanceof EstoqueError || error.code === 'DADOS_INVALIDOS') {
+    if (
+      error instanceof TicketError ||
+      error instanceof EstoqueError ||
+      error.code === "DADOS_INVALIDOS"
+    ) {
       return res.status(error.status || 400).json({ erro: error.message });
     }
 
     return res.status(500).json({
-      erro: 'Erro ao editar ordem de serviço',
+      erro: "Erro ao editar ordem de serviço",
       detalhe: error.message,
     });
   }
@@ -999,23 +1135,43 @@ export async function deletarOrdemServico(req, res) {
     });
 
     if (!ordem) {
-      return res.status(404).json({ erro: 'Ordem de serviço não encontrada' });
+      return res.status(404).json({ erro: "Ordem de serviço não encontrada" });
     }
 
     await prisma.$transaction(async (tx) => {
       const bloqueio = await tx.$queryRaw`
         SELECT id FROM "OrdemServico" WHERE id = ${id} AND "oficinaId" = ${oficinaId} FOR UPDATE
       `;
-      if (!bloqueio.length) throw criarErroReferencia('Ordem de serviço não encontrada nesta oficina.');
+      if (!bloqueio.length)
+        throw criarErroReferencia(
+          "Ordem de serviço não encontrada nesta oficina.",
+        );
 
-      if (await tx.requisicaoPeca.count({ where: { ordemServicoId: id, oficinaId } })) {
-        throw new TicketError(409, 'Esta OS possui tickets e deve ser preservada. Encerre ou cancele a OS em vez de excluí-la.');
+      if (
+        await tx.requisicaoPeca.count({
+          where: { ordemServicoId: id, oficinaId },
+        })
+      ) {
+        throw new TicketError(
+          409,
+          "Esta OS possui tickets e deve ser preservada. Encerre ou cancele a OS em vez de excluí-la.",
+        );
       }
-      if (await tx.ordemServicoAtribuicao.count({ where: { ordemServicoId: id, oficinaId } })) {
-        throw new TicketError(409, 'Esta OS possui histórico de atribuição e deve ser preservada. Encerre ou cancele a OS em vez de excluí-la.');
+      if (
+        await tx.ordemServicoAtribuicao.count({
+          where: { ordemServicoId: id, oficinaId },
+        })
+      ) {
+        throw new TicketError(
+          409,
+          "Esta OS possui histórico de atribuição e deve ser preservada. Encerre ou cancele a OS em vez de excluí-la.",
+        );
       }
 
-      const quantidadesAnteriores = await buscarQuantidadesEstoqueDaOrdem(tx, id);
+      const quantidadesAnteriores = await buscarQuantidadesEstoqueDaOrdem(
+        tx,
+        id,
+      );
       await reconciliarEstoqueOrdem({
         tx,
         oficinaId,
@@ -1028,14 +1184,19 @@ export async function deletarOrdemServico(req, res) {
       await tx.ordemServico.delete({ where: { id } });
     });
 
-    return res.json({ mensagem: 'Ordem de serviço deletada com sucesso' });
+    return res.json({ mensagem: "Ordem de serviço deletada com sucesso" });
   } catch (error) {
-    if (!(error instanceof TicketError)) console.error('Erro ao deletar ordem de serviço:', error);
-    if (error instanceof TicketError || error instanceof EstoqueError || error.code === 'REFERENCIA_FORA_DA_OFICINA') {
+    if (!(error instanceof TicketError))
+      console.error("Erro ao deletar ordem de serviço:", error);
+    if (
+      error instanceof TicketError ||
+      error instanceof EstoqueError ||
+      error.code === "REFERENCIA_FORA_DA_OFICINA"
+    ) {
       return res.status(error.status || 400).json({ erro: error.message });
     }
     return res.status(500).json({
-      erro: 'Erro ao deletar ordem de serviço',
+      erro: "Erro ao deletar ordem de serviço",
       detalhe: error.message,
     });
   }
@@ -1050,7 +1211,7 @@ export async function gerarProximoCodigoOS(req, res) {
       where: {
         oficinaId,
         codigo: {
-          startsWith: 'OS-',
+          startsWith: "OS-",
         },
       },
       select: {
@@ -1066,13 +1227,13 @@ export async function gerarProximoCodigoOS(req, res) {
       return numero > maior ? numero : maior;
     }, 0);
 
-    const codigo = `OS-${String(maiorNumero + 1).padStart(4, '0')}`;
+    const codigo = `OS-${String(maiorNumero + 1).padStart(4, "0")}`;
 
     return res.json({ codigo });
   } catch (error) {
-    console.error('Erro ao gerar código da OS:', error);
+    console.error("Erro ao gerar código da OS:", error);
     return res.status(500).json({
-      erro: 'Erro ao gerar código da OS',
+      erro: "Erro ao gerar código da OS",
       detalhe: error.message,
     });
   }
@@ -1085,7 +1246,8 @@ export async function buscarOrdensServico(req, res) {
 
     const { termo, status, dataInicio, dataFim } = req.query;
     const filtros = [{ oficinaId }];
-    if (req.user.role === 'TECNICO') filtros.push({ tecnicoId: req.user.id, status: { notIn: OS_ENCERRADA } });
+    if (req.user.role === "TECNICO")
+      filtros.push({ tecnicoId: req.user.id, status: { notIn: OS_ENCERRADA } });
 
     if (termo) {
       filtros.push({
@@ -1093,14 +1255,14 @@ export async function buscarOrdensServico(req, res) {
           {
             codigo: {
               contains: termo,
-              mode: 'insensitive',
+              mode: "insensitive",
             },
           },
           {
             veiculo: {
               placa: {
                 contains: termo,
-                mode: 'insensitive',
+                mode: "insensitive",
               },
             },
           },
@@ -1108,7 +1270,7 @@ export async function buscarOrdensServico(req, res) {
             veiculo: {
               modelo: {
                 contains: termo,
-                mode: 'insensitive',
+                mode: "insensitive",
               },
             },
           },
@@ -1116,7 +1278,7 @@ export async function buscarOrdensServico(req, res) {
             veiculo: {
               fabricante: {
                 contains: termo,
-                mode: 'insensitive',
+                mode: "insensitive",
               },
             },
           },
@@ -1125,7 +1287,7 @@ export async function buscarOrdensServico(req, res) {
               cliente: {
                 nome: {
                   contains: termo,
-                  mode: 'insensitive',
+                  mode: "insensitive",
                 },
               },
             },
@@ -1157,7 +1319,7 @@ export async function buscarOrdensServico(req, res) {
         AND: filtros,
       },
       orderBy: {
-        dataEmissao: 'desc',
+        dataEmissao: "desc",
       },
       include: {
         veiculo: {
@@ -1175,9 +1337,9 @@ export async function buscarOrdensServico(req, res) {
 
     return res.json(resultado);
   } catch (error) {
-    console.error('Erro ao buscar ordens de serviço:', error);
+    console.error("Erro ao buscar ordens de serviço:", error);
     return res.status(500).json({
-      erro: 'Erro ao buscar ordens de serviço',
+      erro: "Erro ao buscar ordens de serviço",
       detalhe: error.message,
     });
   }

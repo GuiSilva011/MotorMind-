@@ -102,7 +102,7 @@ test('notificação respeita configuração e limita destinatários à oficina',
   let filtro; let dados;
   const db = { configuracaoOficina: { findUnique: async () => null }, usuario: { findMany: async ({ where }) => { filtro = where; return [{ id: 2 }]; } }, notificacao: { create: async ({ data }) => { dados = data; } } };
   await notificarTicket(db, { oficinaId: 10, tipo: 'REQUISICAO_PECA', titulo: 'Ticket', mensagem: 'Solicitação' });
-  assert.deepEqual(filtro, { oficinaId: 10, Role: 'OPERADOR' });
+  assert.deepEqual(filtro, { oficinaId: 10, excluidoEm: null, Role: 'OPERADOR' });
   assert.deepEqual(dados.usuarios.create, [{ usuarioId: 2 }]);
   db.configuracaoOficina.findUnique = async () => ({ notificarChatSistema: false });
   dados = null;

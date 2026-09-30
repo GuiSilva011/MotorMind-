@@ -246,40 +246,6 @@
   font-size: .78rem;
 }
 
-.cadastro-oficina-page .cadastro-sucesso {
-  max-width: 720px;
-  margin: 10px auto 40px;
-  padding: 45px;
-  border: 1px solid #dce2eb;
-  border-radius: 12px;
-  background: white;
-  text-align: center;
-}
-
-.cadastro-oficina-page .cadastro-sucesso h1 {
-  font-size: clamp(2rem, 4vw, 2.8rem);
-}
-
-.cadastro-oficina-page .cadastro-sucesso-icone {
-  width: 48px;
-  height: 48px;
-  color: #1d7b62;
-  margin-bottom: 24px;
-}
-
-.cadastro-oficina-page .cadastro-aviso {
-  margin: 28px 0;
-  padding: 22px;
-  text-align: left;
-  border-left: 3px solid #f5730c;
-  background: #fff7ed;
-  font-size: .9rem;
-}
-
-.cadastro-oficina-page .cadastro-aviso p {
-  margin: 10px 0 0;
-}
-
 @media (max-width: 850px) {
   .cadastro-oficina-page .cadastro-layout {
     grid-template-columns: 1fr;
@@ -293,8 +259,7 @@
 @media (max-width: 520px) {
 
   .cadastro-oficina-page .cadastro-form,
-  .cadastro-oficina-page .cadastro-resumo,
-  .cadastro-oficina-page .cadastro-sucesso {
+  .cadastro-oficina-page .cadastro-resumo {
     padding: 24px 20px;
   }
 
@@ -306,39 +271,4 @@
     padding: 9px 10px;
     font-size: .78rem;
   }
-}
-
-.cadastro-oficina-page .cadastro-confirmacao-link {
-  margin-top: 24px;
-  font-size: .85rem;
-}
-
-.cadastro-oficina-page .cadastro-confirmacao-link :is(a, button) {
-  color: #2365a3;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.cadastro-oficina-page .cadastro-confirmacao-link button {
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.cadastro-oficina-page .confirmacao-card {
-  margin-top: 40px;
-}
-
-.cadastro-oficina-page .confirmacao-form {
-  text-align: left;
-  max-width: 430px;
-  margin: 28px auto 0;
-}
-
-.cadastro-oficina-page .confirmacao-form button {
-  margin-top: 24px;
-}
-
-.cadastro-oficina-page .cadastro-aviso {
-  overflow-wrap: anywhere;
 }

@@ -196,7 +196,6 @@ function Login() {
           <div className="login-public-links">
             <Link to="/">Voltar ao site</Link>
             <Link to="/cadastro-oficina">Cadastrar minha oficina</Link>
-            <Link to="/confirmar-oficina">Reenviar confirmação de e-mail</Link>
           </div>
 
           <div className="login-test-users">

@@ -6,7 +6,12 @@ export async function login(req, res) {
   try {
     const { Email, Senha } = req.body || {};
 
-    if (typeof Email !== "string" || !Email.trim() || typeof Senha !== "string" || !Senha) {
+    if (
+      typeof Email !== "string" ||
+      !Email.trim() ||
+      typeof Senha !== "string" ||
+      !Senha
+    ) {
       return res.status(400).json({
         erro: "Email e senha são obrigatórios.",
       });
@@ -14,21 +19,23 @@ export async function login(req, res) {
 
     const include = { oficina: { include: { licenca: true } } };
     // Preserva a conta exata de cadastros antigos e tolera capitalização no novo acesso.
-    const usuario = await prisma.usuario.findUnique({ where: { Email: Email.trim() }, include })
-      || await prisma.usuario.findFirst({
-        where: { Email: { equals: Email.trim(), mode: "insensitive" } }, include,
-      });
+    const usuario =
+      (await prisma.usuario.findUnique({
+        where: { Email: Email.trim() },
+        include,
+      })) ||
+      (await prisma.usuario.findFirst({
+        where: { Email: { equals: Email.trim(), mode: "insensitive" } },
+        include,
+      }));
 
-    if (!usuario) {
+    if (!usuario || usuario.excluidoEm) {
       return res.status(401).json({
         erro: "Email ou senha inválidos.",
       });
     }
 
-    const senhaValida = await bcrypt.compare(
-      Senha,
-      usuario.Senha
-    );
+    const senhaValida = await bcrypt.compare(Senha, usuario.Senha);
 
     if (!senhaValida) {
       return res.status(401).json({
@@ -44,10 +51,10 @@ export async function login(req, res) {
 
     if (usuario.oficina.status !== "ATIVA") {
       return res.status(403).json({
-        erro: usuario.oficina.status === "PENDENTE"
-          ? "Sua oficina aguarda ativação. Confirme seu e-mail pelo link recebido ou solicite um novo envio."
-          : "Oficina sem acesso ao MotorMind.",
-        ...(usuario.oficina.status === "PENDENTE" ? { codigo: "CONFIRMACAO_EMAIL_PENDENTE" } : {}),
+        erro:
+          usuario.oficina.status === "PENDENTE"
+            ? "Sua oficina aguarda ativação. Entre em contato com o suporte do MotorMind."
+            : "Oficina sem acesso ao MotorMind.",
       });
     }
 
@@ -79,7 +86,7 @@ export async function login(req, res) {
       {
         subject: String(usuario.id),
         expiresIn: process.env.JWT_EXPIRES_IN || "8h",
-      }
+      },
     );
 
     return res.status(200).json({

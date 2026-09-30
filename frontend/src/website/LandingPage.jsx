@@ -95,7 +95,7 @@ const etapas = [
     numero: "3",
     titulo: "Acesse o sistema",
     texto:
-      "Confirme seu e-mail para ativar a oficina e entrar com seu acesso de administrador.",
+      "Após o cadastro, entre com seu e-mail e senha para acessar o sistema como administrador.",
   },
 ];
 
@@ -394,8 +394,8 @@ function LandingPage() {
               </p>
               <h2>Do cadastro ao primeiro acesso</h2>
               <p>
-                Cadastre sua oficina e seu responsável. Confirme seu e-mail
-                para ativar a licença e acessar o sistema como administrador.
+                Cadastre sua oficina e seu responsável. Depois, entre com seu
+                e-mail e senha para acessar o sistema como administrador.
               </p>
             </div>
             <ol className="landing-steps-grid">

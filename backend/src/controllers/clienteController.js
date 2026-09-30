@@ -1,5 +1,23 @@
 import prisma from '../config/prisma.js';
 
+const incluirVinculosCliente = {
+  veiculos: {
+    include: { _count: { select: { ordensServico: true, checklists: true, agendamentos: true } } },
+  },
+  _count: { select: { agendamentos: true } },
+};
+
+function comPermissaoExclusao(cliente) {
+  const { _count, veiculos, ...dados } = cliente;
+  return {
+    ...dados,
+    veiculos: veiculos.map(({ _count, ...veiculo }) => veiculo),
+    podeExcluir: _count.agendamentos === 0 && veiculos.every(veiculo =>
+      veiculo._count.ordensServico === 0 && veiculo._count.checklists === 0 && veiculo._count.agendamentos === 0
+    ),
+  };
+}
+
 function obterOficinaId(req, res) {
   const oficinaId = Number(req.user?.oficinaId);
 
@@ -132,16 +150,14 @@ export async function buscarClientePorNome(req, res) {
           mode: 'insensitive',
         },
       },
-      include: {
-        veiculos: true,
-      },
+      include: incluirVinculosCliente,
     });
 
     if (!cliente) {
       return res.status(404).json({ erro: 'Cliente não encontrado' });
     }
 
-    return res.json(cliente);
+    return res.json(comPermissaoExclusao(cliente));
   } catch (error) {
     console.error('Erro ao buscar cliente por nome:', error);
     return res.status(500).json({ erro: 'Erro ao buscar cliente por nome' });
@@ -155,15 +171,13 @@ export async function listarClientes(req, res) {
 
     const clientes = await prisma.cliente.findMany({
       where: { oficinaId },
-      include: {
-        veiculos: true,
-      },
+      include: incluirVinculosCliente,
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    return res.json(clientes);
+    return res.json(clientes.map(comPermissaoExclusao));
   } catch (error) {
     console.error('Erro ao exibir clientes:', error);
     return res.status(500).json({ erro: 'Erro ao exibir clientes' });

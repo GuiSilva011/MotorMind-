@@ -29,6 +29,7 @@ const ordemInicial = {
   codigo: '',
   status: 'ABERTA',
   tecnicoId: '',
+  tecnicoNome: '',
   cliente: {
     id: '',
     nome: '',
@@ -2096,6 +2097,7 @@ function OrdemServico() {
       codigo: os.codigo || '',
       status: os.status || 'ABERTA',
       tecnicoId: os.tecnicoId || '',
+      tecnicoNome: os.tecnico?.Nome || '',
       cliente: mapearClienteParaTela(cliente),
       veiculo: {
         id: veiculo.id || os.veiculoId || '',
@@ -3508,6 +3510,9 @@ Pode me enviar os valores e disponibilidade, por favor?`;
               <select id="os-tecnico" value={ordem.tecnicoId || ''} disabled={!podeEditar}
                 onChange={event => atualizarCampoOrdem('tecnicoId', event.target.value)}>
                 <option value="">Sem atribuição</option>
+                {ordem.tecnicoId && !(catalogos.tecnicosOS || []).some(tecnico => tecnico.id === Number(ordem.tecnicoId)) && (
+                  <option value={ordem.tecnicoId}>{ordem.tecnicoNome || 'Mecânico vinculado'} (fora da equipe)</option>
+                )}
                 {(catalogos.tecnicosOS || []).map(tecnico => <option key={tecnico.id} value={tecnico.id}>{tecnico.Nome}</option>)}
               </select>
               <small>O vínculo com o mecânico só é confirmado ao salvar a OS.</small>

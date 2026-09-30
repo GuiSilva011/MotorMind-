@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import prisma from "../config/prisma.js";
 
-export function authMiddleware(req, res, next) {
+export async function authMiddleware(req, res, next) {
   try {
     const authorization = req.headers.authorization;
 
@@ -29,12 +30,20 @@ export function authMiddleware(req, res, next) {
       process.env.JWT_SECRET
     );
 
-    req.user = {
-      id: Number(payload.sub),
-      oficinaId: Number(payload.oficinaId),
-      role: payload.role,
-      email: payload.email,
-    };
+    const id = Number(payload.sub);
+    const oficinaId = Number(payload.oficinaId);
+    if (!Number.isSafeInteger(id) || id <= 0 || !Number.isSafeInteger(oficinaId) || oficinaId <= 0) {
+      return res.status(401).json({ erro: "Sessão inválida." });
+    }
+    const usuario = await prisma.usuario.findFirst({
+      where: { id, oficinaId, excluidoEm: null },
+      select: { id: true, oficinaId: true, Role: true, Email: true, CreatedAt: true },
+    });
+    // Impede reutilizar a sessão de um ID que tenha sido recriado após um reset.
+    if (!usuario || !Number.isFinite(payload.iat) || payload.iat < Math.floor(usuario.CreatedAt.getTime() / 1000)) {
+      return res.status(401).json({ erro: "Acesso encerrado. Entre novamente no sistema." });
+    }
+    req.user = { id: usuario.id, oficinaId: usuario.oficinaId, role: usuario.Role, email: usuario.Email };
 
     return next();
   } catch (error) {

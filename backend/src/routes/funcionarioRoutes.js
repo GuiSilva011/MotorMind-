@@ -8,16 +8,16 @@ import {
   deletarFuncionario,
 } from "../controllers/funcionarioController.js";
 
-import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { authMiddleware, authorizeRoles } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post("/", criarFuncionario);
+router.post("/", authorizeRoles('ADMIN'), criarFuncionario);
 router.get("/", listarFuncionarios);
 router.get("/:id", buscarFuncionarioPorId);
-router.put("/:id", atualizarFuncionario);
-router.delete("/:id", deletarFuncionario);
+router.put("/:id", authorizeRoles('ADMIN'), atualizarFuncionario);
+router.delete("/:id", authorizeRoles('ADMIN'), deletarFuncionario);
 
 export default router;

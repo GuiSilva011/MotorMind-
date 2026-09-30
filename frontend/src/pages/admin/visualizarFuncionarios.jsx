@@ -254,15 +254,15 @@ function VisualizarFuncionarios() {
     const nome = funcionario.usuario?.Nome || 'este funcionário';
 
     const confirmar = window.confirm(
-      `Deseja realmente excluir ${nome}? Essa ação também removerá o acesso dele ao sistema.`
+      `Deseja excluir ${nome} da equipe? O acesso ao sistema será encerrado. As ordens de serviço e o histórico serão preservados.`
     );
 
     if (!confirmar) return;
 
     try {
-      await api.delete(`/funcionarios/${funcionario.id}`);
+      const { data } = await api.delete(`/funcionarios/${funcionario.id}`);
 
-      toast.success('Funcionário excluído com sucesso!');
+      toast.success(data.mensagem);
       carregarFuncionarios();
     } catch (error) {
       console.error('Erro ao excluir funcionário:', error);
