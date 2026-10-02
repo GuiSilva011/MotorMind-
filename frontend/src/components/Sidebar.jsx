@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { FiPackage, FiMessageSquare } from 'react-icons/fi';
+import Navbars from './ui/navbars';
 
 /**
  * Menu lateral responsivo que adapta as opções ao perfil do usuário.
@@ -12,8 +13,7 @@ function Sidebar() {
   const navigate = useNavigate();
 
   const [sidebarAberta, setSidebarAberta] = useState(true);
-  const [openAgendamento, setOpenAgendamento] = useState(false);
-  const [openOrdemServico, setOpenOrdemServico] = useState(false);
+  const [submenus, setSubmenus] = useState(null);
 
   const usuarioSalvo = localStorage.getItem('motormind_usuario');
   const usuario = usuarioSalvo ? JSON.parse(usuarioSalvo) : null;
@@ -24,23 +24,6 @@ function Sidebar() {
   const isOperador = role === 'OPERADOR';
   const isTecnico = role === 'TECNICO';
 
-  /** Mantém o submenu visível quando a navegação já está dentro de uma seção relacionada. */
-  // Mantém os submenus abertos quando o usuário navega por páginas relacionadas.
-  useEffect(() => {
-    if (location.pathname.startsWith('/operador/agendamentos')) {
-      setOpenAgendamento(true);
-    }
-
-    if (
-      location.pathname.startsWith('/operador/ordem-servico') ||
-      location.pathname.startsWith('/operador/diagnosticos') ||
-      location.pathname.startsWith('/operador/servicos') ||
-      location.pathname.startsWith('/operador/pecas')
-    ) {
-      setOpenOrdemServico(true);
-    }
-  }, [location.pathname]);
-
   const agendamentoAtivo = location.pathname.startsWith(
     '/operador/agendamentos'
   );
@@ -50,6 +33,12 @@ function Sidebar() {
     location.pathname.startsWith('/operador/diagnosticos') ||
     location.pathname.startsWith('/operador/servicos') ||
     location.pathname.startsWith('/operador/pecas');
+
+  // A seção da rota atual abre automaticamente, sem um efeito adicional.
+  const openAgendamento = submenus?.pathname === location.pathname
+    ? submenus.agendamento : agendamentoAtivo;
+  const openOrdemServico = submenus?.pathname === location.pathname
+    ? submenus.ordemServico : ordemServicoAtivo;
 
   /** Indica se o perfil atual pode acessar a área do operador. */
   // Helpers simples para decidir quais menus aparecem para cada perfil.
@@ -62,31 +51,19 @@ function Sidebar() {
     return isTecnico;
   }
 
-  /** Alterna o estado de expansão da sidebar e limpa os submenus quando ela fecha. */
-  // Recolhe ou expande a sidebar e fecha os submenus quando necessário.
+  /** Alterna o estado de expansão da sidebar. */
   function alternarSidebar() {
-    setSidebarAberta((prevState) => {
-      const novaSituacao = !prevState;
-
-      if (!novaSituacao) {
-        setOpenAgendamento(false);
-        setOpenOrdemServico(false);
-      }
-
-      return novaSituacao;
-    });
+    setSidebarAberta(!sidebarAberta);
   }
 
-    /** Alterna a visibilidade do submenu de agendamentos. */
+  /** Alterna a visibilidade do submenu de agendamentos. */
   // Abre/fecha o submenu de agendamentos.
   function alternarAgendamento() {
     if (!sidebarAberta) {
       setSidebarAberta(true);
-      setOpenAgendamento(true);
-      return;
     }
-
-    setOpenAgendamento((prevState) => !prevState);
+    setSubmenus({ pathname: location.pathname,
+      agendamento: !sidebarAberta || !openAgendamento, ordemServico: openOrdemServico });
   }
 
   /** Alterna a visibilidade do submenu de ordem de serviço. */
@@ -94,11 +71,9 @@ function Sidebar() {
   function alternarOrdemServico() {
     if (!sidebarAberta) {
       setSidebarAberta(true);
-      setOpenOrdemServico(true);
-      return;
     }
-
-    setOpenOrdemServico((prevState) => !prevState);
+    setSubmenus({ pathname: location.pathname,
+      agendamento: openAgendamento, ordemServico: !sidebarAberta || !openOrdemServico });
   }
 
   /** Limpa os dados de sessão e redireciona o usuário para a tela de login. */
@@ -110,46 +85,22 @@ function Sidebar() {
   }
 
   return (
-    <aside className={sidebarAberta ? 'sidebar' : 'sidebar sidebar-collapsed'}>
-      <div className="sidebar-top">
-        <div className="sidebar-header">
-          {sidebarAberta && (
-            <div className="logo">
-              Motor<span className="text-orange">Mind</span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            className="sidebar-toggle"
-            onClick={alternarSidebar}
-            title={sidebarAberta ? 'Recolher menu' : 'Expandir menu'}
-          >
-            <img
-              src="/icons/menu.svg"
-              alt={sidebarAberta ? 'Recolher menu' : 'Expandir menu'}
-              className="sidebar-toggle-icon"
-            />
-          </button>
-        </div>
-
-        {usuario && sidebarAberta && (
-          <div className="sidebar-user">
-            <strong>{usuario.Nome}</strong>
-            <span>{usuario.Role}</span>
-          </div>
-        )}
-
-        <nav className="sidebar-menu">
+    <Navbars expanded={sidebarAberta} onToggle={alternarSidebar} footer={
+      <button type="button" className="logout-btn" onClick={sair} title="Sair" aria-label="Sair">
+        <img src="/icons/logout.svg" alt="" className="menu-icon" />
+        <span>Sair</span>
+      </button>
+    }>
+        <nav id="sidebar-navigation" className="sidebar-menu" aria-label="Navegação principal">
           {['TECNICO', 'OPERADOR', 'ADMIN', 'OWNER'].includes(role) && <NavLink to="/tickets" title="Solicitações de peças"
             className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
-            <FiMessageSquare className="menu-icon" aria-hidden="true" /><span>SOLICITAÇÕES DE PEÇAS</span>
+            <FiMessageSquare className="menu-icon" aria-hidden="true" /><span>Solicitações de peças</span>
           </NavLink>}
           {(isAdmin || isOperador || role === 'OWNER') && (
             <NavLink to="/estoque" title="Estoque"
               className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
               <FiPackage className="menu-icon" aria-hidden="true" />
-              <span>ESTOQUE</span>
+              <span>Estoque</span>
             </NavLink>
           )}
           {podeVerOperador() && (
@@ -167,7 +118,7 @@ function Sidebar() {
                   alt="Clientes"
                   className="menu-icon"
                 />
-                <span>CADASTRAR CLIENTES</span>
+                <span>Cadastrar clientes</span>
               </NavLink>
 
               <NavLink
@@ -183,7 +134,7 @@ function Sidebar() {
                   alt="Consultar clientes"
                   className="menu-icon"
                 />
-                <span>CONSULTAR CLIENTES</span>
+                <span>Consultar clientes</span>
               </NavLink>
 
               <button
@@ -195,17 +146,21 @@ function Sidebar() {
                     : 'menu-item'
                 }
                 onClick={alternarAgendamento}
+                aria-label="Agendamentos"
+                aria-expanded={openAgendamento}
+                aria-controls="submenu-agendamentos"
               >
                 <img
                   src="/icons/agendamento.svg"
                   alt="Agendamentos"
                   className="menu-icon"
                 />
-                <span>AGENDAMENTOS</span>
+                <span>Agendamentos</span>
+                <span className={openAgendamento ? 'submenu-chevron is-open' : 'submenu-chevron'} aria-hidden="true" />
               </button>
 
-              {sidebarAberta && openAgendamento && (
-                <div className="submenu">
+              {openAgendamento && (
+                <div id="submenu-agendamentos" className="submenu">
                   <NavLink
                     to="/operador/agendamentos"
                     end
@@ -218,7 +173,7 @@ function Sidebar() {
                       alt="Cadastrar agendamento"
                       className="submenu-icon"
                     />
-                    <span>CADASTRAR AGENDAMENTO</span>
+                    <span>Cadastrar agendamento</span>
                   </NavLink>
 
                   <NavLink
@@ -233,7 +188,7 @@ function Sidebar() {
                       alt="Calendário"
                       className="submenu-icon"
                     />
-                    <span>VISUALIZAR CALENDÁRIO</span>
+                    <span>Visualizar calendário</span>
                   </NavLink>
                 </div>
               )}
@@ -247,17 +202,21 @@ function Sidebar() {
                     : 'menu-item'
                 }
                 onClick={alternarOrdemServico}
+                aria-label="Ordem de serviço"
+                aria-expanded={openOrdemServico}
+                aria-controls="submenu-ordem-servico"
               >
                 <img
                   src="/icons/ordemservico.svg"
                   alt="Ordem de serviço"
                   className="menu-icon"
                 />
-                <span>ORDEM DE SERVIÇO</span>
+                <span>Ordem de serviço</span>
+                <span className={openOrdemServico ? 'submenu-chevron is-open' : 'submenu-chevron'} aria-hidden="true" />
               </button>
 
-              {sidebarAberta && openOrdemServico && (
-                <div className="submenu">
+              {openOrdemServico && (
+                <div id="submenu-ordem-servico" className="submenu">
                   <NavLink
                     to="/operador/ordem-servico"
                     end
@@ -270,7 +229,7 @@ function Sidebar() {
                       alt="Gerenciar OS"
                       className="submenu-icon"
                     />
-                    <span>GERENCIAR OS</span>
+                    <span>Gerenciar OS</span>
                   </NavLink>
 
                   <NavLink
@@ -285,7 +244,7 @@ function Sidebar() {
                       alt="Diagnósticos"
                       className="submenu-icon"
                     />
-                    <span>DIAGNÓSTICOS</span>
+                    <span>Diagnósticos</span>
                   </NavLink>
 
                   <NavLink
@@ -300,7 +259,7 @@ function Sidebar() {
                       alt="Serviços"
                       className="submenu-icon"
                     />
-                    <span>SERVIÇOS</span>
+                    <span>Serviços</span>
                   </NavLink>
 
                   <NavLink
@@ -315,7 +274,7 @@ function Sidebar() {
                       alt="Peças"
                       className="submenu-icon"
                     />
-                    <span>PEÇAS</span>
+                    <span>Peças</span>
                   </NavLink>
                 </div>
               )}
@@ -325,7 +284,7 @@ function Sidebar() {
           {podeVerTecnico() && (
             <>
               <NavLink to="/tecnico/painel" title="Painel técnico" className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
-                <FiPackage className="menu-icon" aria-hidden="true" /><span>PAINEL TÉCNICO</span>
+                <FiPackage className="menu-icon" aria-hidden="true" /><span>Painel técnico</span>
               </NavLink>
             </>
           )}
@@ -345,7 +304,7 @@ function Sidebar() {
                   alt="Relatórios"
                   className="menu-icon"
                 />
-                <span>RELATÓRIOS</span>
+                <span>Relatórios</span>
               </NavLink>
 
               <NavLink
@@ -361,7 +320,7 @@ function Sidebar() {
                   alt="Cadastrar fornecedores"
                   className="menu-icon"
                 />
-                <span>CADASTRAR FORNECEDORES</span>
+                <span>Cadastrar fornecedores</span>
               </NavLink>
 
               <NavLink
@@ -377,7 +336,7 @@ function Sidebar() {
                   alt="Visualizar fornecedores"
                   className="menu-icon"
                 />
-                <span>VISUALIZAR FORNECEDORES</span>
+                <span>Visualizar fornecedores</span>
               </NavLink>
 
               <NavLink
@@ -393,7 +352,7 @@ function Sidebar() {
                   alt="Cadastrar funcionários"
                   className="menu-icon"
                 />
-                <span>CADASTRAR FUNCIONÁRIOS</span>
+                <span>Cadastrar funcionários</span>
               </NavLink>
 
               <NavLink
@@ -409,18 +368,12 @@ function Sidebar() {
                   alt="Visualizar funcionários"
                   className="menu-icon"
                 />
-                <span>VISUALIZAR FUNCIONÁRIOS</span>
+                <span>Visualizar funcionários</span>
               </NavLink>
             </>
           )}
         </nav>
-      </div>
-
-      <button type="button" className="logout-btn" onClick={sair} title="Sair">
-        <img src="/icons/logout.svg" alt="Logout" className="menu-icon" />
-        <span>LOGOUT</span>
-      </button>
-    </aside>
+    </Navbars>
   );
 }
 

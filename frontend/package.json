@@ -8,7 +8,8 @@
     "docs": "jsdoc -c jsdoc.json",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:os": "node --test tests/ordemServico.test.js tests/ordemServicoFluxos.test.js"
   },
   "dependencies": {
     "axios": "^1.15.1",

@@ -1,5 +1,6 @@
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import '../styles/operadorStyles/layout.css';
 
 /**
  * Layout principal utilizado nas páginas do sistema.
@@ -9,14 +10,14 @@ import Topbar from './Topbar';
  * @param {*} props.children - Conteúdo principal da página.
  * @returns {Object} Estrutura visual da página.
  */
-function Layout({ children }) {
+function Layout({ children, className = '', theme, topbarActions }) {
   return (
     // Estrutura base usada nas páginas internas: menu lateral + topo + conteúdo.
-    <div className="cadastro-page">
+    <div className={`cadastro-page ${className}`.trim()} data-theme={theme}>
       <Sidebar />
 
       <div className="main-area">
-        <Topbar />
+        <Topbar actions={topbarActions} />
         {children}
       </div>
     </div>

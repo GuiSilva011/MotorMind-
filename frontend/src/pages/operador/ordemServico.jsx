@@ -2,6 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
+import OrdemServicoTela from '../../components/OrdemServicoTela';
+import ModalOficina from '../../components/ModalOficina';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { calcularTotaisOrdem } from '../../utils/ordemServicoCalculos';
+import '../../styles/temaOficina.css';
 import api from '../../services/api';
 import '../../styles/operadorStyles/ordemServico.css';
 
@@ -91,6 +97,7 @@ const filtrosBuscaOSInicial = {
 function OrdemServico() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [tema, setTema] = useTemaOficina();
   const iniciouTelaRef = useRef(false);
 
   const agendamentoOrigem = location.state?.agendamento || null;
@@ -141,19 +148,6 @@ function OrdemServico() {
   const [carregandoOrdem, setCarregandoOrdem] = useState(false);
 
   const podeEditar = modoTela === 'nova' || modoTela === 'edicao';
-  const estaVisualizando = modoTela === 'visualizacao';
-
-  /**
-   * Inicializa a tela apenas uma vez e evita execuções duplicadas durante
-   * re-renderizações do componente.
-   */
-  useEffect(() => {
-    if (iniciouTelaRef.current) return;
-
-    iniciouTelaRef.current = true;
-    iniciarTelaOrdemServico();
-  }, []);
-
   /**
    * Salva automaticamente o rascunho da ordem de serviço enquanto houver
    * progresso de preenchimento e a tela estiver em modo editável.
@@ -1880,15 +1874,16 @@ function OrdemServico() {
           <tbody>
             {itens.map((item) => (
               <tr key={item.id}>
-                <td>{item.codigo || '-'}</td>
-                <td>{item.nome || '-'}</td>
-                <td>{obterDetalheCatalogo(item)}</td>
+                <td data-label="Código">{item.codigo || '-'}</td>
+                <td data-label="Nome">{item.nome || '-'}</td>
+                <td data-label="Detalhes">{obterDetalheCatalogo(item)}</td>
 
                 <td>
                   <button
                     type="button"
                     className="os-small-btn os-blue"
                     onClick={() => selecionarItemCatalogo(item)}
+                    aria-label={`Selecionar ${item.nome || item.codigo || 'item'}`}
                     disabled={modalCatalogo.tipo === 'estoque' && item.quantidadeAtual < 1}
                   >
                     {modalCatalogo.tipo === 'estoque' && item.quantidadeAtual < 1 ? 'Sem saldo' : 'Selecionar'}
@@ -2224,47 +2219,7 @@ function OrdemServico() {
    *
    * @type {Object}
    */
-  const totais = useMemo(() => {
-    const todosServicos = [
-      ...ordem.servicosSemDiagnostico,
-      ...ordem.diagnosticos.flatMap((diagnostico) => diagnostico.servicos),
-    ];
-
-    const totalServicos = todosServicos.reduce((acc, servico) => {
-      const preco = Number(servico.precoVenda || 0);
-      const desconto = Number(servico.desconto || 0);
-
-      return acc + Math.max(preco - desconto, 0);
-    }, 0);
-
-    const totalPecasDosServicos = todosServicos.reduce((acc, servico) => {
-      const totalServicoPecas = servico.pecas.reduce((soma, peca) => {
-        const quantidade = Number(peca.quantidade || 0);
-        const custoUnitario = Number(peca.custoUnitario || 0);
-        const desconto = Number(peca.desconto || 0);
-
-        return soma + Math.max(quantidade * custoUnitario - desconto, 0);
-      }, 0);
-
-      return acc + totalServicoPecas;
-    }, 0);
-
-    const totalPecasAvulsas = ordem.pecasAvulsas.reduce((acc, peca) => {
-      const quantidade = Number(peca.quantidade || 0);
-      const custoUnitario = Number(peca.custoUnitario || 0);
-      const desconto = Number(peca.desconto || 0);
-
-      return acc + Math.max(quantidade * custoUnitario - desconto, 0);
-    }, 0);
-
-    const totalPecas = totalPecasDosServicos + totalPecasAvulsas;
-
-    return {
-      totalServicos,
-      totalPecas,
-      totalGeral: totalServicos + totalPecas,
-    };
-  }, [ordem]);
+  const totais = useMemo(() => calcularTotaisOrdem(ordem), [ordem]);
 
   /**
    * Prepara a lista de peças para montar a cotação por WhatsApp.
@@ -3257,1065 +3212,47 @@ Pode me enviar os valores e disponibilidade, por favor?`;
   janelaImpressao.document.close();
 }
 
-  /**
-   * Renderiza uma linha de peça reutilizada nos blocos da OS.
-   *
-   * @param {Object} configuracao - Dados usados para renderizar a linha de peça.
-   * @returns {JSX.Element} Elemento JSX renderizado.
-   */
-  function renderPeca({
-    peca,
-    pecaIndex,
-    codigoPecaCompleto,
-    onAbrirCatalogo,
-    onAbrirEstoque,
-    onAplicarFornecedor,
-    onAtualizar,
-    onRemover,
-  }) {
-    return (
-      <div className="os-piece-row" key={peca.id}>
-        <div className="os-piece-title-row">
-          <div className="os-code os-code-piece">{pecaIndex + 1}</div>
-
-          <div>
-            <strong>Peça {pecaIndex + 1}</strong>
-            <small>{codigoPecaCompleto}</small>
-          </div>
-        </div>
-
-        <div className="os-form-grid os-grid-piece">
-          <div className="os-field os-col-2">
-            <label>Origem da peça</label>
-
-            <div className="os-piece-source-actions">
-              <button
-                type="button"
-                className="os-select-modal-btn"
-                onClick={onAbrirCatalogo}
-                disabled={!podeEditar}
-              >
-                {peca.pecaCatalogoId ? peca.descricao : 'Selecionar do catálogo'}
-              </button>
-              <button
-                type="button"
-                className={`os-select-modal-btn ${peca.estoquePecaId ? 'os-stock-selected' : ''}`}
-                onClick={onAbrirEstoque}
-                disabled={!podeEditar}
-              >
-                {peca.estoquePecaId ? `Estoque: ${peca.descricao}` : 'Pegar do estoque'}
-              </button>
-            </div>
-            {peca.estoquePecaId && <small className="os-stock-note">A baixa será confirmada ao salvar a OS.</small>}
-          </div>
-
-          <div className="os-field os-col-2">
-            <label>Descrição complementar</label>
-            <input
-              value={peca.descricao}
-              disabled={!podeEditar}
-              onChange={(event) => onAtualizar('descricao', event.target.value)}
-              placeholder="Detalhe específico desta peça na OS"
-            />
-          </div>
-
-          <div className="os-field">
-            <label>Fornecedor</label>
-            <select
-              value={peca.fornecedorId}
-              disabled={!podeEditar || Boolean(peca.estoquePecaId)}
-              onChange={(event) => onAplicarFornecedor(event.target.value)}
-            >
-              <option value="">
-                {peca.estoquePecaId ? 'Estoque interno' : 'Selecione'}
-              </option>
-
-              {catalogos.fornecedores.map((fornecedor) => (
-                <option key={fornecedor.id} value={fornecedor.id}>
-                  {fornecedor.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="os-field">
-            <label>Qtd.</label>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={peca.quantidade}
-              disabled={!podeEditar}
-              onChange={(event) =>
-                onAtualizar('quantidade', event.target.value)
-              }
-            />
-          </div>
-
-          <div className="os-field">
-            <label>Custo</label>
-            <input
-              type="number"
-              value={peca.custoUnitario}
-              disabled={!podeEditar}
-              onChange={(event) =>
-                onAtualizar('custoUnitario', event.target.value)
-              }
-              placeholder="0,00"
-            />
-          </div>
-
-          <div className="os-field">
-            <label>Desconto</label>
-            <input
-              type="number"
-              value={peca.desconto}
-              disabled={!podeEditar}
-              onChange={(event) => onAtualizar('desconto', event.target.value)}
-              placeholder="0,00"
-            />
-          </div>
-
-          <div className="os-field">
-            <label>Total</label>
-            <input
-              readOnly
-              value={formatarMoeda(
-                Number(peca.quantidade || 0) *
-                  Number(peca.custoUnitario || 0) -
-                  Number(peca.desconto || 0)
-              )}
-            />
-          </div>
-        </div>
-
-        {podeEditar && (
-          <button type="button" className="os-icon-btn" onClick={onRemover}>
-            ×
-          </button>
-        )}
-      </div>
-    );
-  }
+  // Inicializa uma vez, preservando o fluxo de rascunho e agendamento.
+  useEffect(() => {
+    if (iniciouTelaRef.current) return;
+    iniciouTelaRef.current = true;
+    iniciarTelaOrdemServico();
+  }, []);
 
   return (
-    <Layout>
-      <main className="os-page">
-        <section className="os-top">
-          <div>
-            <h1>Ordem de Serviço</h1>
-
-            <p>
-              {modoTela === 'nova' && 'Monte uma nova OS.'}
-              {modoTela === 'visualizacao' &&
-                'Visualizando uma ordem de serviço existente.'}
-              {modoTela === 'edicao' &&
-                'Editando uma ordem de serviço existente.'}
-            </p>
-
-            {(carregandoCatalogos || carregandoCodigo || carregandoOrdem) && (
-              <small>Carregando dados da OS...</small>
-            )}
-          </div>
-
-          <div className="os-top-actions">
-            <button
-              type="button"
-              className="os-small-btn os-dark"
-              onClick={abrirModalBuscarOS}
-            >
-              Buscar OS existente
-            </button>
-
-            {modoTela !== 'nova' && (
-              <button
-                type="button"
-                className="os-small-btn os-outline"
-                onClick={novaOrdemServico}
-              >
-                Nova OS
-              </button>
-            )}
-
-            {estaVisualizando && (
-              <button
-                type="button"
-                className="os-small-btn os-blue"
-                onClick={editarOrdemAtual}
-              >
-                Editar OS
-              </button>
-            )}
-          </div>
-        </section>
-
-        <section className="os-panel">
-          <div className="os-panel-title">
-            <h2>Cliente e veículo</h2>
-            <span>Busque por nome do cliente ou placa do veículo.</span>
-          </div>
-
-          <div className="os-form-grid os-grid-4">
-            <div className="os-field os-col-2">
-              <label>Buscar cliente ou placa</label>
-
-              <div className="os-search-line">
-                <input
-                  value={busca}
-                  disabled={!podeEditar}
-                  onChange={(event) => setBusca(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      buscarClienteOuVeiculo();
-                    }
-                  }}
-                  placeholder="Digite o nome do cliente ou placa"
-                />
-
-                <button
-                  type="button"
-                  onClick={buscarClienteOuVeiculo}
-                  disabled={buscandoVeiculo || !podeEditar}
-                >
-                  {buscandoVeiculo ? 'Buscando...' : 'Buscar'}
-                </button>
-              </div>
-            </div>
-
-            <div className="os-field">
-              <label>Código da OS</label>
-              <input value={ordem.codigo} readOnly placeholder="Automático" />
-            </div>
-
-            <div className="os-field">
-              <label>Status da OS</label>
-
-              <select
-                value={ordem.status || 'ABERTA'}
-                disabled={!podeEditar}
-                onChange={(event) =>
-                  atualizarCampoOrdem('status', event.target.value)
-                }
-              >
-                <option value="ABERTA">Aberta</option>
-                <option value="EM_ANDAMENTO">Em andamento</option>
-                <option value="AGUARDANDO_PECA">Aguardando peça</option>
-                <option value="FINALIZADA">Finalizada</option>
-                <option value="FECHADA">Fechada</option>
-                <option value="CANCELADA">Cancelada</option>
-              </select>
-            </div>
-            <div className="os-field">
-              <label htmlFor="os-tecnico">Mecânico responsável</label>
-              <select id="os-tecnico" value={ordem.tecnicoId || ''} disabled={!podeEditar}
-                onChange={event => atualizarCampoOrdem('tecnicoId', event.target.value)}>
-                <option value="">Sem atribuição</option>
-                {ordem.tecnicoId && !(catalogos.tecnicosOS || []).some(tecnico => tecnico.id === Number(ordem.tecnicoId)) && (
-                  <option value={ordem.tecnicoId}>{ordem.tecnicoNome || 'Mecânico vinculado'} (fora da equipe)</option>
-                )}
-                {(catalogos.tecnicosOS || []).map(tecnico => <option key={tecnico.id} value={tecnico.id}>{tecnico.Nome}</option>)}
-              </select>
-              <small>O vínculo com o mecânico só é confirmado ao salvar a OS.</small>
-              {ordem.id && <button type="button" className="os-small-btn os-blue" onClick={() => navigate(`/tickets?ordem=${ordem.id}`)}>Tickets desta OS</button>}
-            </div>
-          </div>
-
-          {resultadosBusca.length > 0 && podeEditar && (
-            <div className="os-search-results">
-              {resultadosBusca.map((veiculo) => (
-                <button
-                  type="button"
-                  key={veiculo.id}
-                  className="os-search-result-item"
-                  onClick={() => selecionarVeiculo(veiculo)}
-                >
-                  <strong>{veiculo.cliente?.nome || 'Cliente sem nome'}</strong>
-
-                  <span>
-                    {veiculo.placa || '-'} | {veiculo.fabricante || '-'}{' '}
-                    {veiculo.modelo || '-'} | {montarAnoVeiculo(veiculo) || '-'} | Câmbio: {veiculo.cambio || '-'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {clienteNaoEncontrado && podeEditar && (
-            <div className="os-not-found">
-              <span>Nenhum cliente ou veículo encontrado.</span>
-
-              <button
-                type="button"
-                className="os-small-btn os-blue"
-                onClick={() => navigate('/clientes/cadastro')}
-              >
-                Cadastrar novo cliente
-              </button>
-            </div>
-          )}
-
-          <div className="os-divider" />
-
-          <div className="os-subtitle">Cliente selecionado</div>
-
-          <div className="os-form-grid os-grid-4">
-            <div className="os-field os-col-2">
-              <label>Nome do cliente</label>
-              <input
-                value={ordem.cliente.nome}
-                readOnly
-                placeholder="Nenhum cliente selecionado"
-              />
-            </div>
-          </div>
-
-          <div className="os-divider" />
-
-          <div className="os-subtitle">Dados do veículo</div>
-
-          <div className="os-form-grid os-grid-4">
-            <div className="os-field">
-              <label>Placa</label>
-              <input value={ordem.veiculo.placa} readOnly />
-            </div>
-
-            <div className="os-field">
-              <label>Marca</label>
-              <input value={ordem.veiculo.marca} readOnly />
-            </div>
-
-            <div className="os-field">
-              <label>Modelo</label>
-              <input value={ordem.veiculo.modelo} readOnly />
-            </div>
-
-            <div className="os-field">
-              <label>Ano</label>
-              <input value={ordem.veiculo.ano} readOnly />
-            </div>
-
-            <div className="os-field">
-              <label>Motor</label>
-              <input value={ordem.veiculo.motor} readOnly />
-            </div>
-
-            <div className="os-field">
-              <label>Câmbio</label>
-              <input value={ordem.veiculo.cambio || '-'} readOnly />
-            </div>
-
-            <div className="os-field">
-              <label>Cor</label>
-              <input value={ordem.veiculo.cor} readOnly />
-            </div>
-
-            <div className="os-field">
-              <label>KM</label>
-              <input value={ordem.veiculo.km} readOnly />
-            </div>
-
-            <div className="os-field os-col-2">
-              <label>Chassi</label>
-              <input value={ordem.veiculo.chassi} readOnly />
-            </div>
-
-            <label className="os-check">
-              <input
-                type="checkbox"
-                checked={ordem.veiculo.possuiAr}
-                readOnly
-              />
-              Possui ar-condicionado
-            </label>
-
-            <div className="os-field os-col-full">
-              <label>Observações da OS</label>
-              <input
-                value={ordem.observacoes}
-                disabled={!podeEditar}
-                onChange={(event) =>
-                  atualizarCampoOrdem('observacoes', event.target.value)
-                }
-                placeholder="Observações gerais da ordem de serviço"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="os-service-panel">
-          <div className="os-panel-title os-title-row">
-            <div>
-              <h2>Diagnósticos, serviços e peças</h2>
-              <span>Crie a hierarquia da ordem de serviço.</span>
-            </div>
-
-            {podeEditar && (
-              <div className="os-title-actions">
-                <button
-                  type="button"
-                  className="os-small-btn os-blue"
-                  onClick={adicionarDiagnostico}
-                >
-                  + Novo diagnóstico
-                </button>
-
-                <button
-                  type="button"
-                  className="os-small-btn os-dark"
-                  onClick={adicionarServicoSemDiagnostico}
-                >
-                  + Serviço sem diagnóstico
-                </button>
-
-                <button
-                  type="button"
-                  className="os-small-btn os-outline"
-                  onClick={adicionarPecaAvulsa}
-                >
-                  + Peça avulsa
-                </button>
-              </div>
-            )}
-          </div>
-
-          {ordem.diagnosticos.length === 0 &&
-            ordem.servicosSemDiagnostico.length === 0 &&
-            ordem.pecasAvulsas.length === 0 && (
-              <div className="os-empty">
-                Nenhum diagnóstico, serviço ou peça adicionado.
-              </div>
-            )}
-
-          {ordem.diagnosticos.map((diagnostico, diagnosticoIndex) => {
-            const codigoDiagnostico = letraDiagnostico(diagnosticoIndex);
-
-            return (
-              <article className="os-diagnostic-card" key={diagnostico.id}>
-                <div className="os-diagnostic-header">
-                  <div className="os-code os-code-diagnostic">
-                    {codigoDiagnostico}
-                  </div>
-
-                  <div className="os-field">
-                    <label>Modelo de diagnóstico</label>
-
-                    <button
-                      type="button"
-                      className="os-select-modal-btn"
-                      onClick={() =>
-                        abrirModalCatalogo({
-                          tipo: 'diagnostico',
-                          diagnosticoId: diagnostico.id,
-                        })
-                      }
-                      disabled={!podeEditar}
-                    >
-                      {diagnostico.diagnosticoCatalogoId
-                        ? diagnostico.descricao
-                        : 'Selecionar diagnóstico cadastrado'}
-                    </button>
-                  </div>
-
-                  <div className="os-field os-grow">
-                    <label>Descrição do diagnóstico</label>
-
-                    <input
-                      value={diagnostico.descricao}
-                      disabled={!podeEditar}
-                      onChange={(event) =>
-                        atualizarDiagnostico(
-                          diagnostico.id,
-                          'descricao',
-                          event.target.value
-                        )
-                      }
-                      placeholder="Ex: Carro falhando, barulho no motor..."
-                    />
-                  </div>
-
-                  {podeEditar && (
-                    <>
-                      <button
-                        type="button"
-                        className="os-small-btn os-blue"
-                        onClick={() =>
-                          adicionarServicoAoDiagnostico(diagnostico.id)
-                        }
-                      >
-                        + Serviço
-                      </button>
-
-                      <button
-                        type="button"
-                        className="os-icon-btn"
-                        onClick={() => removerDiagnostico(diagnostico.id)}
-                      >
-                        ×
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {diagnostico.servicos.length === 0 && (
-                  <div className="os-inner-empty">
-                    Nenhum serviço vinculado a este diagnóstico.
-                  </div>
-                )}
-
-                {diagnostico.servicos.map((servico, servicoIndex) => {
-                  const codigoServicoCompleto = `${codigoDiagnostico}.${
-                    servicoIndex + 1
-                  }`;
-
-                  return (
-                    <article className="os-service-card" key={servico.id}>
-                      <div className="os-service-title-row">
-                        <div className="os-code os-code-service">
-                          {servicoIndex + 1}
-                        </div>
-
-                        <div>
-                          <strong>Serviço {servicoIndex + 1}</strong>
-                          <small>{codigoServicoCompleto}</small>
-                        </div>
-                      </div>
-
-                      <div className="os-service-header">
-                        <div className="os-form-grid os-grid-service">
-                          <div className="os-field os-col-2">
-                            <label>Serviço</label>
-
-                            <button
-                              type="button"
-                              className="os-select-modal-btn"
-                              onClick={() =>
-                                abrirModalCatalogo({
-                                  tipo: 'servico',
-                                  diagnosticoId: diagnostico.id,
-                                  servicoId: servico.id,
-                                  origem: 'diagnostico',
-                                })
-                              }
-                              disabled={!podeEditar}
-                            >
-                              {servico.servicoCatalogoId
-                                ? servico.descricao
-                                : 'Selecionar serviço cadastrado'}
-                            </button>
-                          </div>
-
-                          <div className="os-field os-col-2">
-                            <label>Descrição complementar</label>
-
-                            <input
-                              value={servico.descricao}
-                              disabled={!podeEditar}
-                              onChange={(event) =>
-                                atualizarServicoDiagnostico(
-                                  diagnostico.id,
-                                  servico.id,
-                                  'descricao',
-                                  event.target.value
-                                )
-                              }
-                              placeholder="Detalhe específico deste serviço"
-                            />
-                          </div>
-
-                          <div className="os-field">
-                            <label>Responsável</label>
-
-                            <select
-                              value={servico.responsavel}
-                              disabled={!podeEditar}
-                              onChange={(event) =>
-                                atualizarServicoDiagnostico(
-                                  diagnostico.id,
-                                  servico.id,
-                                  'responsavel',
-                                  event.target.value
-                                )
-                              }
-                            >
-                              <option value="">Selecione um técnico</option>
-
-                              {catalogos.tecnicos.map((tecnico) => (
-                                <option
-                                  key={tecnico.id}
-                                  value={tecnico.usuario?.Nome || ''}
-                                >
-                                  {tecnico.usuario?.Nome || 'Técnico sem nome'}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="os-field">
-                            <label>Tipo</label>
-
-                            <input
-                              value={servico.tipo}
-                              disabled={!podeEditar}
-                              onChange={(event) =>
-                                atualizarServicoDiagnostico(
-                                  diagnostico.id,
-                                  servico.id,
-                                  'tipo',
-                                  event.target.value
-                                )
-                              }
-                              placeholder="Mão de obra, troca..."
-                            />
-                          </div>
-
-                          <div className="os-field">
-                            <label>Preço</label>
-
-                            <input
-                              type="number"
-                              value={servico.precoVenda}
-                              disabled={!podeEditar}
-                              onChange={(event) =>
-                                atualizarServicoDiagnostico(
-                                  diagnostico.id,
-                                  servico.id,
-                                  'precoVenda',
-                                  event.target.value
-                                )
-                              }
-                              placeholder="0,00"
-                            />
-                          </div>
-
-                          <div className="os-field">
-                            <label>Desconto</label>
-
-                            <input
-                              type="number"
-                              value={servico.desconto}
-                              disabled={!podeEditar}
-                              onChange={(event) =>
-                                atualizarServicoDiagnostico(
-                                  diagnostico.id,
-                                  servico.id,
-                                  'desconto',
-                                  event.target.value
-                                )
-                              }
-                              placeholder="0,00"
-                            />
-                          </div>
-                        </div>
-
-                        {podeEditar && (
-                          <button
-                            type="button"
-                            className="os-icon-btn"
-                            onClick={() =>
-                              removerServicoDiagnostico(
-                                diagnostico.id,
-                                servico.id
-                              )
-                            }
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="os-piece-area">
-                        {podeEditar && (
-                          <button
-                            type="button"
-                            className="os-small-btn os-outline"
-                            onClick={() =>
-                              adicionarPecaDiagnostico(
-                                diagnostico.id,
-                                servico.id
-                              )
-                            }
-                          >
-                            + Adicionar peça
-                          </button>
-                        )}
-
-                        {servico.pecas.map((peca, pecaIndex) => {
-                          const codigoPecaCompleto = `${codigoServicoCompleto}.${
-                            pecaIndex + 1
-                          }`;
-
-                          return renderPeca({
-                            peca,
-                            pecaIndex,
-                            codigoPecaCompleto,
-                            onAbrirCatalogo: () =>
-                              abrirModalCatalogo({
-                                tipo: 'peca',
-                                diagnosticoId: diagnostico.id,
-                                servicoId: servico.id,
-                                pecaId: peca.id,
-                                origem: 'diagnostico',
-                              }),
-                            onAbrirEstoque: () =>
-                              abrirModalCatalogo({
-                                tipo: 'estoque',
-                                diagnosticoId: diagnostico.id,
-                                servicoId: servico.id,
-                                pecaId: peca.id,
-                                origem: 'diagnostico',
-                              }),
-                            onAplicarFornecedor: (fornecedorId) =>
-                              aplicarFornecedorPecaDiagnostico(
-                                diagnostico.id,
-                                servico.id,
-                                peca.id,
-                                fornecedorId
-                              ),
-                            onAtualizar: (campo, valor) =>
-                              atualizarPecaDiagnostico(
-                                diagnostico.id,
-                                servico.id,
-                                peca.id,
-                                campo,
-                                valor
-                              ),
-                            onRemover: () =>
-                              removerPecaDiagnostico(
-                                diagnostico.id,
-                                servico.id,
-                                peca.id
-                              ),
-                          });
-                        })}
-                      </div>
-                    </article>
-                  );
-                })}
-              </article>
-            );
-          })}
-
-          {ordem.servicosSemDiagnostico.length > 0 && (
-            <div className="os-free-items">
-              {ordem.servicosSemDiagnostico.map((servico, servicoIndex) => {
-                const codigoServicoCompleto = `S.${servicoIndex + 1}`;
-
-                return (
-                  <article className="os-service-card" key={servico.id}>
-                    <div className="os-service-title-row">
-                      <div className="os-code os-code-service">
-                        {servicoIndex + 1}
-                      </div>
-
-                      <div>
-                        <strong>Serviço {servicoIndex + 1}</strong>
-                        <small>{codigoServicoCompleto}</small>
-                      </div>
-                    </div>
-
-                    <div className="os-service-header">
-                      <div className="os-form-grid os-grid-service">
-                        <div className="os-field os-col-2">
-                          <label>Serviço</label>
-
-                          <button
-                            type="button"
-                            className="os-select-modal-btn"
-                            onClick={() =>
-                              abrirModalCatalogo({
-                                tipo: 'servico',
-                                servicoId: servico.id,
-                                origem: 'sem-diagnostico',
-                              })
-                            }
-                            disabled={!podeEditar}
-                          >
-                            {servico.servicoCatalogoId
-                              ? servico.descricao
-                              : 'Selecionar serviço cadastrado'}
-                          </button>
-                        </div>
-
-                        <div className="os-field os-col-2">
-                          <label>Descrição complementar</label>
-
-                          <input
-                            value={servico.descricao}
-                            disabled={!podeEditar}
-                            onChange={(event) =>
-                              atualizarServicoSemDiagnostico(
-                                servico.id,
-                                'descricao',
-                                event.target.value
-                              )
-                            }
-                            placeholder="Detalhe específico deste serviço"
-                          />
-                        </div>
-
-                        <div className="os-field">
-                          <label>Responsável</label>
-
-                          <select
-                            value={servico.responsavel}
-                            disabled={!podeEditar}
-                            onChange={(event) =>
-                              atualizarServicoSemDiagnostico(
-                                servico.id,
-                                'responsavel',
-                                event.target.value
-                              )
-                            }
-                          >
-                            <option value="">Selecione um técnico</option>
-
-                            {catalogos.tecnicos.map((tecnico) => (
-                              <option
-                                key={tecnico.id}
-                                value={tecnico.usuario?.Nome || ''}
-                              >
-                                {tecnico.usuario?.Nome || 'Técnico sem nome'}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="os-field">
-                          <label>Tipo</label>
-
-                          <input
-                            value={servico.tipo}
-                            disabled={!podeEditar}
-                            onChange={(event) =>
-                              atualizarServicoSemDiagnostico(
-                                servico.id,
-                                'tipo',
-                                event.target.value
-                              )
-                            }
-                            placeholder="Mão de obra, troca..."
-                          />
-                        </div>
-
-                        <div className="os-field">
-                          <label>Preço</label>
-
-                          <input
-                            type="number"
-                            value={servico.precoVenda}
-                            disabled={!podeEditar}
-                            onChange={(event) =>
-                              atualizarServicoSemDiagnostico(
-                                servico.id,
-                                'precoVenda',
-                                event.target.value
-                              )
-                            }
-                            placeholder="0,00"
-                          />
-                        </div>
-
-                        <div className="os-field">
-                          <label>Desconto</label>
-
-                          <input
-                            type="number"
-                            value={servico.desconto}
-                            disabled={!podeEditar}
-                            onChange={(event) =>
-                              atualizarServicoSemDiagnostico(
-                                servico.id,
-                                'desconto',
-                                event.target.value
-                              )
-                            }
-                            placeholder="0,00"
-                          />
-                        </div>
-                      </div>
-
-                      {podeEditar && (
-                        <button
-                          type="button"
-                          className="os-icon-btn"
-                          onClick={() =>
-                            removerServicoSemDiagnostico(servico.id)
-                          }
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="os-piece-area">
-                      {podeEditar && (
-                        <button
-                          type="button"
-                          className="os-small-btn os-outline"
-                          onClick={() => adicionarPecaSemDiagnostico(servico.id)}
-                        >
-                          + Adicionar peça
-                        </button>
-                      )}
-
-                      {servico.pecas.map((peca, pecaIndex) => {
-                        const codigoPecaCompleto = `${codigoServicoCompleto}.${
-                          pecaIndex + 1
-                        }`;
-
-                        return renderPeca({
-                          peca,
-                          pecaIndex,
-                          codigoPecaCompleto,
-                          onAbrirCatalogo: () =>
-                            abrirModalCatalogo({
-                              tipo: 'peca',
-                              servicoId: servico.id,
-                              pecaId: peca.id,
-                              origem: 'servico-sem-diagnostico',
-                            }),
-                          onAbrirEstoque: () =>
-                            abrirModalCatalogo({
-                              tipo: 'estoque',
-                              servicoId: servico.id,
-                              pecaId: peca.id,
-                              origem: 'servico-sem-diagnostico',
-                            }),
-                          onAplicarFornecedor: (fornecedorId) =>
-                            aplicarFornecedorPecaSemDiagnostico(
-                              servico.id,
-                              peca.id,
-                              fornecedorId
-                            ),
-                          onAtualizar: (campo, valor) =>
-                            atualizarPecaSemDiagnostico(
-                              servico.id,
-                              peca.id,
-                              campo,
-                              valor
-                            ),
-                          onRemover: () =>
-                            removerPecaSemDiagnostico(servico.id, peca.id),
-                        });
-                      })}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-
-          {ordem.pecasAvulsas.length > 0 && (
-            <div className="os-free-items">
-              <div className="os-piece-area os-piece-area-loose">
-                {ordem.pecasAvulsas.map((peca, pecaIndex) =>
-                  renderPeca({
-                    peca,
-                    pecaIndex,
-                    codigoPecaCompleto: `P.${pecaIndex + 1}`,
-                    onAbrirCatalogo: () =>
-                      abrirModalCatalogo({
-                        tipo: 'peca',
-                        pecaId: peca.id,
-                        origem: 'avulsa',
-                      }),
-                    onAbrirEstoque: () =>
-                      abrirModalCatalogo({
-                        tipo: 'estoque',
-                        pecaId: peca.id,
-                        origem: 'avulsa',
-                      }),
-                    onAplicarFornecedor: (fornecedorId) =>
-                      aplicarFornecedorPecaAvulsa(peca.id, fornecedorId),
-                    onAtualizar: (campo, valor) =>
-                      atualizarPecaAvulsa(peca.id, campo, valor),
-                    onRemover: () => removerPecaAvulsa(peca.id),
-                  })
-                )}
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section className="os-bottom">
-          <div className="os-summary-card">
-            <h3>Pagamento</h3>
-
-            <div>
-              <span>Serviços</span>
-              <strong>{formatarMoeda(totais.totalServicos)}</strong>
-            </div>
-
-            <div>
-              <span>Peças</span>
-              <strong>{formatarMoeda(totais.totalPecas)}</strong>
-            </div>
-
-            <div className="os-summary-total">
-              <span>Total</span>
-              <strong>{formatarMoeda(totais.totalGeral)}</strong>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="os-quote-btn"
-            disabled={pecasParaCotacao.length === 0}
-            onClick={() => setModalCotacaoAberto(true)}
-          >
-            Enviar cotação para fornecedor
-          </button>
-        </section>
-
-        <section className="os-final-actions">
-          <button
-            type="button"
-            className="os-action os-action-blue"
-            onClick={imprimirOrdemServico}
-            disabled={!ordem.veiculo.id}
-          >
-            Imprimir OS
-          </button>
-
-          <button
-            type="button"
-            className="os-action os-action-red"
-            onClick={voltarPagina}
-          >
-            Voltar
-          </button>
-
-          {estaVisualizando && (
-            <button
-              type="button"
-              className="os-action os-action-dark"
-              onClick={editarOrdemAtual}
-            >
-              Editar OS
-            </button>
-          )}
-
-          {podeEditar && (
-            <button
-              type="button"
-              className="os-action os-action-dark"
-              onClick={salvarOrdemServico}
-              disabled={salvando}
-            >
-              {salvando ? 'Salvando...' : 'Salvar'}
-            </button>
-          )}
-        </section>
-
+    <Layout className="oficina-theme os-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <OrdemServicoTela ordem={ordem} modoTela={modoTela} catalogos={catalogos}
+        busca={busca} resultadosBusca={resultadosBusca} buscandoVeiculo={buscandoVeiculo}
+        clienteNaoEncontrado={clienteNaoEncontrado}
+        carregando={carregandoCatalogos || carregandoCodigo || carregandoOrdem}
+        salvando={salvando} totais={totais} podeCotar={pecasParaCotacao.length > 0}
+        formatarMoeda={formatarMoeda} acoes={{
+          setBusca, buscarClienteOuVeiculo, selecionarVeiculo, montarAnoVeiculo,
+          atualizarCampoOrdem, abrirModalBuscarOS, novaOrdemServico, editarOrdemAtual,
+          salvarOrdemServico, imprimirOrdemServico, voltarPagina,
+          cadastrarCliente: () => navigate('/clientes/cadastro'),
+          abrirTickets: () => navigate(`/tickets?ordem=${ordem.id}`),
+          abrirCotacao: () => setModalCotacaoAberto(true),
+          adicionarDiagnostico, atualizarDiagnostico, removerDiagnostico,
+          adicionarServicoAoDiagnostico, adicionarServicoSemDiagnostico,
+          atualizarServicoDiagnostico, atualizarServicoSemDiagnostico,
+          removerServicoDiagnostico, removerServicoSemDiagnostico,
+          adicionarPecaDiagnostico, adicionarPecaSemDiagnostico, adicionarPecaAvulsa,
+          atualizarPecaDiagnostico, atualizarPecaSemDiagnostico, atualizarPecaAvulsa,
+          aplicarFornecedorPecaDiagnostico, aplicarFornecedorPecaSemDiagnostico,
+          aplicarFornecedorPecaAvulsa, removerPecaDiagnostico, removerPecaSemDiagnostico,
+          removerPecaAvulsa, abrirModalCatalogo,
+        }}>
         {modalBuscarOSAberto && (
-          <div className="os-modal-overlay">
-            <div className="os-modal os-catalog-modal">
+          <ModalOficina labelledBy="os-buscar-title" onClose={fecharModalBuscarOS} className="os-catalog-modal">
               <div className="os-modal-header">
-                <h2>Buscar ordem de serviço</h2>
+                <h2 id="os-buscar-title">Buscar ordem de serviço</h2>
 
                 <button
                   type="button"
                   className="os-modal-close-btn"
+                  aria-label="Fechar janela"
                   onClick={fecharModalBuscarOS}
                 >
                   ×
@@ -4324,9 +3261,10 @@ Pode me enviar os valores e disponibilidade, por favor?`;
 
               <div className="os-form-grid os-grid-4">
                 <div className="os-field os-col-2">
-                  <label>Código, cliente, placa ou veículo</label>
+                  <label htmlFor="os-filtro-termo">Código, cliente, placa ou veículo</label>
 
                   <input
+                    id="os-filtro-termo"
                     value={filtrosBuscaOS.termo}
                     onChange={(event) =>
                       atualizarFiltroBuscaOS('termo', event.target.value)
@@ -4336,9 +3274,10 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                 </div>
 
                 <div className="os-field">
-                  <label>Status</label>
+                  <label htmlFor="os-filtro-status">Status</label>
 
                   <select
+                    id="os-filtro-status"
                     value={filtrosBuscaOS.status}
                     onChange={(event) =>
                       atualizarFiltroBuscaOS('status', event.target.value)
@@ -4349,15 +3288,17 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                     <option value="EM_ANDAMENTO">Em andamento</option>
                     <option value="AGUARDANDO_PECA">Aguardando peça</option>
                     <option value="FINALIZADA">Finalizada</option>
+                    <option value="FECHADA">Fechada</option>
                     <option value="CANCELADA">Cancelada</option>
                   </select>
                 </div>
 
                 <div className="os-field">
-                  <label>Data inicial</label>
+                  <label htmlFor="os-filtro-dataInicio">Data inicial</label>
 
                   <input
                     type="date"
+                    id="os-filtro-dataInicio"
                     value={filtrosBuscaOS.dataInicio}
                     onChange={(event) =>
                       atualizarFiltroBuscaOS('dataInicio', event.target.value)
@@ -4366,10 +3307,11 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                 </div>
 
                 <div className="os-field">
-                  <label>Data final</label>
+                  <label htmlFor="os-filtro-dataFim">Data final</label>
 
                   <input
                     type="date"
+                    id="os-filtro-dataFim"
                     value={filtrosBuscaOS.dataFim}
                     onChange={(event) =>
                       atualizarFiltroBuscaOS('dataFim', event.target.value)
@@ -4378,8 +3320,6 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                 </div>
 
                 <div className="os-field">
-                  <label>&nbsp;</label>
-
                   <button
                     type="button"
                     className="os-small-btn os-blue"
@@ -4391,8 +3331,6 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                 </div>
 
                 <div className="os-field">
-                  <label>&nbsp;</label>
-
                   <button
                     type="button"
                     className="os-small-btn os-outline"
@@ -4426,24 +3364,25 @@ Pode me enviar os valores e disponibilidade, por favor?`;
 
                     {ordensEncontradas.map((item) => (
                       <tr key={item.id}>
-                        <td>{item.codigo}</td>
-                        <td>{item.clienteNome || '-'}</td>
+                        <td data-label="OS">{item.codigo}</td>
+                        <td data-label="Cliente">{item.clienteNome || '-'}</td>
 
-                        <td>
+                        <td data-label="Veículo">
                           {item.veiculo?.placa || '-'} |{' '}
                           {item.veiculo?.fabricante || '-'}{' '}
                           {item.veiculo?.modelo || '-'}
                         </td>
 
-                        <td>{formatarData(item.dataEmissao)}</td>
-                        <td>{item.status}</td>
-                        <td>{formatarMoeda(item.totalGeral)}</td>
+                        <td data-label="Data">{formatarData(item.dataEmissao)}</td>
+                        <td data-label="Status">{item.status}</td>
+                        <td data-label="Total">{formatarMoeda(item.totalGeral)}</td>
 
                         <td>
                           <button
                             type="button"
                             className="os-small-btn os-blue"
                             onClick={() => abrirOrdemExistente(item.id)}
+                            aria-label={`Abrir OS ${item.codigo}`}
                             disabled={carregandoOrdem}
                           >
                             Abrir
@@ -4454,16 +3393,14 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
+          </ModalOficina>
         )}
 
         {modalCatalogo.aberto && (
-          <div className="os-modal-overlay">
-            <div className="os-modal os-catalog-modal">
+          <ModalOficina labelledBy="os-catalogo-title" onClose={fecharModalCatalogo} className="os-catalog-modal">
               <div className="os-modal-header os-catalog-header">
                 <div>
-                  <h2>{obterTituloModalCatalogo()}</h2>
+                  <h2 id="os-catalogo-title">{obterTituloModalCatalogo()}</h2>
 
                   <span>
                     {modalCatalogo.tipo === 'estoque'
@@ -4493,6 +3430,7 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                   <button
                     type="button"
                     className="os-modal-close-btn"
+                    aria-label="Fechar janela"
                     onClick={fecharModalCatalogo}
                   >
                     ×
@@ -4502,6 +3440,8 @@ Pode me enviar os valores e disponibilidade, por favor?`;
 
               <div className="os-catalog-search">
                 <input
+                  id="os-catalogo-busca"
+                  aria-label="Pesquisar no catálogo"
                   value={buscaCatalogo}
                   onChange={(event) => setBuscaCatalogo(event.target.value)}
                   placeholder={`Pesquisar ${obterTituloModalCatalogo().toLowerCase()} por código, nome, marca, aplicação ou localização...`}
@@ -4509,19 +3449,18 @@ Pode me enviar os valores e disponibilidade, por favor?`;
               </div>
 
               {renderConteudoModalCatalogo()}
-            </div>
-          </div>
+          </ModalOficina>
         )}
 
         {modalCotacaoAberto && (
-          <div className="os-modal-overlay">
-            <div className="os-modal">
+          <ModalOficina labelledBy="os-cotacao-title" onClose={() => setModalCotacaoAberto(false)} className="">
               <div className="os-modal-header">
-                <h2>Enviar cotação para fornecedores</h2>
+                <h2 id="os-cotacao-title">Enviar cotação para fornecedores</h2>
 
                 <button
                   type="button"
                   className="os-modal-close-btn"
+                  aria-label="Fechar janela"
                   onClick={() => setModalCotacaoAberto(false)}
                 >
                   ×
@@ -4592,10 +3531,9 @@ Pode me enviar os valores e disponibilidade, por favor?`;
                   Enviar cotação
                 </button>
               </div>
-            </div>
-          </div>
+          </ModalOficina>
         )}
-      </main>
+      </OrdemServicoTela>
     </Layout>
   );
 }

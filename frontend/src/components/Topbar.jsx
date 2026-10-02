@@ -5,7 +5,7 @@ import api from '../services/api';
 import '../styles/estoqueAlertas.css';
 import NotificacoesTickets from './NotificacoesTickets';
 
-function Topbar() {
+function Topbar({ actions }) {
   const usuario = JSON.parse(localStorage.getItem('motormind_usuario') || 'null');
   const permitido = ['ADMIN', 'OPERADOR', 'OWNER'].includes(usuario?.Role);
   const [alertas, setAlertas] = useState([]);
@@ -40,6 +40,7 @@ function Topbar() {
   }, [permitido]);
 
   return <div className="estoque-topbar" onKeyDown={event => { if (event.key === 'Escape') setAberto(false); }}>
+    {actions && <div className="topbar-preferences">{actions}</div>}
     <NotificacoesTickets />
     {permitido && <>
     <button type="button" className="estoque-bell" aria-expanded={aberto} aria-controls="estoque-alertas" onClick={() => setAberto(!aberto)}>

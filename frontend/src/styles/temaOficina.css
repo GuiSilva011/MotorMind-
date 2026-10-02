@@ -1,0 +1,308 @@
+/* Paleta reutilizável. A classe é aplicada somente às telas que adotam esta identidade. */
+.oficina-theme,
+.oficina-theme dialog::backdrop,
+body[data-tema-oficina] {
+  --ui-page: #f3f4f6;
+  --ui-surface: #ffffff;
+  --ui-secondary: #f7f8fa;
+  --ui-text: #202938;
+  --ui-muted: #626d7d;
+  --ui-border: #dfe3e9;
+  --ui-primary: #254e84;
+  --ui-primary-text: #ffffff;
+  --ui-link: #2459a8;
+  --ui-blue-soft: #edf3fc;
+  --ui-success: #286743;
+  --ui-success-soft: #edf6ef;
+  --ui-danger: #a32d35;
+  --ui-danger-soft: #fbeef0;
+  --ui-overlay: #161b2380;
+  --ui-shadow: 0 8px 24px #20293814;
+  --ui-print-surface: #ffffff;
+  --ui-print-text: #202938;
+  color-scheme: light;
+}
+
+.oficina-theme[data-theme='escuro'],
+.oficina-theme[data-theme='escuro'] dialog::backdrop,
+body[data-tema-oficina='escuro'] {
+  --ui-page: #161b23;
+  --ui-surface: #202733;
+  --ui-secondary: #252e3b;
+  --ui-text: #e7ebf2;
+  --ui-muted: #acb5c5;
+  --ui-border: #364150;
+  --ui-primary: #94bbef;
+  --ui-primary-text: #142238;
+  --ui-link: #8dbaff;
+  --ui-blue-soft: #263954;
+  --ui-success: #93d4b1;
+  --ui-success-soft: #263c31;
+  --ui-danger: #ff9aa0;
+  --ui-danger-soft: #402c35;
+  --ui-overlay: #080c14a6;
+  --ui-shadow: 0 8px 24px #00000026;
+  color-scheme: dark;
+}
+
+.oficina-theme {
+  --sidebar-text: var(--ui-text);
+  --sidebar-muted: var(--ui-muted);
+  background: var(--ui-page);
+  color: var(--ui-text);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.oficina-theme .main-area {
+  background: var(--ui-page);
+}
+
+.oficina-theme :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--ui-link);
+  outline-offset: 2px;
+}
+
+.oficina-theme button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.oficina-theme :is(.sidebar, .sidebar-mobile-toolbar, .estoque-topbar) {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  border-color: var(--ui-border);
+}
+
+.oficina-theme :is(.sidebar-header, .sidebar-footer, .submenu) {
+  border-color: var(--ui-border);
+}
+
+.oficina-theme .sidebar-scroll {
+  scrollbar-color: var(--ui-border) transparent;
+}
+
+.oficina-theme :is(.sidebar-toggle, .sidebar .menu-item, .sidebar .submenu-item, .sidebar .logout-btn) {
+  color: var(--ui-text);
+  font-weight: 500;
+}
+
+.oficina-theme :is(.sidebar-toggle, .sidebar .menu-item, .sidebar .submenu-item):hover {
+  background: var(--ui-secondary);
+  color: var(--ui-text);
+}
+
+.oficina-theme .sidebar :is(.menu-item, .submenu-item).active {
+  background: var(--ui-blue-soft);
+  color: var(--ui-link);
+}
+
+.oficina-theme .sidebar .logout-btn:hover {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.oficina-theme[data-theme='escuro'] :is(.sidebar, .sidebar-mobile-toolbar) img {
+  filter: brightness(0) invert(1);
+}
+
+.oficina-theme .sidebar-mobile::backdrop {
+  background: var(--ui-overlay);
+}
+
+.oficina-theme .sidebar-mobile {
+  box-shadow: var(--ui-shadow);
+}
+
+.oficina-theme [role='alert'],
+.oficina-theme .estoque-alertas [role='alert'] {
+  color: var(--ui-danger);
+}
+
+.oficina-theme .estoque-topbar {
+  min-height: 64px;
+  align-items: center;
+  padding: 12px 24px;
+  gap: 12px;
+}
+
+.oficina-theme .topbar-preferences {
+  margin-right: auto;
+}
+
+.oficina-theme-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  background: var(--ui-secondary);
+}
+
+.oficina-theme-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ui-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.oficina-theme-switch button[aria-pressed='true'] {
+  background: var(--ui-surface);
+  border-color: var(--ui-border);
+  color: var(--ui-text);
+  font-weight: 600;
+}
+
+.oficina-theme-switch svg {
+  width: 16px;
+  height: 16px;
+}
+
+.oficina-theme .estoque-bell {
+  background: var(--ui-surface);
+  border-color: var(--ui-border);
+  color: var(--ui-text);
+  font-size: 13px;
+  font-weight: 500;
+  min-height: 36px;
+}
+
+.oficina-theme .estoque-bell:hover {
+  background: var(--ui-secondary);
+}
+
+.oficina-theme .estoque-bell strong {
+  background: var(--ui-blue-soft);
+  color: var(--ui-link);
+  font-weight: 600;
+}
+
+.oficina-theme .ticket-notificacoes {
+  position: static;
+}
+
+.oficina-theme .estoque-alertas {
+  right: 16px;
+  width: min(380px, calc(100% - 32px));
+  background: var(--ui-surface);
+  border-color: var(--ui-border);
+  box-shadow: var(--ui-shadow);
+  color: var(--ui-text);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.oficina-theme .estoque-alertas h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.oficina-theme .estoque-alertas :is(p, li span, small) {
+  color: var(--ui-muted);
+}
+
+.oficina-theme .estoque-alertas li {
+  border-color: var(--ui-border);
+}
+
+.oficina-theme .estoque-alertas a {
+  color: var(--ui-link);
+}
+
+.oficina-theme .estoque-alertas .nao-lida {
+  border-left-color: var(--ui-link);
+}
+
+body[data-tema-oficina] .Toastify__toast {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  box-shadow: var(--ui-shadow);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 14px;
+}
+
+body[data-tema-oficina] .Toastify__close-button {
+  color: var(--ui-text);
+}
+
+body[data-tema-oficina] .Toastify__toast-icon svg {
+  fill: var(--ui-link);
+}
+
+body[data-tema-oficina] .Toastify__toast--error .Toastify__toast-icon svg {
+  fill: var(--ui-danger);
+}
+
+body[data-tema-oficina] .Toastify__toast--success .Toastify__toast-icon svg {
+  fill: var(--ui-success);
+}
+
+body[data-tema-oficina] .Toastify__progress-bar {
+  background: var(--ui-link);
+}
+
+body[data-tema-oficina] .Toastify__toast--error .Toastify__progress-bar {
+  background: var(--ui-danger);
+}
+
+body[data-tema-oficina] .os-toast-draft {
+  display: grid;
+  gap: 12px;
+}
+
+body[data-tema-oficina] .os-toast-draft strong {
+  font-weight: 600;
+}
+
+body[data-tema-oficina] .os-toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+body[data-tema-oficina] .os-toast-actions button {
+  padding: 8px 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  background: var(--ui-primary);
+  color: var(--ui-primary-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+body[data-tema-oficina] .os-toast-actions button.secondary {
+  background: var(--ui-secondary);
+  color: var(--ui-text);
+}
+
+body[data-tema-oficina] .os-toast-actions button:focus-visible {
+  outline: 2px solid var(--ui-link);
+  outline-offset: 2px;
+}
+
+@media (max-width: 650px) {
+  .oficina-theme .estoque-topbar {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .oficina-theme .topbar-preferences {
+    flex-basis: 100%;
+  }
+}
+
+@media print {
+  body[data-tema-oficina] .Toastify {
+    display: none !important;
+  }
+}
