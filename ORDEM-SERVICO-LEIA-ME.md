@@ -6,7 +6,7 @@ Cliente e veículo aparecem em um resumo compacto, com placa identificada e dado
 
 A inclusão foi simplificada a pedido de Guilherme: **Adicionar diagnóstico** fica na área de diagnósticos; dentro de cada diagnóstico há **Serviços deste diagnóstico** e **Adicionar serviço**; dentro de cada serviço há **Peças deste serviço** e **Adicionar peça**. Cada item novo aparece antes do botão de inclusão, pronto para preencher. A peça oferece diretamente **Selecionar do catálogo** e **Pegar do estoque**. Serviços sem diagnóstico e peças avulsas têm áreas e botões próprios, com explicação do vínculo. Esses botões também aparecem quando as áreas estão vazias em criação/edição.
 
-O desktop usa uma coluna principal e uma lateral de 240 px para gestão e financeiro. A lateral passa para baixo em telas menores. Os dois botões **Salvar OS** chamam o mesmo fluxo. O financeiro apresenta valores brutos, descontos efetivamente aplicados e total líquido, respeitando o piso zero de cada item. A impressão continua usando os totais líquidos anteriores.
+O desktop usa uma coluna principal e uma lateral de 240 px para gestão, financeiro e documentos. **Imprimir OS** e **Enviar cotação para fornecedor** ficam no painel direito, em **Documentos e cotação**, com os mesmos handlers e condições de habilitação; **Voltar** permanece no final da coluna principal. A lateral passa para baixo em telas menores. Os dois botões **Salvar OS** chamam o mesmo fluxo. O financeiro apresenta valores brutos, descontos efetivamente aplicados e total líquido, respeitando o piso zero de cada item. A impressão continua usando os totais líquidos anteriores.
 
 As funções de criação, busca, edição, salvamento, seleção, atribuição, estoque, cotação e impressão foram preservadas. O backend, seus contratos e suas autorizações continuam iguais. Não houve dependência nova nem mudança de banco.
 
@@ -30,7 +30,13 @@ As funções de criação, busca, edição, salvamento, seleção, atribuição,
 | `AGENTS.md` | Registro da entrega e limites de validação. |
 | `ORDEM-SERVICO-LEIA-ME.md` | Documentação desta entrega. |
 
-Para adotar a identidade em outra tela, a paleta está isolada em `temaOficina.css`, ativada pela classe `oficina-theme` e `data-theme="claro"`/`"escuro"`. A apresentação específica da OS está em `ordemServico.css`; as outras telas mantêm seus estilos atuais.
+Para adotar a identidade em outra tela, a paleta está isolada em `temaOficina.css`, ativada pela classe `oficina-theme` e `data-theme="claro"`/`"escuro"`. A apresentação específica da OS está em `ordemServico.css`.
+
+Em 03/10/2026, peças e diagnósticos passaram a usar essa mesma identidade e preferência de tema. `Layout.jsx` importa a paleta e `oficinaUi.css`, que centraliza a apresentação de páginas, cabeçalhos, cartões, formulários, botões e tabelas. A OS também reutiliza as classes compartilhadas de página, cabeçalho e cartões; mantém sua organização de atendimento, itens, gestão e financeiro.
+
+A sidebar compartilhada usa gradiente azul escuro em todos os perfis e nos dois temas, com textos/ícones claros e destaque da rota atual. A estrutura recolhível e o painel mobile continuam usando a mesma navegação. Cadastros mantêm suas funções e chamadas da API; receberam labels associados, ícones de ação e tabelas com rótulos por célula no celular.
+
+Na continuidade de 03/10/2026, o cadastro de serviços também recebeu o padrão compartilhado e os dois temas. A topbar agrupa os controles de tema/avisos, com adaptação para celular; o texto **Oficina > página** foi removido por decisão mais recente de Guilherme. Seus painéis usam o mesmo estilo, abrem um de cada vez e fecham por botão, Escape, clique fora ou mudança de rota. Fechamento pelo botão/Escape retorna o foco ao controle de origem. Consultas, leitura de notificações, navegação para ticket/OS e permissões foram preservadas.
 
 ## Verificação realizada
 

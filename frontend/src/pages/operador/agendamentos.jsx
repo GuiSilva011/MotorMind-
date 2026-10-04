@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { FiCalendar, FiCheck, FiSearch, FiUser } from 'react-icons/fi';
+import { TbCar } from 'react-icons/tb';
 
 import api from '../../services/api';
 import Layout from '../../components/Layout';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
 
 import '../../styles/operadorStyles/agendamento.css';
 import '../../styles/operadorStyles/layout.css';
@@ -31,6 +36,7 @@ const agendamentoInicial = {
  * @returns {JSX.Element} Tela de cadastro de agendamento.
  */
 function CadastroAgendamento() {
+  const [tema, setTema] = useTemaOficina();
   const [clientes, setClientes] = useState([]);
   const [tecnicos, setTecnicos] = useState([]);
 
@@ -276,60 +282,75 @@ function CadastroAgendamento() {
   }
 
   return (
-    <Layout>
-      <main className="agendamento-content">
-        <div className="agendamento-header">
-          <h1>Cadastro de Agendamento</h1>
-          <p>Registre os serviços agendados pelos operadores da oficina.</p>
-        </div>
+    <Layout className="oficina-theme agendamentos-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page agendamento-content">
+        <header className="oficina-page-header">
+          <div>
+            <h1>Cadastro de agendamento</h1>
+            <p>Organize o atendimento com cliente, veículo e horário definidos.</p>
+          </div>
+          <Link className="oficina-btn" to="/operador/agendamentos/calendario">
+            <FiCalendar aria-hidden="true" /> Visualizar agendamentos
+          </Link>
+        </header>
 
         <form className="agendamento-form" onSubmit={handleSubmit}>
-          <section className="form-section">
-            <div className="section-title-row">
+          <section className="oficina-panel" aria-labelledby="agendamento-cliente-titulo">
+            <div className="oficina-panel-title agendamento-section-title">
               <div>
-                <h2>Dados do cliente</h2>
-                <p>Pesquise e selecione o cliente antes de escolher o veículo.</p>
+                <h2 id="agendamento-cliente-titulo" className="oficina-section-heading">
+                  <FiUser aria-hidden="true" /> Cliente e veículo
+                </h2>
+                <span>Pesquise o cliente e escolha o veículo que será atendido.</span>
               </div>
 
               {carregandoClientes && (
-                <span className="loading-label">Carregando clientes...</span>
+                <span className="agendamento-loading" role="status">Carregando clientes...</span>
               )}
             </div>
 
-            <div className="form-grid two-columns">
-              <div className="field-group campo-com-dropdown">
-                <label>Cliente</label>
+            <div className="oficina-form-grid agendamento-grid">
+              <div className="oficina-field agendamento-cliente-busca">
+                <label htmlFor="agendamento-cliente">Cliente</label>
 
-                <input
-                  type="text"
-                  placeholder="Digite o nome, CPF ou placa do cliente"
-                  value={buscaCliente}
-                  onChange={(event) => {
-                    setBuscaCliente(event.target.value);
-                    setClienteSelecionado(null);
+                <div className="agendamento-search-control">
+                  <FiSearch aria-hidden="true" />
+                  <input
+                    id="agendamento-cliente"
+                    type="text"
+                    placeholder="Digite o nome, CPF ou placa do cliente"
+                    autoComplete="off"
+                    aria-controls={resultados.length > 0 ? 'agendamento-clientes-resultados' : undefined}
+                    value={buscaCliente}
+                    onChange={(event) => {
+                      setBuscaCliente(event.target.value);
+                      setClienteSelecionado(null);
 
-                    setFormData((prevState) => ({
-                      ...prevState,
-                      clienteId: '',
-                      veiculoId: '',
-                    }));
+                      setFormData((prevState) => ({
+                        ...prevState,
+                        clienteId: '',
+                        veiculoId: '',
+                      }));
 
-                    setVeiculosCliente([]);
-                  }}
-                />
+                      setVeiculosCliente([]);
+                    }}
+                  />
+                </div>
 
                 {resultados.length > 0 && (
-                  <div className="dropdown-clientes">
+                  <div id="agendamento-clientes-resultados" className="agendamento-clientes-resultados"
+                    role="group" aria-label="Clientes encontrados">
                     {resultados.map((cliente) => (
                       <button
                         type="button"
                         key={cliente.id}
-                        className="item-cliente"
+                        className="agendamento-cliente-opcao"
                         onClick={() => selecionarCliente(cliente)}
                       >
                         <strong>{cliente.nome}</strong>
                         <span>
-                          {cliente.cpf || 'CPF não informado'} |{' '}
+                          {cliente.cpf || 'CPF não informado'} ·{' '}
                           {cliente.veiculos?.length || 0} veículo(s)
                         </span>
                       </button>
@@ -338,10 +359,13 @@ function CadastroAgendamento() {
                 )}
               </div>
 
-              <div className="field-group">
-                <label>Veículo</label>
+              <div className="oficina-field">
+                <label htmlFor="agendamento-veiculo" className="agendamento-label-icon">
+                  <TbCar aria-hidden="true" /> Veículo
+                </label>
 
                 <select
+                  id="agendamento-veiculo"
                   name="veiculoId"
                   value={formData.veiculoId}
                   onChange={handleChange}
@@ -364,37 +388,42 @@ function CadastroAgendamento() {
             </div>
 
             {clienteSelecionado && (
-              <div className="cliente-selecionado-card">
-                <div>
-                  <span>Cliente selecionado</span>
-                  <strong>{clienteSelecionado.nome || '-'}</strong>
-                </div>
-
-                <div>
-                  <span>CPF</span>
-                  <strong>{clienteSelecionado.cpf || '-'}</strong>
-                </div>
-
-                <div>
-                  <span>Celular</span>
-                  <strong>{clienteSelecionado.celular || '-'}</strong>
-                </div>
-
-                <button type="button" onClick={removerClienteSelecionado}>
+              <div className="agendamento-cliente-selecionado">
+                <dl>
+                  <div>
+                    <dt>Cliente selecionado</dt>
+                    <dd>{clienteSelecionado.nome || '-'}</dd>
+                  </div>
+                  <div>
+                    <dt>CPF</dt>
+                    <dd>{clienteSelecionado.cpf || '-'}</dd>
+                  </div>
+                  <div>
+                    <dt>Celular</dt>
+                    <dd>{clienteSelecionado.celular || '-'}</dd>
+                  </div>
+                </dl>
+                <button type="button" className="oficina-btn" onClick={removerClienteSelecionado}>
                   Trocar cliente
                 </button>
               </div>
             )}
           </section>
 
-          <section className="form-section">
-            <h2>Dados do agendamento</h2>
+          <section className="oficina-panel" aria-labelledby="agendamento-dados-titulo">
+            <div className="oficina-panel-title">
+              <h2 id="agendamento-dados-titulo" className="oficina-section-heading">
+                <FiCalendar aria-hidden="true" /> Dados do agendamento
+              </h2>
+              <span>Defina quando será o atendimento e descreva o serviço solicitado.</span>
+            </div>
 
-            <div className="form-grid two-columns">
-              <div className="field-group">
-                <label>Data</label>
+            <div className="oficina-form-grid agendamento-grid">
+              <div className="oficina-field">
+                <label htmlFor="agendamento-data">Data</label>
 
                 <input
+                  id="agendamento-data"
                   type="date"
                   name="data"
                   value={formData.data}
@@ -402,23 +431,22 @@ function CadastroAgendamento() {
                 />
               </div>
 
-              <div className="field-group">
-                <label>Hora</label>
+              <div className="oficina-field">
+                <label htmlFor="agendamento-hora">Hora</label>
 
                 <input
+                  id="agendamento-hora"
                   type="time"
                   name="hora"
                   value={formData.hora}
                   onChange={handleChange}
                 />
               </div>
-            </div>
-
-            <div className="form-grid two-columns">
-              <div className="field-group">
-                <label>Técnico responsável</label>
+              <div className="oficina-field">
+                <label htmlFor="agendamento-tecnico">Técnico responsável</label>
 
                 <select
+                  id="agendamento-tecnico"
                   name="mecanico"
                   value={formData.mecanico}
                   onChange={handleChange}
@@ -438,10 +466,11 @@ function CadastroAgendamento() {
                 </select>
               </div>
 
-              <div className="field-group">
-                <label>Tipo de serviço</label>
+              <div className="oficina-field">
+                <label htmlFor="agendamento-tipo">Tipo de serviço <span className="agendamento-opcional">(opcional)</span></label>
 
                 <input
+                  id="agendamento-tipo"
                   type="text"
                   name="tipo_servico"
                   placeholder="Ex: Revisão, troca de óleo, diagnóstico..."
@@ -449,13 +478,11 @@ function CadastroAgendamento() {
                   onChange={handleChange}
                 />
               </div>
-            </div>
-
-            <div className="form-grid one-column">
-              <div className="field-group">
-                <label>Descrição do serviço</label>
+              <div className="oficina-field oficina-col-full">
+                <label htmlFor="agendamento-descricao">Descrição do serviço</label>
 
                 <textarea
+                  id="agendamento-descricao"
                   name="servico"
                   placeholder="Descreva o serviço solicitado pelo cliente"
                   value={formData.servico}
@@ -465,17 +492,18 @@ function CadastroAgendamento() {
             </div>
           </section>
 
-          <div className="form-actions">
+          <div className="oficina-form-actions">
             <button
               type="button"
-              className="btn-secondary"
+              className="oficina-btn"
               onClick={limparFormulario}
               disabled={loading}
             >
               Limpar
             </button>
 
-            <button type="submit" className="btn-primary" disabled={loading}>
+            <button type="submit" className="oficina-btn oficina-btn-primary" disabled={loading}>
+              <FiCheck aria-hidden="true" />
               {loading ? 'Salvando...' : 'Cadastrar agendamento'}
             </button>
           </div>

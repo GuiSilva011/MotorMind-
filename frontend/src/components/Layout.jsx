@@ -1,6 +1,8 @@
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import '../styles/operadorStyles/layout.css';
+import '../styles/temaOficina.css';
+import '../styles/oficinaUi.css';
 
 /**
  * Layout principal utilizado nas páginas do sistema.

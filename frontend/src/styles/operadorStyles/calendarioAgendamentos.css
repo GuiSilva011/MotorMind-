@@ -1,343 +1,431 @@
-.calendario-page {
-  width: 100%;
-  min-height: calc(100vh - 68px);
-  background: #edf2f7;
-  padding: 30px 48px 60px;
-  color: #07142b;
+.agendamentos-workspace .calendario-header-actions,
+.agendamentos-workspace .calendario-navegacao {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.calendario-header {
+.agendamentos-workspace .calendario-header-actions a.oficina-btn {
+  text-decoration: none;
+}
+
+.agendamentos-workspace .calendario-panel-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: -4px 0 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.agendamentos-workspace .calendario-panel-label,
+.agendamentos-workspace .calendario-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.agendamentos-workspace .calendario-panel-label {
+  font-weight: 600;
+}
+
+.agendamentos-workspace .calendario-panel-label > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--ui-link);
+}
+
+.agendamentos-workspace .calendario-contagem {
+  padding: 5px 9px;
+  border-radius: 5px;
+  background: var(--ui-secondary);
+  color: var(--ui-muted);
+  font-size: 12px;
+}
+
+.agendamentos-workspace .calendario-scroll {
+  overflow-x: auto;
+}
+
+.agendamentos-workspace .calendario-toolbar {
+  position: sticky;
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
-.calendario-header h1 {
+.agendamentos-workspace .calendario-icon-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+}
+
+.agendamentos-workspace .calendario-periodo {
   margin: 0;
-  color: #07142b;
-  font-size: 30px;
-  font-weight: 900;
-}
-
-.calendario-header p {
-  margin: 6px 0 0;
-  color: #455875;
-  font-size: 15px;
-}
-
-.calendario-header small {
-  display: block;
-  margin-top: 8px;
-  color: #14a8e8;
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.calendario-refresh {
-  height: 42px;
-  border: 0;
-  border-radius: 999px;
-  background: #07142b;
-  color: #fff;
-  padding: 0 22px;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.calendario-refresh:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.calendario-refresh:hover {
-  filter: brightness(0.96);
-}
-
-.calendar-section {
-  background: #fff;
-  border: 1px solid #d9e1ec;
-  border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-  padding: 18px;
-}
-
-/* React Big Calendar */
-
-.calendar-section .rbc-calendar {
-  font-family: inherit;
-  color: #07142b;
-}
-
-.calendar-section .rbc-toolbar {
-  margin-bottom: 18px;
-  gap: 12px;
-}
-
-.calendar-section .rbc-toolbar-label {
-  color: #07142b;
-  font-size: 20px;
-  font-weight: 900;
+  text-align: center;
   text-transform: capitalize;
 }
 
-.calendar-section .rbc-btn-group {
+.agendamentos-workspace .calendario-visoes {
   display: flex;
-  gap: 6px;
+  padding: 3px;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  background: var(--ui-secondary);
 }
 
-.calendar-section .rbc-btn-group button {
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #07142b;
-  border-radius: 9px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 900;
+.agendamentos-workspace .calendario-visoes button {
+  min-height: 30px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ui-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
 }
 
-.calendar-section .rbc-btn-group button:hover,
-.calendar-section .rbc-btn-group button.rbc-active {
-  background: #07142b;
-  color: #fff;
-  border-color: #07142b;
-  box-shadow: none;
+.agendamentos-workspace .calendario-visoes button:hover {
+  color: var(--ui-text);
 }
 
-.calendar-section .rbc-month-view,
-.calendar-section .rbc-time-view,
-.calendar-section .rbc-agenda-view {
-  border: 1px solid #d9e1ec;
-  border-radius: 14px;
+.agendamentos-workspace .calendario-visoes button[aria-pressed='true'] {
+  background: var(--ui-primary);
+  color: var(--ui-primary-text);
+}
+
+.agendamentos-workspace .calendario-panel .rbc-calendar {
+  height: 660px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ui-text);
+}
+
+.agendamentos-workspace .calendario-panel :is(.rbc-month-view, .rbc-time-view) {
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  background: var(--ui-surface);
+}
+
+.agendamentos-workspace .calendario-panel :is(
+  .rbc-header, .rbc-header + .rbc-header, .rbc-day-bg + .rbc-day-bg,
+  .rbc-month-row + .rbc-month-row, .rbc-time-header-content, .rbc-time-content,
+  .rbc-timeslot-group, .rbc-time-header.rbc-overflowing,
+  .rbc-time-content > * + * > *, .rbc-day-slot .rbc-time-slot,
+  .rbc-agenda-view table.rbc-agenda-table,
+  .rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td,
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td
+) {
+  border-color: var(--ui-border);
+}
+
+.agendamentos-workspace .calendario-panel .rbc-header {
+  padding: 10px 4px;
+  background: var(--ui-secondary);
+  color: var(--ui-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.agendamentos-workspace .calendario-panel .rbc-button-link {
+  color: inherit;
+}
+
+.agendamentos-workspace .calendario-panel .rbc-date-cell {
+  padding: 8px;
+  font-size: 12px;
+}
+
+.agendamentos-workspace .calendario-panel .rbc-date-cell.rbc-now {
+  color: var(--ui-link);
+  font-weight: 600;
+}
+
+.agendamentos-workspace .calendario-panel .rbc-off-range {
+  color: var(--ui-muted);
+  opacity: 0.7;
+}
+
+.agendamentos-workspace .calendario-panel .rbc-off-range-bg {
+  background: var(--ui-secondary);
+}
+
+.agendamentos-workspace .calendario-panel .rbc-today {
+  background: var(--ui-blue-soft);
+}
+
+.agendamentos-workspace .calendario-panel .rbc-event {
+  border: 1px solid var(--ui-primary);
+  border-radius: 4px;
+  background: var(--ui-primary);
+  color: var(--ui-primary-text);
+  font-size: 12px;
+}
+
+.agendamentos-workspace .calendario-panel .rbc-event.rbc-selected {
+  outline: 2px solid var(--ui-link);
+  outline-offset: 1px;
+}
+
+.agendamentos-workspace .calendario-panel .rbc-month-view .rbc-event {
+  /* A linha de medição do calendário precisa ter a altura do evento de duas linhas. */
+  height: 42px;
+  margin-top: 2px;
+  padding: 4px 6px;
+}
+
+.agendamentos-workspace .calendario-evento-resumo {
+  display: block;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.agendamentos-workspace .calendario-evento-resumo > :is(strong, span) {
+  display: block;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.calendar-section .rbc-header {
-  padding: 10px 6px;
-  background: #f8fafc;
-  color: #07142b;
-  font-size: 13px;
-  font-weight: 900;
-  border-bottom: 1px solid #d9e1ec;
+.agendamentos-workspace .calendario-evento-resumo > span {
+  font-size: 11px;
 }
 
-.calendar-section .rbc-month-row {
-  min-height: 96px;
+.agendamentos-workspace .calendario-panel .rbc-show-more {
+  margin: 4px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: var(--ui-blue-soft);
+  color: var(--ui-link);
+  font-size: 11px;
+  font-weight: 500;
 }
 
-.calendar-section .rbc-date-cell {
-  padding: 7px;
-  color: #07142b;
-  font-size: 13px;
-  font-weight: 800;
+.agendamentos-workspace .calendario-panel .rbc-current-time-indicator {
+  background: var(--ui-link);
 }
 
-.calendar-section .rbc-off-range-bg {
-  background: #f1f5f9;
+.agendamentos-workspace .calendario-panel .rbc-label {
+  color: var(--ui-muted);
+  font-size: 11px;
 }
 
-.calendar-section .rbc-today {
-  background: #e0f2fe;
+.agendamentos-workspace .calendario-panel .rbc-agenda-view {
+  border-radius: 7px;
+  color: var(--ui-text);
 }
 
-.calendario-evento {
-  background: #14a8e8 !important;
-  border: 0 !important;
-  border-radius: 7px !important;
-  padding: 3px 6px !important;
-  font-size: 12px !important;
-  font-weight: 800 !important;
+.agendamentos-workspace .calendario-panel .rbc-agenda-empty {
+  display: grid;
+  place-items: center;
+  min-height: 190px;
+  padding: 24px;
+  border: 1px dashed var(--ui-border);
+  border-radius: 7px;
+  background: var(--ui-secondary);
+  color: var(--ui-muted);
+  text-align: center;
 }
 
-.calendario-evento .rbc-event-content {
-  color: #fff;
+.agendamentos-workspace .calendario-panel .rbc-overlay {
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  box-shadow: var(--ui-shadow);
 }
 
-/* Modal */
-
-.calendario-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  background: rgba(7, 20, 43, 0.58);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 28px;
+.agendamentos-workspace .calendario-panel .rbc-overlay-header {
+  border-color: var(--ui-border);
 }
 
-.calendario-modal {
-  width: min(780px, 100%);
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
-  padding: 26px;
+.agendamentos-workspace .calendario-hint {
+  margin: 16px 0 0;
+  color: var(--ui-muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
-.calendario-modal-header {
+.agendamentos-workspace .calendario-hint > svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.agendamentos-workspace .calendario-modal {
+  width: min(760px, calc(100% - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 24px;
+  overflow-y: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  box-shadow: var(--ui-shadow);
+}
+
+.agendamentos-workspace .calendario-modal::backdrop {
+  background: var(--ui-overlay);
+}
+
+.agendamentos-workspace .calendario-modal-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 22px;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ui-border);
 }
 
-.calendario-modal-header h2 {
+.agendamentos-workspace .calendario-modal-header h2 {
   margin: 0;
-  color: #07142b;
-  font-size: 26px;
-  font-weight: 900;
+  font-size: 20px;
 }
 
-.calendario-modal-header span {
-  display: block;
-  margin-top: 5px;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 700;
+.agendamentos-workspace .calendario-modal-header p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: var(--ui-muted);
+  font-size: 13px;
 }
 
-.calendario-modal-header button {
-  width: 38px;
-  height: 38px;
-  border: 0;
-  border-radius: 10px;
-  background: #fee2e2;
-  color: #dc2626;
-  font-size: 24px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.calendario-modal-grid {
+.agendamentos-workspace .calendario-modal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 20px 16px;
+  margin: 0 0 20px;
 }
 
-.calendario-modal-grid div,
-.calendario-modal-descricao {
-  border: 1px solid #d9e1ec;
-  border-radius: 12px;
-  background: #f8fafc;
-  padding: 14px;
-}
-
-.calendario-modal-grid span,
-.calendario-modal-descricao span {
-  display: block;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.calendario-modal-grid strong {
-  display: block;
-  margin-top: 5px;
-  color: #07142b;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.calendario-modal-descricao p {
-  margin: 8px 0 0;
-  color: #334155;
-  font-size: 14px;
-  line-height: 1.5;
-  font-weight: 700;
-}
-
-.calendario-modal-actions {
+.agendamentos-workspace .calendario-modal-grid dt {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 22px;
+  align-items: center;
+  gap: 6px;
+  color: var(--ui-muted);
+  font-size: 12px;
 }
 
-.calendario-btn {
-  height: 42px;
-  border-radius: 999px;
-  padding: 0 20px;
+.agendamentos-workspace .calendario-modal-grid dt > svg {
+  width: 15px;
+  height: 15px;
+}
+
+.agendamentos-workspace .calendario-modal-grid dd {
+  margin: 6px 0 0;
   font-size: 14px;
-  font-weight: 900;
-  cursor: pointer;
+  font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
-.calendario-btn-outline {
-  background: #fff;
-  border: 1px solid #07142b;
-  color: #07142b;
+.agendamentos-workspace .calendario-modal-descricao {
+  padding: 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  background: var(--ui-secondary);
 }
 
-.calendario-btn-danger {
-  border: 0;
-  background: #dc2626;
-  color: #fff;
+.agendamentos-workspace .calendario-modal-descricao h3 {
+  margin: 0;
+  color: var(--ui-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.calendario-btn:hover {
-  filter: brightness(0.96);
+.agendamentos-workspace .calendario-modal-descricao p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.calendario-btn-primary {
-  border: 0;
-  background: #14a8e8;
-  color: #fff;
+.agendamentos-workspace .calendario-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ui-border);
 }
 
-@media (max-width: 760px) {
-  .calendario-page {
-    padding: 24px;
+.agendamentos-workspace .calendario-modal-actions > .oficina-btn-danger {
+  margin-right: auto;
+}
+
+@media (max-width: 1100px) {
+  .agendamentos-workspace .calendario-toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .calendario-header {
-    flex-direction: column;
-    align-items: stretch;
+  .agendamentos-workspace .calendario-periodo {
+    grid-column: 1 / -1;
+    grid-row: 1;
   }
 
-  .calendario-refresh {
+  .agendamentos-workspace .calendario-visoes {
+    justify-self: end;
+  }
+}
+
+@media (max-width: 650px) {
+  .agendamentos-workspace .calendario-panel .rbc-calendar {
+    height: 640px;
+  }
+
+  .agendamentos-workspace .calendario-visao-month .rbc-month-view,
+  .agendamentos-workspace .calendario-visao-week .rbc-time-view {
+    min-width: 620px;
+  }
+
+  .agendamentos-workspace .calendario-header-actions {
     width: 100%;
   }
 
-  .calendar-section {
-    padding: 12px;
+  .agendamentos-workspace .calendario-header-actions .oficina-btn {
+    flex: 1;
   }
 
-  .calendar-section .rbc-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+  .agendamentos-workspace .calendario-modal {
+    padding: 16px;
   }
 
-  .calendar-section .rbc-btn-group {
-    justify-content: center;
-    flex-wrap: wrap;
+  .agendamentos-workspace .calendario-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .calendario-modal-overlay {
-    padding: 14px;
+  .agendamentos-workspace .calendario-modal-actions > .oficina-btn {
+    width: 100%;
+    margin-right: 0;
   }
+}
 
-  .calendario-modal {
-    padding: 18px;
-  }
-
-  .calendario-modal-grid {
+@media (max-width: 480px) {
+  .agendamentos-workspace .calendario-toolbar {
     grid-template-columns: 1fr;
   }
 
-  .calendario-modal-actions {
-    flex-direction: column;
+  .agendamentos-workspace .calendario-navegacao,
+  .agendamentos-workspace .calendario-visoes {
+    justify-self: center;
   }
-
-  .calendario-btn {
-    width: 100%;
-  }
-}
-.calendario-modal-actions {
-  flex-wrap: wrap;
 }

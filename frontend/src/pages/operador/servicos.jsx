@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../../components/Layout';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { FiEdit2, FiRotateCcw, FiSave, FiTrash2 } from 'react-icons/fi';
 import api from '../../services/api';
 import '../../styles/operadorStyles/servicos.css';
 
@@ -42,6 +45,7 @@ function criarServicoInicial() {
  * @returns {JSX.Element} Tela de manutenção de serviços.
  */
 function Servicos() {
+  const [tema, setTema] = useTemaOficina();
   const [servicos, setServicos] = useState([]);
   const [form, setForm] = useState(criarServicoInicial());
   const [editandoId, setEditandoId] = useState(null);
@@ -242,39 +246,42 @@ function Servicos() {
   }, [servicos, busca]);
 
   return (
-    <Layout>
-      <main className="servicos-page">
-        <section className="servicos-top">
+    <Layout className="oficina-theme catalogo-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page" aria-labelledby="servicos-titulo">
+        <header className="oficina-page-header">
           <div>
-            <h1>Cadastro de Serviços</h1>
+            <h1 id="servicos-titulo">Cadastro de Serviços</h1>
             <p>Cadastre os serviços usados nas ordens de serviço.</p>
 
             {carregando && <small>Carregando serviços...</small>}
           </div>
-        </section>
+        </header>
 
-        <section className="servicos-card">
-          <div className="servicos-card-title">
-            <h2>{editandoId ? 'Editar serviço' : 'Novo serviço'}</h2>
+        <section className="oficina-panel" aria-labelledby="servicos-form-titulo">
+          <div className="oficina-panel-title">
+            <h2 id="servicos-form-titulo">{editandoId ? 'Editar serviço' : 'Novo serviço'}</h2>
             <span>
               O serviço cadastrado será usado como item cobrável dentro da OS.
             </span>
           </div>
 
           <form onSubmit={salvarServico}>
-            <div className="servicos-form-grid">
-              <div className="servicos-field">
-                <label>Código</label>
+            <div className="oficina-form-grid servicos-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="servicos-codigo">Código</label>
                 <input
+                  id="servicos-codigo"
                   value={form.codigo}
                   readOnly
                   placeholder="Código automático"
                 />
               </div>
 
-              <div className="servicos-field servicos-col-2">
-                <label>Nome do serviço</label>
+              <div className="oficina-field servicos-col-2">
+                <label htmlFor="servicos-nome">Nome do serviço</label>
                 <input
+                  id="servicos-nome"
                   value={form.nome}
                   onChange={(event) =>
                     atualizarCampo('nome', event.target.value)
@@ -283,9 +290,10 @@ function Servicos() {
                 />
               </div>
 
-              <div className="servicos-field">
-                <label>Categoria</label>
+              <div className="oficina-field">
+                <label htmlFor="servicos-categoria">Categoria</label>
                 <input
+                  id="servicos-categoria"
                   value={form.categoria}
                   onChange={(event) =>
                     atualizarCampo('categoria', event.target.value)
@@ -294,9 +302,10 @@ function Servicos() {
                 />
               </div>
 
-              <div className="servicos-field">
-                <label>Valor padrão</label>
+              <div className="oficina-field">
+                <label htmlFor="servicos-valor">Valor padrão (R$)</label>
                 <input
+                  id="servicos-valor"
                   type="number"
                   step="0.01"
                   value={form.valorPadrao}
@@ -308,20 +317,21 @@ function Servicos() {
               </div>
             </div>
 
-            <div className="servicos-actions">
+            <div className="oficina-form-actions">
               <button
                 type="button"
-                className="servicos-btn servicos-btn-light"
+                className="oficina-btn"
                 onClick={limparFormulario}
               >
-                Limpar
+                <FiRotateCcw aria-hidden="true" /> Limpar
               </button>
 
               <button
                 type="submit"
-                className="servicos-btn servicos-btn-primary"
+                className="oficina-btn oficina-btn-primary"
                 disabled={salvando}
               >
+                <FiSave aria-hidden="true" />
                 {salvando
                   ? 'Salvando...'
                   : editandoId
@@ -332,15 +342,18 @@ function Servicos() {
           </form>
         </section>
 
-        <section className="servicos-card">
-          <div className="servicos-list-header">
+        <section className="oficina-panel" aria-labelledby="servicos-lista-titulo" aria-busy={carregando}>
+          <div className="oficina-list-header">
             <div>
-              <h2>Serviços cadastrados</h2>
+              <h2 id="servicos-lista-titulo">Serviços cadastrados</h2>
               <span>{servicosFiltrados.length} serviço(s) encontrado(s)</span>
             </div>
 
-            <div className="servicos-search">
+            <div className="oficina-search">
+              <label htmlFor="servicos-busca">Buscar serviços</label>
               <input
+                id="servicos-busca"
+                type="search"
                 value={busca}
                 onChange={(event) => setBusca(event.target.value)}
                 placeholder="Buscar por código, nome ou categoria"
@@ -348,55 +361,57 @@ function Servicos() {
             </div>
           </div>
 
-          <div className="servicos-table-wrap">
-            <table className="servicos-table">
+          <div className="oficina-table-wrap">
+            <table className="oficina-table">
               <thead>
                 <tr>
-                  <th>Código</th>
-                  <th>Nome</th>
-                  <th>Categoria</th>
-                  <th>Valor padrão</th>
-                  <th>Ações</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Categoria</th>
+                  <th scope="col">Valor padrão</th>
+                  <th scope="col">Ações</th>
                 </tr>
               </thead>
 
               <tbody>
                 {servicosFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="servicos-empty">
-                      Nenhum serviço encontrado.
+                    <td colSpan="5" className="oficina-empty">
+                      {carregando ? 'Carregando serviços...' : 'Nenhum serviço encontrado.'}
                     </td>
                   </tr>
                 )}
 
                 {servicosFiltrados.map((servico) => (
                   <tr key={servico.id}>
-                    <td>
+                    <td data-label="Código">
                       <strong>{servico.codigo}</strong>
                     </td>
 
-                    <td>{servico.nome}</td>
+                    <td data-label="Nome">{servico.nome}</td>
 
-                    <td>{servico.categoria || '-'}</td>
+                    <td data-label="Categoria">{servico.categoria || '-'}</td>
 
-                    <td>{formatarMoeda(servico.valorPadrao)}</td>
+                    <td data-label="Valor padrão">{formatarMoeda(servico.valorPadrao)}</td>
 
-                    <td>
-                      <div className="servicos-table-actions">
+                    <td data-label="Ações">
+                      <div className="oficina-row-actions">
                         <button
                           type="button"
-                          className="servicos-mini-btn"
+                          className="oficina-btn"
+                          aria-label={`Editar serviço: ${servico.nome}`}
                           onClick={() => editarServico(servico)}
                         >
-                          Editar
+                          <FiEdit2 aria-hidden="true" /> Editar
                         </button>
 
                         <button
                           type="button"
-                          className="servicos-mini-btn danger"
+                          className="oficina-btn oficina-btn-danger"
+                          aria-label={`Excluir serviço: ${servico.nome}`}
                           onClick={() => excluirServico(servico.id)}
                         >
-                          Excluir
+                          <FiTrash2 aria-hidden="true" /> Excluir
                         </button>
                       </div>
                     </td>

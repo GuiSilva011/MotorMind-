@@ -10,6 +10,18 @@ Foram preservados os endpoints, formatos de resposta, permissões, transações,
 
 Em 16/09/2026, o módulo do técnico passou a seguir o mesmo padrão: `tecnicoRoutes.js` → `tecnicoController.js` → Prisma. O antigo `tecnicoService.js` foi removido. O controller atende painel, OS e histórico; `utils/tecnicoRegras.js` mantém os filtros e seleções compartilhados com veículos/OS e o bloqueio usado pela checklist. `middlewares/tecnicoMiddleware.js` mantém as respostas sem cache e o tratamento de erros. As URLs, permissões e respostas continuam iguais.
 
+## Identidade visual — 03/10/2026
+
+A tela de solicitações e o detalhe do ticket usam o mesmo padrão dos cadastros e da OS, com temas claro/escuro e preferência compartilhada. A apresentação inclui lista, filtros, estados, histórico, mensagens, anexos e diálogos; os acessos a chat e as regras de expiração continuam iguais. A tabela de peças apresenta rótulos por célula no celular.
+
+O detalhe reúne OS, placa/modelo e participantes em um resumo compacto. A lista mostra a contagem total do filtro e identifica a solicitação selecionada; atendimento e conversa têm ações com ícones, e o histórico permanente aparece como linha do tempo. Cartões, títulos de seção e estados vazios reutilizam os estilos compartilhados da oficina.
+
+O atalho **Solicitações de peças** aparece no final da sidebar, seguido de **Estoque** nos perfis que podem consultá-lo. A barra superior mantém os avisos individuais e o seletor de tema. OPERADOR continua somente leitura no Estoque, e tickets continuam sem gerar baixa.
+
+Build e os 20 testes existentes da OS passaram. A renderização foi conferida com dados simulados nos quatro perfis e nos dois temas, incluindo chat sem permissão e ticket entregue em somente leitura. A validação visual em navegador permanece pendente por indisponibilidade na sessão.
+
+O refinamento foi conferido em 18 cenários de renderização React, incluindo seleção/contagem, estados vazio/carregando/erro e estoque do OPERADOR sem ações administrativas. As funções de envio, download e atendimento do ticket foram preservadas; estas verificações usam dados simulados, sem acesso à API ou ao banco da oficina.
+
 ## Como usar
 
 1. Reinicie o backend após a atualização. A migration `20260912120000_tickets_chat` já foi aplicada no banco local e o Prisma Client foi regenerado.

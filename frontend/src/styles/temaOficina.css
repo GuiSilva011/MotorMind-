@@ -14,6 +14,8 @@ body[data-tema-oficina] {
   --ui-blue-soft: #edf3fc;
   --ui-success: #286743;
   --ui-success-soft: #edf6ef;
+  --ui-warning: #875d16;
+  --ui-warning-soft: #fff5df;
   --ui-danger: #a32d35;
   --ui-danger-soft: #fbeef0;
   --ui-overlay: #161b2380;
@@ -38,6 +40,8 @@ body[data-tema-oficina='escuro'] {
   --ui-blue-soft: #263954;
   --ui-success: #93d4b1;
   --ui-success-soft: #263c31;
+  --ui-warning: #f0cd80;
+  --ui-warning-soft: #423825;
   --ui-danger: #ff9aa0;
   --ui-danger-soft: #402c35;
   --ui-overlay: #080c14a6;
@@ -46,8 +50,6 @@ body[data-tema-oficina='escuro'] {
 }
 
 .oficina-theme {
-  --sidebar-text: var(--ui-text);
-  --sidebar-muted: var(--ui-muted);
   background: var(--ui-page);
   color: var(--ui-text);
   font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -69,42 +71,10 @@ body[data-tema-oficina='escuro'] {
   cursor: not-allowed;
 }
 
-.oficina-theme :is(.sidebar, .sidebar-mobile-toolbar, .estoque-topbar) {
-  background: var(--ui-surface);
-  color: var(--ui-text);
-  border-color: var(--ui-border);
-}
-
-.oficina-theme :is(.sidebar-header, .sidebar-footer, .submenu) {
-  border-color: var(--ui-border);
-}
-
-.oficina-theme .sidebar-scroll {
-  scrollbar-color: var(--ui-border) transparent;
-}
-
-.oficina-theme :is(.sidebar-toggle, .sidebar .menu-item, .sidebar .submenu-item, .sidebar .logout-btn) {
-  color: var(--ui-text);
-  font-weight: 500;
-}
-
-.oficina-theme :is(.sidebar-toggle, .sidebar .menu-item, .sidebar .submenu-item):hover {
-  background: var(--ui-secondary);
-  color: var(--ui-text);
-}
-
-.oficina-theme .sidebar :is(.menu-item, .submenu-item).active {
-  background: var(--ui-blue-soft);
-  color: var(--ui-link);
-}
-
-.oficina-theme .sidebar .logout-btn:hover {
-  background: var(--ui-danger-soft);
-  color: var(--ui-danger);
-}
-
-.oficina-theme[data-theme='escuro'] :is(.sidebar, .sidebar-mobile-toolbar) img {
-  filter: brightness(0) invert(1);
+.oficina-theme .sidebar :is(button, a):focus-visible,
+.oficina-theme .sidebar-mobile-toolbar button:focus-visible {
+  outline-color: var(--sidebar-focus);
+  outline-offset: -2px;
 }
 
 .oficina-theme .sidebar-mobile::backdrop {
@@ -118,17 +88,6 @@ body[data-tema-oficina='escuro'] {
 .oficina-theme [role='alert'],
 .oficina-theme .estoque-alertas [role='alert'] {
   color: var(--ui-danger);
-}
-
-.oficina-theme .estoque-topbar {
-  min-height: 64px;
-  align-items: center;
-  padding: 12px 24px;
-  gap: 12px;
-}
-
-.oficina-theme .topbar-preferences {
-  margin-right: auto;
 }
 
 .oficina-theme-switch {
@@ -164,61 +123,6 @@ body[data-tema-oficina='escuro'] {
 .oficina-theme-switch svg {
   width: 16px;
   height: 16px;
-}
-
-.oficina-theme .estoque-bell {
-  background: var(--ui-surface);
-  border-color: var(--ui-border);
-  color: var(--ui-text);
-  font-size: 13px;
-  font-weight: 500;
-  min-height: 36px;
-}
-
-.oficina-theme .estoque-bell:hover {
-  background: var(--ui-secondary);
-}
-
-.oficina-theme .estoque-bell strong {
-  background: var(--ui-blue-soft);
-  color: var(--ui-link);
-  font-weight: 600;
-}
-
-.oficina-theme .ticket-notificacoes {
-  position: static;
-}
-
-.oficina-theme .estoque-alertas {
-  right: 16px;
-  width: min(380px, calc(100% - 32px));
-  background: var(--ui-surface);
-  border-color: var(--ui-border);
-  box-shadow: var(--ui-shadow);
-  color: var(--ui-text);
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.oficina-theme .estoque-alertas h2 {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.oficina-theme .estoque-alertas :is(p, li span, small) {
-  color: var(--ui-muted);
-}
-
-.oficina-theme .estoque-alertas li {
-  border-color: var(--ui-border);
-}
-
-.oficina-theme .estoque-alertas a {
-  color: var(--ui-link);
-}
-
-.oficina-theme .estoque-alertas .nao-lida {
-  border-left-color: var(--ui-link);
 }
 
 body[data-tema-oficina] .Toastify__toast {
@@ -288,17 +192,6 @@ body[data-tema-oficina] .os-toast-actions button.secondary {
 body[data-tema-oficina] .os-toast-actions button:focus-visible {
   outline: 2px solid var(--ui-link);
   outline-offset: 2px;
-}
-
-@media (max-width: 650px) {
-  .oficina-theme .estoque-topbar {
-    padding: 12px 16px;
-    gap: 8px;
-  }
-
-  .oficina-theme .topbar-preferences {
-    flex-basis: 100%;
-  }
 }
 
 @media print {

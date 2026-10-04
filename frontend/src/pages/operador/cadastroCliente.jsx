@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import Layout from '../../components/Layout';
-import '../../styles/operadorStyles/layout.css';
+import ModalOficina from '../../components/ModalOficina';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { FiArrowLeft, FiEdit2, FiEye, FiMapPin, FiPlus, FiSave, FiTrash2, FiUser, FiX } from 'react-icons/fi';
+import { TbCar } from 'react-icons/tb';
+import '../../styles/operadorStyles/clientes.css';
 import '../../styles/operadorStyles/cadastroClientes.css';
 
 
@@ -98,6 +103,7 @@ function formatBooleanToSelect(value) {
  * @returns {JSX.Element} Tela de cadastro de cliente.
  */
 function CadastroCliente() {
+  const [tema, setTema] = useTemaOficina();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -696,51 +702,51 @@ function CadastroCliente() {
   }
 
   return (
-    <Layout>
-      <main className="cadastro-content">
-        <div className="cadastro-header">
-          <h1>
-            {isVisualizacao
-              ? 'Visualizar Cliente'
-              : clienteEmEdicaoId
-              ? 'Editar Cliente'
-              : 'Cadastro de Clientes'}
-          </h1>
+    <Layout className="oficina-theme clientes-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="clientes-cadastro oficina-page" aria-labelledby="clientes-cadastro-title">
+        <header className="oficina-page-header">
+          <div>
+            <h1 id="clientes-cadastro-title">
+              {isVisualizacao
+                ? 'Visualizar Cliente'
+                : clienteEmEdicaoId
+                ? 'Editar Cliente'
+                : 'Cadastro de Clientes'}
+            </h1>
 
-          <p>
-            {isVisualizacao
-              ? 'Confira os dados do cliente e dos veículos cadastrados.'
-              : clienteEmEdicaoId
-              ? 'Atualize os dados do cliente e dos veículos cadastrados.'
-              : 'Preencha os dados do cliente'}
-          </p>
-        </div>
+            <p>
+              {isVisualizacao
+                ? 'Confira os dados do cliente e dos veículos cadastrados.'
+                : clienteEmEdicaoId
+                ? 'Atualize os dados do cliente e dos veículos cadastrados.'
+                : 'Preencha os dados do cliente'}
+            </p>
+          </div>
+        </header>
 
         {isVisualizacao && (
-          <div className="view-mode-banner">
+          <div className="clientes-view-banner">
+            <FiEye aria-hidden="true" />
             Modo visualização: para alterar dados, clique em "Editar".
           </div>
         )}
 
         {loadingCliente && (
-          <p className="form-message info">Carregando dados do cliente...</p>
+          <p className="clientes-feedback" role="status">Carregando dados do cliente...</p>
         )}
 
-        {mensagem && <p className="toast-message">{mensagem}</p>}
+        {mensagem && !modalOpen && <p className="clientes-feedback" role="status">{mensagem}</p>}
 
-        <form className="cadastro-form" onSubmit={handleSubmit}>
-          <section className="form-section">
-            <h2>
-              <img
-                src="/icons/cadastrar-cliente.svg"
-                alt="Ícone dados do cliente"
-                className="section-icon"
-              />
+        <form className="clientes-form" onSubmit={handleSubmit}>
+          <section className="oficina-panel" aria-labelledby="clientes-dados-title">
+            <h2 id="clientes-dados-title" className="oficina-section-heading clientes-section-title">
+              <FiUser aria-hidden="true" />
               Dados do cliente
             </h2>
 
-            <div className="form-grid two-columns">
-              <div className="field-group">
+            <div className="oficina-form-grid clientes-grid clientes-grid-2">
+              <div className="oficina-field">
                 <label htmlFor="nome">Nome completo</label>
                 <input
                   id="nome"
@@ -753,7 +759,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="dataNascimento">Data de nascimento</label>
                 <input
                   id="dataNascimento"
@@ -766,8 +772,8 @@ function CadastroCliente() {
               </div>
             </div>
 
-            <div className="form-grid three-columns">
-              <div className="field-group">
+            <div className="oficina-form-grid clientes-grid clientes-grid-3">
+              <div className="oficina-field">
                 <label htmlFor="cpf">CPF</label>
                 <input
                   id="cpf"
@@ -780,7 +786,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="celular">Celular</label>
                 <input
                   id="celular"
@@ -793,7 +799,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="email">E-mail</label>
                 <input
                   id="email"
@@ -807,21 +813,16 @@ function CadastroCliente() {
             </div>
           </section>
 
-          <section className="form-section">
-            <h2>
-              <img
-                src="/icons/endereco.svg"
-                alt="Ícone endereço"
-                className="section-icon"
-              />
+          <section className="oficina-panel" aria-labelledby="clientes-endereco-title">
+            <h2 id="clientes-endereco-title" className="oficina-section-heading clientes-section-title">
+              <FiMapPin aria-hidden="true" />
               Endereço
             </h2>
 
-            <div className="form-grid address-grid">
-              <div className="field-group">
+            <div className="oficina-form-grid clientes-grid clientes-address-grid">
+              <div className="oficina-field">
                 <label htmlFor="cep">CEP</label>
 
-                <div className="input-with-icon">
                   <input
                     id="cep"
                     type="text"
@@ -832,15 +833,9 @@ function CadastroCliente() {
                     readOnly={isVisualizacao}
                   />
 
-                  <img
-                    src="/icons/busca.svg"
-                    alt="Ícone busca"
-                    className="search-icon"
-                  />
-                </div>
               </div>
 
-              <div className="field-group field-span-2">
+              <div className="oficina-field clientes-col-2">
                 <label htmlFor="endereco">Endereço</label>
                 <input
                   id="endereco"
@@ -852,7 +847,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="numero">Número</label>
                 <input
                   id="numero"
@@ -866,8 +861,8 @@ function CadastroCliente() {
               </div>
             </div>
 
-            <div className="form-grid three-columns">
-              <div className="field-group">
+            <div className="oficina-form-grid clientes-grid clientes-grid-3">
+              <div className="oficina-field">
                 <label htmlFor="bairro">Bairro</label>
                 <input
                   id="bairro"
@@ -879,7 +874,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="cidade">Cidade</label>
                 <input
                   id="cidade"
@@ -891,7 +886,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="uf">UF</label>
                 <input
                   id="uf"
@@ -905,8 +900,8 @@ function CadastroCliente() {
               </div>
             </div>
 
-            <div className="form-grid one-column">
-              <div className="field-group">
+            <div className="oficina-form-grid clientes-grid">
+              <div className="oficina-field">
                 <label htmlFor="complemento">Complemento</label>
                 <input
                   id="complemento"
@@ -921,113 +916,104 @@ function CadastroCliente() {
             </div>
           </section>
 
-          <section className="form-section">
-            <div className="veiculos-header-flex">
-              <h2>
-                <img
-                  src="/icons/veiculo.svg"
-                  alt="Ícone veículos"
-                  className="section-icon"
-                />
+          <section className="oficina-panel" aria-labelledby="clientes-veiculos-title">
+            <div className="clientes-veiculos-header">
+              <h2 id="clientes-veiculos-title" className="oficina-section-heading">
+                <TbCar aria-hidden="true" />
                 Veículos do cliente
+                <span className="oficina-badge">{veiculosVisiveis.length}</span>
               </h2>
 
               {!isVisualizacao && (
                 <button
                   type="button"
-                  className="add-veiculo-btn"
+                  className="oficina-btn"
                   onClick={abrirModalNovoVeiculo}
                 >
-                  + Adicionar veículo
+                  <FiPlus aria-hidden="true" />Adicionar veículo
                 </button>
               )}
             </div>
 
-            <div className="veiculos-box">
-              <div className="veiculos-table-header">
-                <span>Placa</span>
-                <span>Chassi</span>
-                <span>Fabricante / Modelo</span>
-                <span>Motor</span>
-                <span>Câmbio</span>
-                <span>Km</span>
-                <span>Ano Fab.</span>
-                <span>Ano Modelo</span>
-                <span>Cor</span>
-                <span>Ar-cond.</span>
-                <span>Ações</span>
-              </div>
-
               {veiculosVisiveis.length === 0 ? (
-                <div className="veiculos-empty">
-                  <div className="empty-icon">
-                    <img
-                      src="/icons/veiculo-vazio.svg"
-                      alt="Nenhum veículo"
-                      className="empty-icon-image"
-                    />
-                  </div>
-
-                  <p>Nenhum veículo cadastrado</p>
-                  <small>Clique em "Adicionar veículo" para incluir.</small>
+                <div className="oficina-empty-state">
+                  <TbCar aria-hidden="true" />
+                  <h3>Nenhum veículo cadastrado</h3>
+                  <p>{isVisualizacao ? 'Este cliente ainda não possui veículos cadastrados.' : 'Clique em Adicionar veículo para incluir.'}</p>
                 </div>
               ) : (
-                veiculos.map((veiculo, index) => {
-                  if (veiculo._remover) return null;
+                <div className="oficina-table-wrap">
+                  <table className="oficina-table clientes-veiculos-table">
+                    <thead><tr>
+                      <th scope="col">Placa</th><th scope="col">Chassi</th>
+                      <th scope="col">Fabricante / Modelo</th><th scope="col">Motor</th>
+                      <th scope="col">Câmbio</th><th scope="col">Km</th>
+                      <th scope="col">Ano Fab.</th><th scope="col">Ano Modelo</th>
+                      <th scope="col">Cor</th><th scope="col">Ar-cond.</th><th scope="col">Ações</th>
+                    </tr></thead>
+                    <tbody>
+                      {veiculos.map((veiculo, index) => {
+                        if (veiculo._remover) return null;
 
-                  return (
-                    <div className="veiculo-row" key={veiculo.id || index}>
-                      <span>{veiculo.placa || '-'}</span>
-                      <span>{veiculo.chassi || '-'}</span>
-                      <span>
-                        {veiculo.fabricante || '-'} / {veiculo.modelo || '-'}
-                      </span>
-                      <span>{veiculo.motor || '-'}</span>
-                      <span>{veiculo.Cambio || veiculo.cambio || '-'}</span>
-                      <span>{veiculo.km || '-'}</span>
-                      <span>{veiculo.ano_fabricacao || '-'}</span>
-                      <span>{veiculo.ano_modelo || '-'}</span>
-                      <span>{veiculo.cor || '-'}</span>
-                      <span>
-                        {veiculo.ar === null
-                          ? '-'
-                          : veiculo.ar
-                          ? 'Sim'
-                          : 'Não'}
-                      </span>
+                        return (
+                          <tr key={veiculo.id || index}>
+                            <td data-label="Placa"><span className="clientes-placa">{veiculo.placa || '-'}</span></td>
+                            <td data-label="Chassi">{veiculo.chassi || '-'}</td>
+                            <td data-label="Fabricante / Modelo">
+                              {veiculo.fabricante || '-'} / {veiculo.modelo || '-'}
+                            </td>
+                            <td data-label="Motor">{veiculo.motor || '-'}</td>
+                            <td data-label="Câmbio">{veiculo.Cambio || veiculo.cambio || '-'}</td>
+                            <td data-label="Km">{veiculo.km || '-'}</td>
+                            <td data-label="Ano Fab.">{veiculo.ano_fabricacao || '-'}</td>
+                            <td data-label="Ano Modelo">{veiculo.ano_modelo || '-'}</td>
+                            <td data-label="Cor">{veiculo.cor || '-'}</td>
+                            <td data-label="Ar-cond.">
+                              {veiculo.ar === null
+                                ? '-'
+                                : veiculo.ar
+                                ? 'Sim'
+                                : 'Não'}
+                            </td>
 
-                      <div className="veiculo-acoes">
-                        <button
-                          type="button"
-                          className="btn-editar-veiculo"
-                          onClick={() => editarVeiculo(index)}
-                        >
-                          {isVisualizacao ? 'Ver' : 'Editar'}
-                        </button>
+                            <td data-label="Ações"><div className="oficina-row-actions">
+                              <button
+                                type="button"
+                                className="oficina-btn"
+                                aria-label={`${isVisualizacao ? 'Ver' : 'Editar'} veículo ${veiculo.placa}`}
+                                onClick={() => editarVeiculo(index)}
+                              >
+                                {isVisualizacao ? <FiEye aria-hidden="true" /> : <FiEdit2 aria-hidden="true" />}
+                                {isVisualizacao ? 'Ver' : 'Editar'}
+                              </button>
 
-                        {!isVisualizacao && (
-                          <button
-                            type="button"
-                            className="btn-remover-veiculo"
-                            onClick={() => removerVeiculo(index)}
-                          >
-                            Remover
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
+                              {!isVisualizacao && (
+                                <button
+                                  type="button"
+                                  className="oficina-btn oficina-btn-danger"
+                                  aria-label={`Remover veículo ${veiculo.placa}`}
+                                  onClick={() => removerVeiculo(index)}
+                                >
+                                  <FiTrash2 aria-hidden="true" />Remover
+                                </button>
+                              )}
+                            </div></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
-            </div>
           </section>
 
-          <div className="form-actions">
+          <div className="oficina-form-actions clientes-form-actions">
             <button
               type="button"
-              className="btn-secondary"
+              className="oficina-btn"
               onClick={limparFormulario}
             >
+              {isVisualizacao ? <FiArrowLeft aria-hidden="true" /> : <FiX aria-hidden="true" />}
               {isVisualizacao ? 'Voltar' : 'Cancelar'}
             </button>
 
@@ -1035,46 +1021,50 @@ function CadastroCliente() {
               <>
                 <button
                   type="button"
-                  className="btn-edit-cliente"
+                  className="oficina-btn oficina-btn-primary"
                   onClick={() =>
                     navigate(
                       `/operador/clientes/cadastro?id=${clienteEmEdicaoId || idBusca}`
                     )
                   }
                 >
-                  Editar
+                  <FiEdit2 aria-hidden="true" />Editar
                 </button>
 
                 {clienteEmEdicaoId && podeExcluirCliente && !loadingCliente && (
                   <button
                     type="button"
-                    className="btn-delete-cliente"
+                    className="oficina-btn oficina-btn-danger"
                     onClick={handleExcluirCliente}
                   >
-                    Excluir
+                    <FiTrash2 aria-hidden="true" />Excluir
                   </button>
                 )}
               </>
             ) : (
-              <button type="submit" className="btn-primary">
+              <button type="submit" className="oficina-btn oficina-btn-primary">
+                <FiSave aria-hidden="true" />
                 {clienteEmEdicaoId ? 'Salvar alterações' : 'Cadastrar cliente'}
               </button>
             )}
           </div>
 
-          {mensagem && <p className="form-message">{mensagem}</p>}
         </form>
       </main>
 
       {modalOpen && (
-        <div className="modal-overlay" onClick={fecharModalVeiculo}>
-          <div className="modal-veiculo" onClick={(e) => e.stopPropagation()}>
-            <h2>
-              {editandoIndex !== null ? 'Editar veículo' : 'Adicionar veículo'}
+        <ModalOficina onClose={fecharModalVeiculo} labelledBy="clientes-modal-title" className="clientes-veiculo-modal">
+          <div className="clientes-modal-header">
+            <h2 id="clientes-modal-title" className="oficina-section-heading">
+              <TbCar aria-hidden="true" />
+              {isVisualizacao ? 'Dados do veículo' : editandoIndex !== null ? 'Editar veículo' : 'Adicionar veículo'}
             </h2>
+            <button type="button" className="oficina-btn clientes-modal-close" onClick={fecharModalVeiculo} aria-label="Fechar dados do veículo"><FiX aria-hidden="true" /></button>
+          </div>
 
-            <div className="modal-grid">
-              <div className="field-group">
+            {mensagem && <p className="clientes-feedback" role="status">{mensagem}</p>}
+            <div className="oficina-form-grid clientes-modal-grid">
+              <div className="oficina-field">
                 <label htmlFor="placa">Placa</label>
                 <input
                   id="placa"
@@ -1087,7 +1077,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="chassi">Chassi</label>
                 <input
                   id="chassi"
@@ -1099,7 +1089,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="fabricante">Fabricante</label>
                 <input
                   id="fabricante"
@@ -1110,7 +1100,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="modelo">Modelo</label>
                 <input
                   id="modelo"
@@ -1121,7 +1111,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="ano_fabricacao">Ano fabricação</label>
                 <input
                   id="ano_fabricacao"
@@ -1133,7 +1123,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="ano_modelo">Ano modelo</label>
                 <input
                   id="ano_modelo"
@@ -1145,7 +1135,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="motor">Motor</label>
                 <input
                   id="motor"
@@ -1157,7 +1147,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="Cambio">Câmbio</label>
                 <select
                   id="Cambio"
@@ -1175,7 +1165,7 @@ function CadastroCliente() {
                 </select>
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="km">Quilometragem</label>
                 <input
                   id="km"
@@ -1186,7 +1176,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="cor">Cor</label>
                 <input
                   id="cor"
@@ -1197,7 +1187,7 @@ function CadastroCliente() {
                 />
               </div>
 
-              <div className="field-group">
+              <div className="oficina-field">
                 <label htmlFor="ar">Ar-condicionado</label>
                 <select
                   id="ar"
@@ -1213,10 +1203,10 @@ function CadastroCliente() {
               </div>
             </div>
 
-            <div className="modal-actions">
+            <div className="oficina-form-actions clientes-modal-actions">
               <button
                 type="button"
-                className="btn-secondary"
+                className="oficina-btn"
                 onClick={fecharModalVeiculo}
               >
                 {isVisualizacao ? 'Fechar' : 'Cancelar'}
@@ -1225,15 +1215,14 @@ function CadastroCliente() {
               {!isVisualizacao && (
                 <button
                   type="button"
-                  className="btn-primary"
+                  className="oficina-btn oficina-btn-primary"
                   onClick={adicionarVeiculo}
                 >
-                  {editandoIndex !== null ? 'Atualizar' : 'Salvar'}
+                  <FiSave aria-hidden="true" />{editandoIndex !== null ? 'Atualizar' : 'Salvar'}
                 </button>
               )}
             </div>
-          </div>
-        </div>
+        </ModalOficina>
       )}
     </Layout>
   );

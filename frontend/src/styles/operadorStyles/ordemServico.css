@@ -1,16 +1,7 @@
-.os-workspace .os-page {
-  width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 24px;
-  color: var(--ui-text);
-}
-
 .os-workspace :is(h1, h2, h3, h4, strong) {
   font-weight: 600;
 }
 
-.os-workspace .os-top,
 .os-workspace .os-heading-line,
 .os-workspace .os-top-actions,
 .os-workspace .os-document-actions {
@@ -18,23 +9,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-}
-
-.os-workspace .os-top {
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-}
-
-.os-workspace h1 {
-  font-size: 26px;
-  line-height: 1.3;
-  letter-spacing: -0.4px;
-}
-
-.os-workspace :is(h2, h3) {
-  font-size: 15px;
-  line-height: 1.4;
 }
 
 .os-workspace h4 {
@@ -67,19 +41,7 @@
   gap: 16px;
 }
 
-.os-workspace :is(.os-panel, .os-service-panel) {
-  min-width: 0;
-  padding: 24px;
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  background: var(--ui-surface);
-}
-
-.os-workspace .os-panel-title {
-  margin-bottom: 16px;
-}
-
-.os-workspace :is(.os-management, .os-summary-card) {
+.os-workspace :is(.os-management, .os-summary-card, .os-actions-card) {
   padding: 16px;
 }
 
@@ -90,6 +52,15 @@
 
 .os-workspace .os-management .os-help {
   margin-top: 0;
+}
+
+.os-workspace .os-actions-card h2 {
+  margin: 0 0 12px;
+}
+
+.os-workspace .os-side-column .os-document-actions {
+  display: grid;
+  gap: 8px;
 }
 
 .os-workspace .os-form-grid {
@@ -861,7 +832,7 @@
     color-scheme: light;
   }
 
-  .os-workspace :is(.sidebar, .sidebar-mobile-toolbar, .estoque-topbar, button, .os-modal, .os-top-actions, summary) {
+  .os-workspace :is(.sidebar, .sidebar-mobile-toolbar, .estoque-topbar, button, .os-modal, .os-top-actions, .os-actions-card, summary) {
     display: none !important;
   }
 

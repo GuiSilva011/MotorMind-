@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../../components/Layout';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { FiEdit2, FiRotateCcw, FiSave, FiTrash2 } from 'react-icons/fi';
 import api from '../../services/api';
 import '../../styles/operadorStyles/pecas.css';
 
@@ -66,6 +69,7 @@ function criarPecaInicial() {
  * @returns {JSX.Element} Tela de manutenção de peças.
  */
 function Pecas() {
+  const [tema, setTema] = useTemaOficina();
   const [pecas, setPecas] = useState([]);
   const [form, setForm] = useState(criarPecaInicial());
   const [editandoId, setEditandoId] = useState(null);
@@ -263,39 +267,42 @@ function Pecas() {
   }, [pecas, busca]);
 
   return (
-    <Layout>
-      <main className="pecas-page">
-        <section className="pecas-top">
+    <Layout className="oficina-theme catalogo-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page" aria-labelledby="pecas-titulo">
+        <header className="oficina-page-header">
           <div>
-            <h1>Cadastro de Peças</h1>
+            <h1 id="pecas-titulo">Cadastro de Peças</h1>
             <p>Cadastre as peças usadas nas ordens de serviço.</p>
 
             {carregando && <small>Carregando peças...</small>}
           </div>
-        </section>
+        </header>
 
-        <section className="pecas-card">
-          <div className="pecas-card-title">
-            <h2>{editandoId ? 'Editar peça' : 'Nova peça'}</h2>
+        <section className="oficina-panel" aria-labelledby="pecas-form-titulo">
+          <div className="oficina-panel-title">
+            <h2 id="pecas-form-titulo">{editandoId ? 'Editar peça' : 'Nova peça'}</h2>
             <span>
               A peça cadastrada será usada como referência dentro da OS.
             </span>
           </div>
 
           <form onSubmit={salvarPeca}>
-            <div className="pecas-form-grid">
-              <div className="pecas-field">
-                <label>Código</label>
+            <div className="oficina-form-grid pecas-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="pecas-codigo">Código</label>
                 <input
+                  id="pecas-codigo"
                   value={form.codigo}
                   readOnly
                   placeholder="Código automático"
                 />
               </div>
 
-              <div className="pecas-field pecas-col-2">
-                <label>Nome da peça</label>
+              <div className="oficina-field pecas-col-2">
+                <label htmlFor="pecas-nome">Nome da peça</label>
                 <input
+                  id="pecas-nome"
                   value={form.nome}
                   onChange={(event) =>
                     atualizarCampo('nome', event.target.value)
@@ -304,9 +311,10 @@ function Pecas() {
                 />
               </div>
 
-              <div className="pecas-field">
-                <label>Marca</label>
+              <div className="oficina-field">
+                <label htmlFor="pecas-marca">Marca</label>
                 <input
+                  id="pecas-marca"
                   value={form.marca}
                   onChange={(event) =>
                     atualizarCampo('marca', event.target.value)
@@ -315,9 +323,10 @@ function Pecas() {
                 />
               </div>
 
-              <div className="pecas-field">
-                <label>Grupo</label>
+              <div className="oficina-field pecas-col-2">
+                <label htmlFor="pecas-grupo">Grupo</label>
                 <select
+                  id="pecas-grupo"
                   value={form.grupo}
                   onChange={(event) =>
                     atualizarCampo('grupo', event.target.value)
@@ -333,9 +342,10 @@ function Pecas() {
                 </select>
               </div>
 
-              <div className="pecas-field">
-                <label>Unidade</label>
+              <div className="oficina-field pecas-col-2">
+                <label htmlFor="pecas-unidade">Unidade</label>
                 <select
+                  id="pecas-unidade"
                   value={form.unidade}
                   onChange={(event) =>
                     atualizarCampo('unidade', event.target.value)
@@ -348,9 +358,10 @@ function Pecas() {
                 </select>
               </div>
 
-              <div className="pecas-field pecas-col-full">
-                <label>Aplicação</label>
+              <div className="oficina-field oficina-col-full">
+                <label htmlFor="pecas-aplicacao">Aplicação</label>
                 <input
+                  id="pecas-aplicacao"
                   value={form.aplicacao}
                   onChange={(event) =>
                     atualizarCampo('aplicacao', event.target.value)
@@ -360,20 +371,21 @@ function Pecas() {
               </div>
             </div>
 
-            <div className="pecas-actions">
+            <div className="oficina-form-actions">
               <button
                 type="button"
-                className="pecas-btn pecas-btn-light"
+                className="oficina-btn"
                 onClick={limparFormulario}
               >
-                Limpar
+                <FiRotateCcw aria-hidden="true" /> Limpar
               </button>
 
               <button
                 type="submit"
-                className="pecas-btn pecas-btn-primary"
+                className="oficina-btn oficina-btn-primary"
                 disabled={salvando}
               >
+                <FiSave aria-hidden="true" />
                 {salvando
                   ? 'Salvando...'
                   : editandoId
@@ -384,15 +396,18 @@ function Pecas() {
           </form>
         </section>
 
-        <section className="pecas-card">
-          <div className="pecas-list-header">
+        <section className="oficina-panel" aria-labelledby="pecas-lista-titulo" aria-busy={carregando}>
+          <div className="oficina-list-header">
             <div>
-              <h2>Peças cadastradas</h2>
+              <h2 id="pecas-lista-titulo">Peças cadastradas</h2>
               <span>{pecasFiltradas.length} peça(s) encontrada(s)</span>
             </div>
 
-            <div className="pecas-search">
+            <div className="oficina-search">
+              <label htmlFor="pecas-busca">Buscar peças</label>
               <input
+                id="pecas-busca"
+                type="search"
                 value={busca}
                 onChange={(event) => setBusca(event.target.value)}
                 placeholder="Buscar por código, nome, grupo, marca ou aplicação"
@@ -400,65 +415,67 @@ function Pecas() {
             </div>
           </div>
 
-          <div className="pecas-table-wrap">
-            <table className="pecas-table">
+          <div className="oficina-table-wrap">
+            <table className="oficina-table">
               <thead>
                 <tr>
-                  <th>Código</th>
-                  <th>Nome</th>
-                  <th>Grupo</th>
-                  <th>Marca</th>
-                  <th>Aplicação</th>
-                  <th>Unidade</th>
-                  <th>Ações</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Grupo</th>
+                  <th scope="col">Marca</th>
+                  <th scope="col">Aplicação</th>
+                  <th scope="col">Unidade</th>
+                  <th scope="col">Ações</th>
                 </tr>
               </thead>
 
               <tbody>
                 {pecasFiltradas.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="pecas-empty">
-                      Nenhuma peça encontrada.
+                    <td colSpan="7" className="oficina-empty">
+                      {carregando ? 'Carregando peças...' : 'Nenhuma peça encontrada.'}
                     </td>
                   </tr>
                 )}
 
                 {pecasFiltradas.map((peca) => (
                   <tr key={peca.id}>
-                    <td>
+                    <td data-label="Código">
                       <strong>{peca.codigo}</strong>
                     </td>
 
-                    <td>{peca.nome}</td>
+                    <td data-label="Nome">{peca.nome}</td>
 
-                    <td>
-                      <span className="pecas-grupo">
+                    <td data-label="Grupo">
+                      <span className="oficina-badge">
                         {peca.grupo || 'Sem grupo'}
                       </span>
                     </td>
 
-                    <td>{peca.marca || '-'}</td>
+                    <td data-label="Marca">{peca.marca || '-'}</td>
 
-                    <td>{peca.aplicacao || '-'}</td>
+                    <td data-label="Aplicação">{peca.aplicacao || '-'}</td>
 
-                    <td>{peca.unidade || 'UN'}</td>
+                    <td data-label="Unidade">{peca.unidade || 'UN'}</td>
 
-                    <td>
-                      <div className="pecas-table-actions">
+                    <td data-label="Ações">
+                      <div className="oficina-row-actions">
                         <button
                           type="button"
-                          className="pecas-mini-btn"
+                          className="oficina-btn"
+                          aria-label={`Editar peça: ${peca.nome}`}
                           onClick={() => editarPeca(peca)}
                         >
-                          Editar
+                          <FiEdit2 aria-hidden="true" /> Editar
                         </button>
 
                         <button
                           type="button"
-                          className="pecas-mini-btn danger"
+                          className="oficina-btn oficina-btn-danger"
+                          aria-label={`Excluir peça: ${peca.nome}`}
                           onClick={() => excluirPeca(peca.id)}
                         >
-                          Excluir
+                          <FiTrash2 aria-hidden="true" /> Excluir
                         </button>
                       </div>
                     </td>

@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Layout from "../components/Layout";
+import SeletorTema from "../components/SeletorTema";
+import useTemaOficina from "../hooks/useTemaOficina";
+import { FiCheck, FiChevronLeft, FiChevronRight, FiClipboard, FiClock, FiDownload, FiMessageSquare, FiRefreshCw, FiSave, FiSend, FiUserCheck } from 'react-icons/fi';
 import ImagemTicket from "../components/ImagemTicket";
 import api from "../services/api";
 import useConsultaTickets from "../hooks/useConsultaTickets";
@@ -114,7 +117,9 @@ function ChatTicket({ ticket, usuario }) {
 
   return (
     <section className="ticket-chat" aria-label="Chat do ticket">
-      <h3>Chat · Mecânico e responsável</h3>
+      <h3 className="oficina-section-heading">
+        <FiMessageSquare aria-hidden="true" />Chat · Mecânico e responsável
+      </h3>
       <p className="ticket-aviso">
         Mensagens e anexos expiram 48 horas após o envio. Registre decisões
         permanentes no status do ticket.
@@ -194,6 +199,7 @@ function ChatTicket({ ticket, usuario }) {
                   disabled={baixando !== null}
                   onClick={() => baixar(anexo)}
                 >
+                  <FiDownload aria-hidden="true" />
                   {baixando === anexo.id
                     ? "Baixando…"
                     : `Baixar ${anexo.nomeArquivo}`}{" "}
@@ -205,7 +211,7 @@ function ChatTicket({ ticket, usuario }) {
         ))}
       </div>
       {podeEnviar ? (
-        <form onSubmit={enviar}>
+        <form className="ticket-composer" onSubmit={enviar}>
           <label htmlFor="ticket-mensagem">
             Mensagem
             <textarea
@@ -249,6 +255,7 @@ function ChatTicket({ ticket, usuario }) {
             className="ticket-primario"
             disabled={enviando || (!conteudo.trim() && !anexos.length)}
           >
+            <FiSend aria-hidden="true" />
             {enviando ? "Enviando…" : "Enviar mensagem"}
           </button>
         </form>
@@ -302,13 +309,13 @@ function TicketDetalhe({ id, usuario, atualizado }) {
   }
   if (consulta.carregando)
     return (
-      <section className="ticket-card" role="status">
+      <section className="ticket-card oficina-panel" role="status">
         Carregando ticket…
       </section>
     );
   if (!ticket)
     return (
-      <section className="ticket-card ticket-erro" role="alert">
+      <section className="ticket-card oficina-panel ticket-erro" role="alert">
         {consulta.erro || "Ticket não encontrado."}
       </section>
     );
@@ -319,51 +326,63 @@ function TicketDetalhe({ id, usuario, atualizado }) {
       ? ["CANCELADA"]
       : [];
   return (
-    <section className="ticket-card ticket-detalhe">
+    <section className="ticket-card oficina-panel ticket-detalhe" aria-labelledby="ticket-detail-title">
       {consulta.erro && (
         <p className="ticket-erro" role="alert">
           {consulta.erro}
         </p>
       )}
       <header className="ticket-cabecalho">
-        <h2>{ticket.codigo}</h2>
+        <div>
+          <p className="ticket-sobre-titulo">Detalhes da solicitação</p>
+          <h2 id="ticket-detail-title">{ticket.codigo}</h2>
+        </div>
         <span className={`ticket-status ${ticket.status}`}>
           {STATUS[ticket.status]}
         </span>
       </header>
-      <p>
-        OS {ticket.ordemServico.codigo} · {ticket.ordemServico.veiculo.placa} ·{" "}
-        {ticket.ordemServico.veiculo.modelo}
-      </p>
-      <p>
-        Solicitante: <strong>{ticket.solicitante.Nome}</strong>
-        <br />
-        Responsável:{" "}
-        <strong>{ticket.responsavel?.Nome || "Aguardando atendimento"}</strong>
-      </p>
+      <dl className="ticket-resumo">
+        <div><dt>Ordem de serviço</dt><dd>{ticket.ordemServico.codigo}</dd></div>
+        <div>
+          <dt>Veículo</dt>
+          <dd>
+            <span className="ticket-placa">{ticket.ordemServico.veiculo.placa}</span>
+            <span>{ticket.ordemServico.veiculo.modelo}</span>
+          </dd>
+        </div>
+        <div><dt>Solicitante</dt><dd>{ticket.solicitante.Nome}</dd></div>
+        <div>
+          <dt>Responsável</dt>
+          <dd>{ticket.responsavel?.Nome || "Aguardando atendimento"}</dd>
+        </div>
+      </dl>
       {["OPERADOR", "OWNER"].includes(usuario.Role) && (
-        <Link to="/operador/ordem-servico">Acessar ordens de serviço</Link>
+        <Link className="ticket-link-os" to="/operador/ordem-servico">
+          <FiClipboard aria-hidden="true" />Acessar ordens de serviço
+        </Link>
       )}
-      <table>
+      <div className="oficina-table-wrap">
+      <table className="oficina-table">
         <caption>Peças solicitadas</caption>
         <thead>
           <tr>
-            <th>Peça</th>
-            <th>Quantidade</th>
+            <th scope="col">Peça</th>
+            <th scope="col">Quantidade</th>
           </tr>
         </thead>
         <tbody>
           {ticket.itens.map((item) => (
             <tr key={item.id}>
-              <td>
+              <td data-label="Peça">
                 {item.nomePeca}
                 {item.observacao && <small>{item.observacao}</small>}
               </td>
-              <td>{item.quantidadeSolicitada}</td>
+              <td data-label="Quantidade">{item.quantidadeSolicitada}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
       {ticket.observacao && <p className="ticket-texto">{ticket.observacao}</p>}
       <p className="ticket-aviso">
         O ticket acompanha o pedido e a entrega. Nesta etapa, retirar peças do
@@ -381,6 +400,7 @@ function TicketDetalhe({ id, usuario, atualizado }) {
             }
             onClick={() => executar("assumir")}
           >
+            <FiUserCheck aria-hidden="true" />
             {ocupado ? "Assumindo…" : "Assumir ticket e abrir chat"}
           </button>
         )}
@@ -392,6 +412,9 @@ function TicketDetalhe({ id, usuario, atualizado }) {
             void executar("status");
           }}
         >
+          <h3 className="oficina-section-heading">
+            <FiCheck aria-hidden="true" />Atendimento
+          </h3>
           <label>
             Atualizar atendimento
             <select
@@ -420,18 +443,21 @@ function TicketDetalhe({ id, usuario, atualizado }) {
               placeholder="Motivo, disponibilidade, compra ou confirmação da entrega"
             />
           </label>
-          <button disabled={ocupado || !opcoes.includes(destino)}>
+          <button className="ticket-primario" disabled={ocupado || !opcoes.includes(destino)}>
+            <FiSave aria-hidden="true" />
             {ocupado ? "Salvando…" : "Salvar status"}
           </button>
         </form>
       )}
       <details className="ticket-historico">
-        <summary>Histórico permanente ({ticket.historico.length})</summary>
+        <summary>
+          <span><FiClock aria-hidden="true" />Histórico permanente ({ticket.historico.length})</span>
+        </summary>
         <ol>
           {ticket.historico.map((item) => (
             <li key={item.id}>
               <strong>{STATUS[item.statusAtual]}</strong> · {item.usuarioNome}
-              <time>{dataHora(item.createdAt)}</time>
+              <time dateTime={item.createdAt}>{dataHora(item.createdAt)}</time>
               {item.motivo && <p>{item.motivo}</p>}
             </li>
           ))}
@@ -451,6 +477,7 @@ function TicketDetalhe({ id, usuario, atualizado }) {
 }
 
 export default function Tickets() {
+  const [tema, setTema] = useTemaOficina();
   const usuario = JSON.parse(
     localStorage.getItem("motormind_usuario") || "null",
   );
@@ -469,11 +496,12 @@ export default function Tickets() {
   );
   const atualizar = () => setVersao((v) => v + 1);
   return (
-    <Layout>
-      <main className="tickets-page">
-        <header className="ticket-cabecalho">
+    <Layout className="oficina-theme tickets-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="tickets-page oficina-page" aria-labelledby="tickets-page-title">
+        <header className="ticket-cabecalho oficina-page-header">
           <div>
-            <h1>Solicitações de peças</h1>
+            <h1 id="tickets-page-title">Solicitações de peças</h1>
             <p>
               {tecnico
                 ? "Acompanhe seus pedidos e converse com o responsável pelo atendimento."
@@ -481,7 +509,7 @@ export default function Tickets() {
             </p>
           </div>
           <button type="button" onClick={atualizar}>
-            Atualizar
+            <FiRefreshCw aria-hidden="true" />Atualizar
           </button>
         </header>
         {tecnico && (
@@ -491,8 +519,17 @@ export default function Tickets() {
           </p>
         )}
         <div className="ticket-colunas">
-          <section className="ticket-card ticket-lista">
-            <h2>Tickets</h2>
+          <section className="ticket-card oficina-panel ticket-lista" aria-labelledby="ticket-list-title">
+            <div className="ticket-lista-header">
+              <h2 id="ticket-list-title" className="oficina-section-heading">
+                <FiClipboard aria-hidden="true" />Solicitações
+              </h2>
+              {!consulta.carregando && !consulta.erro && (
+                <span className="ticket-contagem" aria-label={`${consulta.dados?.total || 0} solicitações neste filtro`}>
+                  {consulta.dados?.total || 0}
+                </span>
+              )}
+            </div>
             <label>
               Exibir
               <select
@@ -544,21 +581,28 @@ export default function Tickets() {
               </p>
             )}
             {consulta.carregando ? (
-              <p>Carregando tickets…</p>
+              <p className="ticket-lista-vazia" role="status">Carregando solicitações…</p>
             ) : !consulta.dados?.itens.length ? (
-              <p>Nenhum ticket neste filtro.</p>
+              <div className="oficina-empty-state ticket-lista-vazia">
+                <FiClipboard aria-hidden="true" />
+                <h3>Nenhuma solicitação</h3>
+                <p>Não há pedidos para os filtros selecionados.</p>
+              </div>
             ) : (
               <ul>
                 {consulta.dados.itens.map((ticket) => (
                   <li key={ticket.id}>
                     <Link
                       className={String(ticket.id) === id ? "selecionado" : ""}
+                      aria-current={String(ticket.id) === id ? "page" : undefined}
                       to={`/tickets/${ticket.id}${ordemFiltro ? `?ordem=${encodeURIComponent(ordemFiltro)}` : ""}`}
                     >
-                      <strong>{ticket.codigo}</strong>
-                      <span className={`ticket-status ${ticket.status}`}>
-                        {STATUS[ticket.status]}
-                      </span>
+                      <div className="ticket-lista-titulo">
+                        <strong>{ticket.codigo}</strong>
+                        <span className={`ticket-status ${ticket.status}`}>
+                          {STATUS[ticket.status]}
+                        </span>
+                      </div>
                       <span>
                         OS {ticket.ordemServico.codigo} ·{" "}
                         {ticket.ordemServico.veiculo.placa}
@@ -572,12 +616,13 @@ export default function Tickets() {
                 ))}
               </ul>
             )}
-            <div className="ticket-acoes">
+            <div className="ticket-acoes ticket-pagination">
               <button
                 type="button"
                 disabled={pagina === 1}
                 onClick={() => setPagina((p) => p - 1)}
               >
+                <FiChevronLeft aria-hidden="true" />
                 Anterior
               </button>
               <span>
@@ -592,6 +637,7 @@ export default function Tickets() {
                 onClick={() => setPagina((p) => p + 1)}
               >
                 Próxima
+                <FiChevronRight aria-hidden="true" />
               </button>
             </div>
           </section>
@@ -603,16 +649,13 @@ export default function Tickets() {
               atualizado={atualizar}
             />
           ) : (
-            <section className="ticket-card ticket-vazio">
-              <h2>Atendimento organizado por ticket</h2>
-              <p>
-                Selecione uma solicitação para consultar as peças, o histórico e
-                a conversa.
-              </p>
-              <p>
-                Atualização automática: tickets a cada 15 segundos e chat a cada
-                5 segundos.
-              </p>
+            <section className="ticket-card oficina-panel ticket-vazio">
+              <div className="oficina-empty-state">
+                <FiMessageSquare aria-hidden="true" />
+                <h2>Selecione uma solicitação</h2>
+                <p>Consulte as peças, o histórico e a conversa de cada pedido.</p>
+                <p>Os pedidos ficam vinculados à ordem de serviço.</p>
+              </div>
             </section>
           )}
         </div>

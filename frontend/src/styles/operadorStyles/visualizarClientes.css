@@ -1,185 +1,371 @@
-.consulta-clientes-container {
-  min-height: 100vh;
-  background: #f4f7fb;
-  padding: 32px;
-  font-family: Arial, sans-serif;
-}
-
-.consulta-clientes-header {
+.clientes-consulta .clientes-directory-toolbar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-.consulta-clientes-header h1 {
-  color: #1f2937;
-  font-size: 28px;
-  margin-bottom: 6px;
+.clientes-consulta .clientes-toolbar-copy {
+  flex: 1 1 220px;
+  min-width: 0;
 }
 
-.consulta-clientes-header p {
-  color: #6b7280;
-  font-size: 15px;
+.clientes-consulta .clientes-result-count {
+  margin: 8px 0 0;
+  color: var(--ui-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }
 
-.btn-novo-cliente {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 12px 18px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-novo-cliente:hover {
-  background: #1d4ed8;
-}
-
-.barra-busca {
-  margin-bottom: 24px;
-}
-
-.barra-busca input {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  font-size: 15px;
-  outline: none;
-}
-
-.barra-busca input:focus {
-  border-color: #2563eb;
-}
-
-.status-message {
-  font-size: 14px;
-  color: #1f2937;
-  margin-bottom: 16px;
-}
-
-.status-message.error {
-  color: #b91c1c;
-}
-
-.toast-message {
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: #ecfdf3;
-  border: 1px solid #a7f3d0;
-  color: #047857;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.lista-clientes {
+.clientes-consulta .clientes-search {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-}
-
-.card-cliente {
-  background: white;
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  display: grid;
-  grid-template-columns: 1.5fr 1.3fr auto;
-  gap: 24px;
-  align-items: center;
-}
-
-.cliente-info h2 {
-  font-size: 21px;
-  color: #111827;
-  margin-bottom: 12px;
-}
-
-.cliente-dados {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(180px, 1fr));
-  gap: 8px 18px;
-}
-
-.cliente-dados p {
-  color: #374151;
-  font-size: 14px;
-}
-
-.veiculos-area h3 {
-  color: #1f2937;
-  font-size: 17px;
-  margin-bottom: 10px;
-}
-
-.lista-veiculos {
-  display: flex;
-  flex-direction: column;
+  flex: 1 1 320px;
+  max-width: 480px;
+  min-width: 0;
   gap: 8px;
 }
 
-.veiculo-item {
-  background: #f3f4f6;
-  padding: 10px;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
+.clientes-consulta .clientes-search label {
+  color: var(--ui-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
-.veiculo-item span {
-  color: #111827;
-  font-weight: 600;
+.clientes-consulta .clientes-search-control {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  background: var(--ui-surface);
+}
+
+.clientes-consulta .clientes-search-control > svg {
+  position: static;
+  display: block;
+  width: 18px;
+  height: 18px;
+  color: var(--ui-muted);
+  pointer-events: none;
+}
+
+.clientes-consulta .clientes-search-control input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ui-text);
+  font: inherit;
   font-size: 14px;
 }
 
-.veiculo-item small {
-  color: #6b7280;
-  margin-top: 3px;
+.clientes-consulta .clientes-search-control input::placeholder {
+  color: var(--ui-muted);
+  font-size: 13px;
+  opacity: 1;
 }
 
-.sem-veiculo {
-  color: #9ca3af;
-  font-size: 14px;
+.clientes-consulta .clientes-search-control:focus-within {
+  border-color: var(--ui-link);
+  outline: 2px solid var(--ui-link);
+  outline-offset: 2px;
 }
 
-.acoes-cliente button {
-  background: #111827;
-  color: white;
-  border: none;
-  padding: 11px 15px;
+.clientes-consulta .clientes-search-control input:focus-visible {
+  outline: 0;
+}
+
+.clientes-consulta .clientes-directory {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr));
+  align-items: start;
+  gap: 16px;
+}
+
+.clientes-consulta .clientes-compact-card {
+  min-width: 0;
+  border: 1px solid var(--ui-border);
   border-radius: 10px;
+  background: var(--ui-surface);
+  overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.clientes-consulta .clientes-compact-card:hover {
+  border-color: var(--ui-link);
+  box-shadow: var(--ui-shadow);
+}
+
+.clientes-consulta .clientes-card-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--ui-border);
+  background: linear-gradient(110deg, var(--ui-blue-soft), var(--ui-surface));
+}
+
+.clientes-workspace .clientes-consulta .clientes-client-name {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: 16px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.clientes-consulta .clientes-card-identity p {
+  margin: 4px 0 0;
+  color: var(--ui-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.clientes-consulta .clientes-open-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ui-link);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
+}
+
+.clientes-consulta .clientes-open-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.clientes-consulta .clientes-open-btn:hover {
+  border-color: var(--ui-border);
+  background: var(--ui-surface);
+}
+
+.clientes-consulta .clientes-card-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  padding: 16px 18px;
+  margin: 0;
+}
+
+.clientes-consulta .clientes-card-details > div {
+  min-width: 0;
+}
+
+.clientes-consulta .clientes-card-details dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  color: var(--ui-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.clientes-consulta .clientes-card-details dt svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.clientes-consulta .clientes-card-details dd {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.clientes-consulta .clientes-card-address {
+  grid-column: 1 / -1;
+}
+
+.clientes-consulta .clientes-card-details small,
+.clientes-consulta .clientes-car-info small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ui-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.clientes-consulta .clientes-card-details small:empty,
+.clientes-consulta .clientes-car-info small:empty {
+  display: none;
+}
+
+.clientes-consulta .clientes-card-vehicles {
+  padding: 12px 18px;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-secondary);
+}
+
+.clientes-consulta .clientes-vehicles-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.clientes-workspace .clientes-consulta .clientes-vehicles-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.clientes-consulta .clientes-vehicles-heading h3 svg {
+  width: 18px;
+  height: 18px;
+  color: var(--ui-link);
+}
+
+.clientes-consulta .clientes-vehicles-heading > span {
+  color: var(--ui-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clientes-consulta .clientes-vehicles {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.clientes-consulta .clientes-vehicles li {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.clientes-consulta .clientes-vehicles li + li {
+  border-top: 1px solid var(--ui-border);
+}
+
+.clientes-consulta .clientes-car-plate {
+  display: block;
+  padding: 6px 8px;
+  border: 1px solid var(--ui-border);
+  border-radius: 5px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.4px;
+  text-align: center;
   white-space: nowrap;
 }
 
-.acoes-cliente button:hover {
-  background: #374151;
+.clientes-consulta .clientes-car-info {
+  min-width: 0;
 }
 
-.sem-clientes {
-  background: white;
-  padding: 28px;
-  border-radius: 12px;
+.clientes-consulta .clientes-car-info strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.clientes-consulta .clientes-no-vehicle {
+  margin: 10px 0 2px;
+  color: var(--ui-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.clientes-consulta :is(.clientes-list-empty, .clientes-list-status) {
+  margin: 0;
+  padding: 48px 20px;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  background: var(--ui-surface);
+  color: var(--ui-muted);
+  font-size: 13px;
+  line-height: 1.5;
   text-align: center;
-  color: #6b7280;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
-@media (max-width: 900px) {
-  .card-cliente {
-    grid-template-columns: 1fr;
-  }
+.clientes-consulta .clientes-list-empty > svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 12px;
+  color: var(--ui-link);
+}
 
-  .cliente-dados {
-    grid-template-columns: 1fr;
-  }
+.clientes-consulta .clientes-list-empty p {
+  margin: 0 0 4px;
+  color: var(--ui-text);
+  font-weight: 500;
+}
 
-  .consulta-clientes-header {
+.clientes-consulta .clientes-list-empty span {
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .clientes-consulta .clientes-directory-toolbar {
+    align-items: stretch;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
+    gap: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .clientes-consulta :is(.clientes-toolbar-copy, .clientes-search) {
+    flex: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .clientes-consulta .clientes-card-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .clientes-consulta .clientes-open-btn {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .clientes-consulta .clientes-card-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clientes-consulta .clientes-compact-card {
+    transition: none;
   }
 }

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../../components/Layout';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { FiEdit2, FiRotateCcw, FiSave, FiTrash2 } from 'react-icons/fi';
 import api from '../../services/api';
 import '../../styles/operadorStyles/diagnosticos.css';
 
@@ -41,6 +44,7 @@ function criarDiagnosticoInicial() {
  * @returns {JSX.Element} Tela de manutenção de diagnósticos.
  */
 function Diagnosticos() {
+  const [tema, setTema] = useTemaOficina();
   const [diagnosticos, setDiagnosticos] = useState([]);
   const [form, setForm] = useState(criarDiagnosticoInicial());
   const [editandoId, setEditandoId] = useState(null);
@@ -224,39 +228,42 @@ function Diagnosticos() {
   }, [diagnosticos, busca]);
 
   return (
-    <Layout>
-      <main className="diagnosticos-page">
-        <section className="diagnosticos-top">
+    <Layout className="oficina-theme catalogo-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page" aria-labelledby="diagnosticos-titulo">
+        <header className="oficina-page-header">
           <div>
-            <h1>Cadastro de Diagnósticos</h1>
+            <h1 id="diagnosticos-titulo">Cadastro de Diagnósticos</h1>
             <p>Cadastre os diagnósticos usados nas ordens de serviço.</p>
 
             {carregando && <small>Carregando diagnósticos...</small>}
           </div>
-        </section>
+        </header>
 
-        <section className="diagnosticos-card">
-          <div className="diagnosticos-card-title">
-            <h2>{editandoId ? 'Editar diagnóstico' : 'Novo diagnóstico'}</h2>
+        <section className="oficina-panel" aria-labelledby="diagnosticos-form-titulo">
+          <div className="oficina-panel-title">
+            <h2 id="diagnosticos-form-titulo">{editandoId ? 'Editar diagnóstico' : 'Novo diagnóstico'}</h2>
             <span>
               O diagnóstico cadastrado será usado como modelo dentro da OS.
             </span>
           </div>
 
           <form onSubmit={salvarDiagnostico}>
-            <div className="diagnosticos-form-grid">
-              <div className="diagnosticos-field">
-                <label>Código</label>
+            <div className="oficina-form-grid diagnosticos-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="diagnosticos-codigo">Código</label>
                 <input
+                  id="diagnosticos-codigo"
                   value={form.codigo}
                   readOnly
                   placeholder="Código automático"
                 />
               </div>
 
-              <div className="diagnosticos-field diagnosticos-col-2">
-                <label>Nome</label>
+              <div className="oficina-field diagnosticos-col-2">
+                <label htmlFor="diagnosticos-nome">Nome</label>
                 <input
+                  id="diagnosticos-nome"
                   value={form.nome}
                   onChange={(event) =>
                     atualizarCampo('nome', event.target.value)
@@ -265,9 +272,10 @@ function Diagnosticos() {
                 />
               </div>
 
-              <div className="diagnosticos-field diagnosticos-col-full">
-                <label>Descrição</label>
+              <div className="oficina-field oficina-col-full">
+                <label htmlFor="diagnosticos-descricao">Descrição</label>
                 <textarea
+                  id="diagnosticos-descricao"
                   value={form.descricao}
                   onChange={(event) =>
                     atualizarCampo('descricao', event.target.value)
@@ -277,20 +285,21 @@ function Diagnosticos() {
               </div>
             </div>
 
-            <div className="diagnosticos-actions">
+            <div className="oficina-form-actions">
               <button
                 type="button"
-                className="diagnosticos-btn diagnosticos-btn-light"
+                className="oficina-btn"
                 onClick={limparFormulario}
               >
-                Limpar
+                <FiRotateCcw aria-hidden="true" /> Limpar
               </button>
 
               <button
                 type="submit"
-                className="diagnosticos-btn diagnosticos-btn-primary"
+                className="oficina-btn oficina-btn-primary"
                 disabled={salvando}
               >
+                <FiSave aria-hidden="true" />
                 {salvando
                   ? 'Salvando...'
                   : editandoId
@@ -301,17 +310,20 @@ function Diagnosticos() {
           </form>
         </section>
 
-        <section className="diagnosticos-card">
-          <div className="diagnosticos-list-header">
+        <section className="oficina-panel" aria-labelledby="diagnosticos-lista-titulo" aria-busy={carregando}>
+          <div className="oficina-list-header">
             <div>
-              <h2>Diagnósticos cadastrados</h2>
+              <h2 id="diagnosticos-lista-titulo">Diagnósticos cadastrados</h2>
               <span>
                 {diagnosticosFiltrados.length} diagnóstico(s) encontrado(s)
               </span>
             </div>
 
-            <div className="diagnosticos-search">
+            <div className="oficina-search">
+              <label htmlFor="diagnosticos-busca">Buscar diagnósticos</label>
               <input
+                id="diagnosticos-busca"
+                type="search"
                 value={busca}
                 onChange={(event) => setBusca(event.target.value)}
                 placeholder="Buscar por código, nome ou descrição"
@@ -319,52 +331,54 @@ function Diagnosticos() {
             </div>
           </div>
 
-          <div className="diagnosticos-table-wrap">
-            <table className="diagnosticos-table">
+          <div className="oficina-table-wrap">
+            <table className="oficina-table">
               <thead>
                 <tr>
-                  <th>Código</th>
-                  <th>Nome</th>
-                  <th>Descrição</th>
-                  <th>Ações</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Ações</th>
                 </tr>
               </thead>
 
               <tbody>
                 {diagnosticosFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan="4" className="diagnosticos-empty">
-                      Nenhum diagnóstico encontrado.
+                    <td colSpan="4" className="oficina-empty">
+                      {carregando ? 'Carregando diagnósticos...' : 'Nenhum diagnóstico encontrado.'}
                     </td>
                   </tr>
                 )}
 
                 {diagnosticosFiltrados.map((diagnostico) => (
                   <tr key={diagnostico.id}>
-                    <td>
+                    <td data-label="Código">
                       <strong>{diagnostico.codigo}</strong>
                     </td>
 
-                    <td>{diagnostico.nome}</td>
+                    <td data-label="Nome">{diagnostico.nome}</td>
 
-                    <td>{diagnostico.descricao || '-'}</td>
+                    <td data-label="Descrição">{diagnostico.descricao || '-'}</td>
 
-                    <td>
-                      <div className="diagnosticos-table-actions">
+                    <td data-label="Ações">
+                      <div className="oficina-row-actions">
                         <button
                           type="button"
-                          className="diagnosticos-mini-btn"
+                          className="oficina-btn"
+                          aria-label={`Editar diagnóstico: ${diagnostico.nome}`}
                           onClick={() => editarDiagnostico(diagnostico)}
                         >
-                          Editar
+                          <FiEdit2 aria-hidden="true" /> Editar
                         </button>
 
                         <button
                           type="button"
-                          className="diagnosticos-mini-btn danger"
+                          className="oficina-btn oficina-btn-danger"
+                          aria-label={`Excluir diagnóstico: ${diagnostico.nome}`}
                           onClick={() => excluirDiagnostico(diagnostico.id)}
                         >
-                          Excluir
+                          <FiTrash2 aria-hidden="true" /> Excluir
                         </button>
                       </div>
                     </td>

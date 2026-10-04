@@ -92,17 +92,6 @@ function Sidebar() {
       </button>
     }>
         <nav id="sidebar-navigation" className="sidebar-menu" aria-label="Navegação principal">
-          {['TECNICO', 'OPERADOR', 'ADMIN', 'OWNER'].includes(role) && <NavLink to="/tickets" title="Solicitações de peças"
-            className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
-            <FiMessageSquare className="menu-icon" aria-hidden="true" /><span>Solicitações de peças</span>
-          </NavLink>}
-          {(isAdmin || isOperador || role === 'OWNER') && (
-            <NavLink to="/estoque" title="Estoque"
-              className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
-              <FiPackage className="menu-icon" aria-hidden="true" />
-              <span>Estoque</span>
-            </NavLink>
-          )}
           {podeVerOperador() && (
             <>
               <NavLink
@@ -371,6 +360,17 @@ function Sidebar() {
                 <span>Visualizar funcionários</span>
               </NavLink>
             </>
+          )}
+          {['TECNICO', 'OPERADOR', 'ADMIN', 'OWNER'].includes(role) && <NavLink to="/tickets" title="Solicitações de peças"
+            className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
+            <FiMessageSquare className="menu-icon" aria-hidden="true" /><span>Solicitações de peças</span>
+          </NavLink>}
+          {(isAdmin || isOperador || role === 'OWNER') && (
+            <NavLink to="/estoque" title="Estoque"
+              className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
+              <FiPackage className="menu-icon" aria-hidden="true" />
+              <span>Estoque</span>
+            </NavLink>
           )}
         </nav>
     </Navbars>

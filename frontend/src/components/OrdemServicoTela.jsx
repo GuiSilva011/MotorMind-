@@ -157,8 +157,8 @@ export default function OrdemServicoTela({ ordem, modoTela, catalogos, busca, re
     </article>;
   }
 
-  return <main className="os-page" aria-labelledby="os-page-title">
-    <header className="os-top">
+  return <main className="os-page oficina-page" aria-labelledby="os-page-title">
+    <header className="os-top oficina-page-header">
       <div>
         <div className="os-heading-line"><h1 id="os-page-title">Ordem de serviço</h1>
           {ordem.codigo && <span className="os-order-code">{ordem.codigo}</span>}
@@ -177,8 +177,8 @@ export default function OrdemServicoTela({ ordem, modoTela, catalogos, busca, re
 
     <div className="os-layout-grid">
       <div className="os-main-column">
-        <section className="os-panel" aria-labelledby="os-atendimento-title">
-          <div className="os-panel-title"><h2 id="os-atendimento-title">Cliente e veículo</h2>
+        <section className="os-panel oficina-panel" aria-labelledby="os-atendimento-title">
+          <div className="os-panel-title oficina-panel-title"><h2 id="os-atendimento-title">Cliente e veículo</h2>
             <span>Busque por nome do cliente ou placa do veículo.</span></div>
           <div className="os-field">
             <label htmlFor="os-busca-cliente">Buscar cliente ou placa</label>
@@ -227,8 +227,8 @@ export default function OrdemServicoTela({ ordem, modoTela, catalogos, busca, re
             onChange={event => acoes.atualizarCampoOrdem('observacoes', event.target.value)} placeholder="Observações gerais da ordem de serviço" />, 'os-observations')}
         </section>
 
-        <section className="os-service-panel" aria-labelledby="os-itens-title">
-          <div className="os-panel-title"><h2 id="os-itens-title">Diagnósticos, serviços e peças</h2>
+        <section className="os-service-panel oficina-panel" aria-labelledby="os-itens-title">
+          <div className="os-panel-title oficina-panel-title"><h2 id="os-itens-title">Diagnósticos, serviços e peças</h2>
             <span>Adicione um diagnóstico, os serviços dentro dele e as peças de cada serviço.</span></div>
           {!podeEditar && !ordem.diagnosticos.length && !ordem.servicosSemDiagnostico.length && !ordem.pecasAvulsas.length &&
             <div className="os-empty">Nenhum diagnóstico, serviço ou peça adicionado.</div>}
@@ -283,14 +283,11 @@ export default function OrdemServicoTela({ ordem, modoTela, catalogos, busca, re
         </section>
         <div className="os-document-actions">
           <button type="button" className="os-small-btn os-outline" onClick={acoes.voltarPagina}><FiArrowLeft aria-hidden="true" />Voltar</button>
-          <button type="button" className="os-small-btn os-outline" onClick={acoes.imprimirOrdemServico} disabled={!ordem.veiculo.id}>
-            <FiFileText aria-hidden="true" />Imprimir OS</button>
-          <button type="button" className="os-small-btn os-outline" onClick={acoes.abrirCotacao} disabled={!podeCotar}>Enviar cotação para fornecedor</button>
         </div>
       </div>
 
       <aside className="os-side-column" aria-label="Gestão e financeiro da ordem de serviço">
-        <section className="os-panel os-management" aria-labelledby="os-gestao-title">
+        <section className="os-panel oficina-panel os-management" aria-labelledby="os-gestao-title">
           <h2 id="os-gestao-title">Gestão da OS</h2>
           {campo('Código da OS', 'os-codigo', <input value={ordem.codigo} readOnly placeholder="Automático" />)}
           <span className="os-status" data-status={ordem.status}>{STATUS_OS[ordem.status] || ordem.status}</span>
@@ -308,7 +305,7 @@ export default function OrdemServicoTela({ ordem, modoTela, catalogos, busca, re
           <p id="os-tecnico-ajuda" className="os-help">O vínculo com o mecânico só é confirmado ao salvar a OS.</p>
           {ordem.id && <button type="button" className="os-small-btn os-outline" onClick={acoes.abrirTickets}>Tickets desta OS</button>}
         </section>
-        <section className="os-panel os-summary-card" aria-labelledby="os-resumo-title">
+        <section className="os-panel oficina-panel os-summary-card" aria-labelledby="os-resumo-title">
           <h2 id="os-resumo-title">Resumo financeiro</h2>
           <dl aria-live="polite" aria-atomic="true">
             <div><dt>Serviços</dt><dd>{formatarMoeda(totais.brutoServicos)}</dd></div>
@@ -318,6 +315,14 @@ export default function OrdemServicoTela({ ordem, modoTela, catalogos, busca, re
           </dl>
           {salvarBotao('os-small-btn os-primary os-save-summary')}
           {estaVisualizando && <p className="os-help">Use Editar OS para alterar esta ordem.</p>}
+        </section>
+        <section className="os-panel oficina-panel os-actions-card" aria-labelledby="os-documentos-title">
+          <h2 id="os-documentos-title">Documentos e cotação</h2>
+          <div className="os-document-actions">
+            <button type="button" className="os-small-btn os-outline" onClick={acoes.imprimirOrdemServico} disabled={!ordem.veiculo.id}>
+              <FiFileText aria-hidden="true" />Imprimir OS</button>
+            <button type="button" className="os-small-btn os-outline" onClick={acoes.abrirCotacao} disabled={!podeCotar}>Enviar cotação para fornecedor</button>
+          </div>
         </section>
       </aside>
     </div>

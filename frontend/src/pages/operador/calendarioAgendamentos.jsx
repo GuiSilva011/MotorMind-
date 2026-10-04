@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { FiCalendar, FiChevronLeft, FiChevronRight, FiClock, FiFileText, FiPlus, FiRefreshCw, FiTrash2, FiUser, FiX } from 'react-icons/fi';
+import { TbCar } from 'react-icons/tb';
 
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -8,6 +10,9 @@ import ptBR from 'date-fns/locale/pt-BR';
 
 import api from '../../services/api';
 import Layout from '../../components/Layout';
+import ModalOficina from '../../components/ModalOficina';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../../styles/operadorStyles/calendarioAgendamentos.css';
@@ -35,6 +40,43 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+const nomesVisoes = { month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda' };
+
+function BarraCalendario({ label, onNavigate, onView, view, views }) {
+  return (
+    <div className="calendario-toolbar">
+      <div className="calendario-navegacao" role="group" aria-label="Navegar pelo calendário">
+        <button type="button" className="oficina-btn" onClick={() => onNavigate('TODAY')}>Hoje</button>
+        <button type="button" className="oficina-btn calendario-icon-btn" aria-label="Período anterior"
+          onClick={() => onNavigate('PREV')}><FiChevronLeft aria-hidden="true" /></button>
+        <button type="button" className="oficina-btn calendario-icon-btn" aria-label="Próximo período"
+          onClick={() => onNavigate('NEXT')}><FiChevronRight aria-hidden="true" /></button>
+      </div>
+      <h2 className="calendario-periodo" aria-live="polite">{label}</h2>
+      <div className="calendario-visoes" role="group" aria-label="Visualização do calendário">
+        {views.map((nome) => (
+          <button key={nome} type="button" aria-pressed={view === nome} onClick={() => onView(nome)}>
+            {nomesVisoes[nome] || nome}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EventoCalendario({ event }) {
+  const agendamento = event.resource || {};
+  return (
+    <span className="calendario-evento-resumo">
+      <strong>{agendamento.tipo_servico || agendamento.servico || 'Serviço'}</strong>
+      <span>{agendamento.cliente?.nome || 'Cliente'}{agendamento.veiculo?.placa ? ` · ${agendamento.veiculo.placa}` : ''}</span>
+    </span>
+  );
+}
+
+// Mantém as referências dos componentes entre renders do calendário.
+const componentesCalendario = { toolbar: BarraCalendario, event: EventoCalendario };
+
 /**
  * Tela responsável por exibir os agendamentos em formato de calendário,
  * permitindo visualizar detalhes, gerar ordem de serviço e excluir agendamentos.
@@ -45,6 +87,8 @@ const localizer = dateFnsLocalizer({
  */
 function CalendarioAgendamento() {
   const navigate = useNavigate();
+  const [tema, setTema] = useTemaOficina();
+  const [visao, setVisao] = useState('month');
 
   const [eventos, setEventos] = useState([]);
   const [carregando, setCarregando] = useState(false);
@@ -205,132 +249,144 @@ function CalendarioAgendamento() {
     const veiculo = agendamento.veiculo || {};
 
     return (
-      <div className="calendario-modal-overlay">
-        <div className="calendario-modal">
-          <div className="calendario-modal-header">
-            <div>
-              <h2>Detalhes do agendamento</h2>
-              <span>{formatarDataHora(agendamento.dataHora)}</span>
-            </div>
-
-            <button type="button" onClick={fecharDetalhes}>
-              ×
-            </button>
+      <ModalOficina className="calendario-modal" labelledBy="calendario-detalhes-titulo" onClose={fecharDetalhes}>
+        <div className="calendario-modal-header">
+          <div>
+            <h2 id="calendario-detalhes-titulo">Detalhes do agendamento</h2>
+            <p><FiClock aria-hidden="true" /> {formatarDataHora(agendamento.dataHora)}</p>
           </div>
 
-          <div className="calendario-modal-grid">
-            <div>
-              <span>Cliente</span>
-              <strong>{cliente.nome || '-'}</strong>
-            </div>
+          <button type="button" className="oficina-btn calendario-icon-btn" onClick={fecharDetalhes}
+            aria-label="Fechar detalhes do agendamento">
+            <FiX aria-hidden="true" />
+          </button>
+        </div>
 
-            <div>
-              <span>Veículo</span>
-              <strong>
-                {veiculo.placa || '-'}{' '}
-                {veiculo.modelo ? `- ${veiculo.modelo}` : ''}
-              </strong>
-            </div>
-
-            <div>
-              <span>Técnico responsável</span>
-              <strong>{agendamento.mecanico || '-'}</strong>
-            </div>
-
-            <div>
-              <span>Tipo de serviço</span>
-              <strong>{agendamento.tipo_servico || '-'}</strong>
-            </div>
-
-            <div>
-              <span>Data e hora</span>
-              <strong>{formatarDataHora(agendamento.dataHora)}</strong>
-            </div>
+        <dl className="calendario-modal-grid">
+          <div>
+            <dt><FiUser aria-hidden="true" /> Cliente</dt>
+            <dd>{cliente.nome || '-'}</dd>
           </div>
 
-          <div className="calendario-modal-descricao">
-            <span>Descrição do serviço</span>
-            <p>{agendamento.servico || 'Sem descrição informada.'}</p>
+          <div>
+            <dt><TbCar aria-hidden="true" /> Veículo</dt>
+            <dd>
+              {veiculo.placa || '-'}{' '}
+              {veiculo.modelo ? `- ${veiculo.modelo}` : ''}
+            </dd>
           </div>
 
-          <div className="calendario-modal-actions">
+          <div>
+            <dt>Técnico responsável</dt>
+            <dd>{agendamento.mecanico || '-'}</dd>
+          </div>
+
+          <div>
+            <dt>Tipo de serviço</dt>
+            <dd>{agendamento.tipo_servico || '-'}</dd>
+          </div>
+
+          <div>
+            <dt>Data e hora</dt>
+            <dd>{formatarDataHora(agendamento.dataHora)}</dd>
+          </div>
+        </dl>
+
+        <section className="calendario-modal-descricao" aria-labelledby="calendario-descricao-titulo">
+          <h3 id="calendario-descricao-titulo">Descrição do serviço</h3>
+          <p>{agendamento.servico || 'Sem descrição informada.'}</p>
+        </section>
+
+        <div className="calendario-modal-actions">
             <button
               type="button"
-              className="calendario-btn calendario-btn-outline"
+              className="oficina-btn oficina-btn-danger"
+              onClick={excluirAgendamento}
+            >
+              <FiTrash2 aria-hidden="true" /> Excluir agendamento
+            </button>
+            <button
+              type="button"
+              className="oficina-btn"
               onClick={fecharDetalhes}
             >
               Fechar
             </button>
-
             <button
               type="button"
-              className="calendario-btn calendario-btn-primary"
+              className="oficina-btn oficina-btn-primary"
               onClick={gerarOrdemServico}
             >
-              Gerar ordem de serviço
+              <FiFileText aria-hidden="true" /> Gerar ordem de serviço
             </button>
+          </div>
+        </ModalOficina>
+      );
+    }
 
+    return (
+      <Layout className="oficina-theme agendamentos-workspace" theme={tema}
+        topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+        <main className="oficina-page calendario-page">
+          <header className="oficina-page-header">
+            <div>
+              <h1>Visualizar agendamentos</h1>
+              <p>Acompanhe os horários da oficina e abra um agendamento para ver os detalhes.</p>
+            </div>
+            <div className="calendario-header-actions">
             <button
               type="button"
-              className="calendario-btn calendario-btn-danger"
-              onClick={excluirAgendamento}
+              className="oficina-btn"
+              onClick={carregarAgendamentos}
+              disabled={carregando}
             >
-              Excluir agendamento
+              <FiRefreshCw aria-hidden="true" /> Atualizar
             </button>
+            <Link className="oficina-btn oficina-btn-primary" to="/operador/agendamentos">
+              <FiPlus aria-hidden="true" /> Novo agendamento
+            </Link>
           </div>
-        </div>
-      </div>
-    );
-  }
+        </header>
 
-  return (
-    <Layout>
-      <main className="calendario-page">
-        <section className="calendario-header">
-          <div>
-            <h1>Calendário de Agendamentos</h1>
-            <p>Visualize os serviços agendados por dia, semana ou mês.</p>
-
-            {carregando && <small>Carregando agendamentos...</small>}
+        <section className="oficina-panel calendario-panel" aria-label="Calendário de agendamentos" aria-busy={carregando}>
+          <div className="calendario-panel-info">
+            <span className="calendario-panel-label"><FiCalendar aria-hidden="true" /> Agenda da oficina</span>
+            <span className="calendario-contagem" role="status">
+              {carregando ? 'Carregando agendamentos...' : `${eventos.length} agendamento${eventos.length === 1 ? '' : 's'} cadastrado${eventos.length === 1 ? '' : 's'}`}
+            </span>
           </div>
-
-          <button
-            type="button"
-            className="calendario-refresh"
-            onClick={carregarAgendamentos}
-            disabled={carregando}
-          >
-            Atualizar
-          </button>
-        </section>
-
-        <section className="calendar-section">
-          <Calendar
-            localizer={localizer}
-            culture="pt-BR"
-            events={eventos}
-            onSelectEvent={abrirDetalhes}
-            startAccessor="start"
-            endAccessor="end"
-            eventPropGetter={() => ({
-              className: 'calendario-evento',
-            })}
-            style={{ height: 620 }}
-            messages={{
-              today: 'Hoje',
-              previous: 'Anterior',
-              next: 'Próximo',
-              month: 'Mês',
-              week: 'Semana',
-              day: 'Dia',
-              agenda: 'Agenda',
-              date: 'Data',
-              time: 'Hora',
-              event: 'Evento',
-              noEventsInRange: 'Nenhum agendamento neste período.',
-              showMore: (total) => `+${total} mais`,
-            }}
-          />
+          <div className={`calendario-scroll calendario-visao-${visao}`}>
+            <Calendar
+              localizer={localizer}
+              culture="pt-BR"
+              events={eventos}
+              components={componentesCalendario}
+              view={visao}
+              onView={setVisao}
+              views={['month', 'week', 'day', 'agenda']}
+              onSelectEvent={abrirDetalhes}
+              startAccessor="start"
+              endAccessor="end"
+              eventPropGetter={() => ({
+                className: 'calendario-evento',
+              })}
+              messages={{
+                today: 'Hoje',
+                previous: 'Anterior',
+                next: 'Próximo',
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                agenda: 'Agenda',
+                date: 'Data',
+                time: 'Hora',
+                event: 'Evento',
+                noEventsInRange: 'Nenhum agendamento neste período.',
+                showMore: (total) => `+${total} mais`,
+              }}
+            />
+          </div>
+          <p className="calendario-hint"><FiClock aria-hidden="true" /> Selecione um agendamento para consultar o cliente, o veículo e o serviço.</p>
         </section>
 
         {renderModalDetalhes()}
