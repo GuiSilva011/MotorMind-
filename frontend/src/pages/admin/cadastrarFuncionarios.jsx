@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { Link } from 'react-router-dom';
+import { FiList, FiLock, FiMapPin, FiRotateCcw, FiSave, FiUser } from 'react-icons/fi';
+import '../../styles/adminStyles/administracao.css';
 import api from '../../services/api';
-import '../../styles/adminStyles/cadastrarFuncionarios.css';
 
 /**
  * Dados iniciais utilizados no formulário de cadastro de funcionários.
@@ -138,6 +142,7 @@ function formatarUf(valor) {
  * @returns {JSX.Element} Tela de cadastro de funcionários.
  */
 function CadastrarFuncionarios() {
+  const [tema, setTema] = useTemaOficina();
   const [funcionario, setFuncionario] = useState(funcionarioInicial);
   const [carregando, setCarregando] = useState(false);
 
@@ -250,64 +255,65 @@ function CadastrarFuncionarios() {
   }
 
   return (
-    <Layout>
-      <main className="cadastro-funcionario-page">
-        <section className="cadastro-funcionario-header">
+    <Layout className="oficina-theme admin-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page" aria-labelledby="funcionarios-titulo">
+        <header className="oficina-page-header">
           <div>
-            <h1>Cadastro de Funcionários</h1>
+            <h1 id="funcionarios-titulo">Cadastro de Funcionários</h1>
             <p>
               Cadastre os dados pessoais, endereço e acesso do funcionário.
             </p>
           </div>
-        </section>
+          <Link className="oficina-btn" to="/admin/funcionarios">
+            <FiList aria-hidden="true" /> Visualizar funcionários
+          </Link>
+        </header>
 
         <form
-          className="cadastro-funcionario-card"
+          className="oficina-panel"
           onSubmit={cadastrarFuncionario}
         >
-          <section className="cadastro-funcionario-section">
-            <div className="cadastro-funcionario-section-title">
-              <h2>Dados pessoais</h2>
+          <section className="admin-form-section">
+            <div className="oficina-panel-title">
+              <h2 className="oficina-section-heading"><FiUser aria-hidden="true" /> Dados pessoais</h2>
               <span>Informações principais do funcionário.</span>
             </div>
 
-            <div className="cadastro-funcionario-grid">
-              <div className="cadastro-funcionario-field field-full">
-                <label>Nome completo</label>
-                <input
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field oficina-col-full">
+                <label htmlFor="funcionarios-cadastro-nome">Nome completo</label>
+                <input id="funcionarios-cadastro-nome"
                   value={funcionario.Nome}
                   onChange={(event) =>
                     atualizarCampo('Nome', event.target.value)
                   }
-                  
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>CPF</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-cpf">CPF</label>
+                <input id="funcionarios-cadastro-cpf"
                   value={funcionario.Cpf}
                   onChange={(event) =>
                     atualizarCampo('Cpf', formatarCpf(event.target.value))
                   }
-                
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>RG</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-rg">RG</label>
+                <input id="funcionarios-cadastro-rg"
                   value={funcionario.Rg}
                   onChange={(event) =>
                     atualizarCampo('Rg', formatarRg(event.target.value))
                   }
-                
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>Data de nascimento</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-datanascimento">Data de nascimento</label>
+                <input id="funcionarios-cadastro-datanascimento"
                   type="date"
                   value={funcionario.DataNascimento}
                   onChange={(event) =>
@@ -316,9 +322,9 @@ function CadastrarFuncionarios() {
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>Celular</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-celular">Celular</label>
+                <input id="funcionarios-cadastro-celular"
                   value={funcionario.Celular}
                   onChange={(event) =>
                     atualizarCampo(
@@ -326,13 +332,12 @@ function CadastrarFuncionarios() {
                       formatarCelular(event.target.value)
                     )
                   }
-             
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>Data de admissão</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-dataadmissao">Data de admissão</label>
+                <input id="funcionarios-cadastro-dataadmissao"
                   type="date"
                   value={funcionario.DataAdmissao}
                   onChange={(event) =>
@@ -343,126 +348,117 @@ function CadastrarFuncionarios() {
             </div>
           </section>
 
-          <section className="cadastro-funcionario-section">
-            <div className="cadastro-funcionario-section-title">
-              <h2>Endereço</h2>
+          <section className="admin-form-section">
+            <div className="oficina-panel-title">
+              <h2 className="oficina-section-heading"><FiMapPin aria-hidden="true" /> Endereço</h2>
               <span>Dados de localização do funcionário.</span>
             </div>
 
-            <div className="cadastro-funcionario-grid">
-              <div className="cadastro-funcionario-field">
-                <label>CEP</label>
-                <input
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-cep">CEP</label>
+                <input id="funcionarios-cadastro-cep"
                   value={funcionario.Cep}
                   onChange={(event) =>
                     atualizarCampo('Cep', formatarCep(event.target.value))
                   }
-                  
                 />
               </div>
 
-              <div className="cadastro-funcionario-field field-large">
-                <label>Endereço</label>
-                <input
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="funcionarios-cadastro-endereco">Endereço</label>
+                <input id="funcionarios-cadastro-endereco"
                   value={funcionario.Endereco}
                   onChange={(event) =>
                     atualizarCampo('Endereco', event.target.value)
                   }
-                 
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>Número</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-numero">Número</label>
+                <input id="funcionarios-cadastro-numero"
                   value={funcionario.Numero}
                   onChange={(event) =>
                     atualizarCampo('Numero', event.target.value)
                   }
-               
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>UF</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-uf">UF</label>
+                <input id="funcionarios-cadastro-uf"
                   value={funcionario.Uf}
                   onChange={(event) =>
                     atualizarCampo('Uf', formatarUf(event.target.value))
                   }
-                 
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>Bairro</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-bairro">Bairro</label>
+                <input id="funcionarios-cadastro-bairro"
                   value={funcionario.Bairro}
                   onChange={(event) =>
                     atualizarCampo('Bairro', event.target.value)
                   }
-               
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>Cidade</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-cidade">Cidade</label>
+                <input id="funcionarios-cadastro-cidade"
                   value={funcionario.Cidade}
                   onChange={(event) =>
                     atualizarCampo('Cidade', event.target.value)
                   }
-                  
                 />
               </div>
 
-              <div className="cadastro-funcionario-field field-large">
-                <label>Complemento</label>
-                <input
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="funcionarios-cadastro-complemento">Complemento</label>
+                <input id="funcionarios-cadastro-complemento"
                   value={funcionario.Complemento}
                   onChange={(event) =>
                     atualizarCampo('Complemento', event.target.value)
                   }
-                 
                 />
               </div>
             </div>
           </section>
 
-          <section className="cadastro-funcionario-section">
-            <div className="cadastro-funcionario-section-title">
-              <h2>Acesso ao sistema</h2>
+          <section className="admin-form-section">
+            <div className="oficina-panel-title">
+              <h2 className="oficina-section-heading"><FiLock aria-hidden="true" /> Acesso ao sistema</h2>
               <span>Dados usados para login do funcionário.</span>
             </div>
 
-            <div className="cadastro-funcionario-grid">
-              <div className="cadastro-funcionario-field">
-                <label>Email</label>
-                <input
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-email">Email</label>
+                <input id="funcionarios-cadastro-email"
                   type="email"
                   value={funcionario.Email}
                   onChange={(event) =>
                     atualizarCampo('Email', event.target.value)
                   }
-                 
                 />
               </div>
 
-              <div className="cadastro-funcionario-field">
-                <label>Senha</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-senha">Senha</label>
+                <input id="funcionarios-cadastro-senha"
                   type="password"
                   value={funcionario.Senha}
                   onChange={(event) =>
                     atualizarCampo('Senha', event.target.value)
                   }
-              
                 />
               </div>
 
-              <div className="cadastro-funcionario-field field-full">
-                <label>Perfil de acesso</label>
-                <select
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-cadastro-role">Perfil de acesso</label>
+                <select id="funcionarios-cadastro-role"
                   value={funcionario.Role}
                   onChange={(event) =>
                     atualizarCampo('Role', event.target.value)
@@ -475,22 +471,22 @@ function CadastrarFuncionarios() {
             </div>
           </section>
 
-          <div className="cadastro-funcionario-actions">
+          <div className="oficina-form-actions">
             <button
               type="button"
-              className="cadastro-funcionario-btn cadastro-funcionario-btn-red"
+              className="oficina-btn"
               onClick={limparFormulario}
               disabled={carregando}
             >
-              Limpar
+              <FiRotateCcw aria-hidden="true" /> Limpar
             </button>
 
             <button
               type="submit"
-              className="cadastro-funcionario-btn cadastro-funcionario-btn-dark"
+              className="oficina-btn oficina-btn-primary"
               disabled={carregando}
             >
-              {carregando ? 'Cadastrando...' : 'Cadastrar'}
+              <FiSave aria-hidden="true" /> {carregando ? 'Cadastrando...' : 'Cadastrar funcionário'}
             </button>
           </div>
         </form>

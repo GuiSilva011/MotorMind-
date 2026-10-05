@@ -387,6 +387,22 @@ O operador não recebe botões de ação na tela e não pode consultar o histór
 - Build passou. Foram preservadas 18 funções/efeitos/filtros por comparação estrutural. Verificação React com dados simulados passou em 44 cenários de renderização/controles: temas, OPERADOR/OWNER, busca por placa, seleção, labels, carregamento, quatro visões, detalhes, resumo do evento e encaminhamento das ações da barra ao calendário. A visão mensal mede suas linhas no navegador; o resumo do evento foi validado separadamente, sem alegar medição real da grade.
 - Lint não ganhou novos diagnósticos: permanecem dois erros anteriores de `react-hooks/immutability` no cadastro e um aviso anterior de `react-hooks/exhaustive-deps` no calendário. Mantém-se o aviso de tamanho do bundle. Navegador indisponível nesta sessão; conferência visual, responsividade e foco em interação real permanecem pendentes.
 
+### 6.17. Identidade visual das telas administrativas (04/10/2026)
+
+- Cadastro e consulta de funcionários/fornecedores e Relatórios adotam o mesmo `Layout`, tema claro/escuro, preferência persistida, cartões, campos, botões e tabelas das telas já atualizadas. `adminStyles/administracao.css` concentra as grades, seções, busca e modais dos quatro cadastros; os quatro CSS anteriores foram substituídos por esse arquivo compartilhado. Estoque já usava essa identidade e foi preservado.
+- Formulários recebem labels associados, ícones de seção e atalhos entre cadastro/consulta. Consultas mantêm filtros e ações, com células identificadas para celular. Os dois modais de edição reutilizam `ModalOficina`, com dialog nativo, título associado, Escape, fechamento pelo fundo/botão e bloqueio da rolagem. Relatórios mantêm as contagens/rankings existentes, com paleta compartilhada, nomes legíveis e ocorrências visíveis nas barras.
+- **Relatórios** passa a ser o último link do menu ADMIN, depois de **Estoque** e antes de **Sair**, tanto no desktop quanto no painel mobile. Os filtros de perfil permanecem iguais. Nenhuma API, permissão, regra de negócio, schema, migration ou dependência foi alterada; a alteração local existente em `services/api.js` foi preservada.
+- Build e lint focado passaram. Comparação estrutural confirmou preservação de 46 funções operacionais; 36 cenários de renderização React com dados simulados passaram, incluindo temas, cadastro, consulta, carregamento, filtros, edição, rankings e navegação nos quatro perfis em desktop/mobile. Essas verificações não comprovam medidas ou interação real no navegador. O navegador estava indisponível; conferência visual, responsividade e foco continuam pendentes. Mantém-se o aviso anterior de tamanho do bundle.
+
+### 6.18. Relatórios gerenciais em abas (04/10/2026)
+
+- `pages/admin/relatorios.jsx` passa a organizar o conteúdo em **Visão geral**, **Evolução**, **Status e valores**, **Rankings** e **Ordens de serviço**, conforme o refinamento solicitado por Guilherme. As abas ficam logo abaixo do título da página, acima dos filtros, conforme a decisão mais recente. Somente o painel selecionado fica visível; os demais permanecem montados para preservar tipos de gráfico e estados da tabela. Abas têm associação semântica, seleção, foco e navegação por setas/Home/End, com rolagem horizontal no celular.
+- Filtros compartilhados por período de emissão, status e técnico, com períodos rápidos e intervalo personalizado. Visão geral mostra quantidade de OS, valor dos itens, ticket médio, ordens ativas/concluídas e clientes distintos. **FINALIZADA** e **FECHADA** continuam estados separados. Valores representam as OS emitidas no período, sem afirmar recebimento ou lucro; canceladas entram nas contagens/status, mas saem dos valores, clientes e rankings.
+- `utils/relatoriosGerenciais.js` normaliza a resposta existente, remove duplicações por ID entre peças/serviços listados em diferentes grupos e soma valores em centavos. Usa o total líquido persistido do item ou, quando ausente, a regra compartilhada de descontos da OS. Rankings contemplam peças por quantidade, serviços, modelos, marcas e técnicos; homônimos de técnicos permanecem separados por ID.
+- `components/GraficoRelatorio.jsx` oferece barras horizontais, colunas, linha, rosca e tabelas conforme a análise. Evolução preenche dias/meses sem emissão; períodos maiores são agrupados por mês. Rankings mostram os dez primeiros nos gráficos e todos na tabela paginada; a rosca agrupa os demais em **Outros** sem perder o total. A tabela de OS tem busca, paginação e exportação CSV dos resultados filtrados, com BOM, decimal brasileiro e campos textuais protegidos contra interpretação como fórmula.
+- Mantidos Layout, preferência claro/escuro, posição de Relatórios na sidebar, Axios/JWT e consulta `GET /ordens-servico`. A consulta continua buscando todas as OS da oficina e filtrando/paginando no frontend. Nenhum endpoint, permissão, schema, migration ou dependência foi alterado. Atualizações falhas preservam a última consulta válida e informam o erro; consultas são canceladas ao sair da tela ou iniciar outra atualização.
+- Build, lint focado e 31 testes (`npm run test:relatorios`, em `frontend/`) passaram. A suíte valida cálculos, deduplicação, datas, canceladas, rankings, CSV, cinco representações, abas, handlers de filtros/carregamento e estados de tela com API/dados simulados e renderização React. Navegador indisponível: aparência, responsividade, foco real e download do CSV continuam sem conferência manual. Permanece o aviso anterior de tamanho do bundle.
+
 ## 7. Próximos passos
 
 Estoque, integração da OS, painel técnico e primeira etapa de tickets/chat são considerados concluídos para a fase atual. As evoluções técnicas que ainda aparecem neste roteiro permanecem registradas, mas não devem ser iniciadas automaticamente. A próxima fase ativa é a landing page e o ingresso de uma nova oficina; seguir cada solicitação de Guilherme passo a passo.
@@ -555,6 +571,12 @@ npm run build
 ```
 
 Há também scripts `npm start`, `npm run seed` e `npm run docs` no backend, e `npm run lint`/`npm run docs` no frontend. A existência do script não significa que ele tenha sido executado ou validado nesta entrega. Não executar seed para resolver um problema de autenticação sem verificar seu efeito sobre os dados.
+
+Testes dos relatórios gerenciais, em `frontend/`:
+
+```bash
+npm run test:relatorios
+```
 
 ## 10. Retomada recomendada no VS Code
 

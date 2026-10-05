@@ -281,22 +281,6 @@ function Sidebar() {
           {isAdmin && (
             <>
               <NavLink
-                to="/admin/relatorios"
-                end
-                title="Relatórios"
-                className={({ isActive }) =>
-                  isActive ? 'menu-item active' : 'menu-item'
-                }
-              >
-                <img
-                  src="/icons/informacoes.svg"
-                  alt="Relatórios"
-                  className="menu-icon"
-                />
-                <span>Relatórios</span>
-              </NavLink>
-
-              <NavLink
                 to="/admin/fornecedores/cadastrar"
                 end
                 title="Cadastrar fornecedores"
@@ -370,6 +354,19 @@ function Sidebar() {
               className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'}>
               <FiPackage className="menu-icon" aria-hidden="true" />
               <span>Estoque</span>
+            </NavLink>
+          )}
+          {isAdmin && (
+            <NavLink
+              to="/admin/relatorios"
+              end
+              title="Relatórios"
+              className={({ isActive }) =>
+                isActive ? 'menu-item active' : 'menu-item'
+              }
+            >
+              <img src="/icons/informacoes.svg" alt="" className="menu-icon" />
+              <span>Relatórios</span>
             </NavLink>
           )}
         </nav>

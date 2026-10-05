@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { Link } from 'react-router-dom';
+import { FiList, FiMapPin, FiRotateCcw, FiSave, FiTruck } from 'react-icons/fi';
+import '../../styles/adminStyles/administracao.css';
 import api from '../../services/api';
-import '../../styles/adminStyles/cadastrarFornecedores.css';
 
 /**
  * Representa os dados preenchidos no formulário de fornecedor.
@@ -161,6 +165,7 @@ function formatarUf(valor) {
  * @returns {JSX.Element} Tela de cadastro de fornecedor.
  */
 function CadastrarFornecedor() {
+  const [tema, setTema] = useTemaOficina();
   const [fornecedor, setFornecedor] = useState({
     ...fornecedorInicial,
     codigo: gerarCodigoFornecedor(),
@@ -289,45 +294,48 @@ function CadastrarFornecedor() {
   }
 
   return (
-    <Layout>
-      <main className="cadastro-fornecedor-page">
-        <section className="cadastro-fornecedor-header">
+    <Layout className="oficina-theme admin-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page" aria-labelledby="fornecedores-titulo">
+        <header className="oficina-page-header">
           <div>
-            <h1>Cadastro de Fornecedores</h1>
+            <h1 id="fornecedores-titulo">Cadastro de Fornecedores</h1>
             <p>Cadastre fornecedores de peças e serviços usados na oficina.</p>
           </div>
-        </section>
+          <Link className="oficina-btn" to="/admin/fornecedores">
+            <FiList aria-hidden="true" /> Visualizar fornecedores
+          </Link>
+        </header>
 
         <form
-          className="cadastro-fornecedor-card"
+          className="oficina-panel"
           onSubmit={cadastrarFornecedor}
         >
-          <section className="cadastro-fornecedor-section">
-            <div className="cadastro-fornecedor-section-title">
-              <h2>Dados do fornecedor</h2>
+          <section className="admin-form-section">
+            <div className="oficina-panel-title">
+              <h2 className="oficina-section-heading"><FiTruck aria-hidden="true" /> Dados do fornecedor</h2>
               <span>Informações principais para identificação.</span>
             </div>
 
-            <div className="cadastro-fornecedor-grid">
-              <div className="cadastro-fornecedor-field">
-                <label>Código</label>
-                <input value={fornecedor.codigo} disabled />
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-codigo">Código</label>
+                <input id="fornecedores-cadastro-codigo" value={fornecedor.codigo} disabled />
               </div>
 
-              <div className="cadastro-fornecedor-field field-large">
-                <label>Nome / Razão social</label>
-                <input
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="fornecedores-cadastro-nome">Nome / Razão social</label>
+                <input id="fornecedores-cadastro-nome"
                   value={fornecedor.nome}
                   onChange={(event) =>
                     atualizarCampo('nome', event.target.value)
                   }
-                 
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>CNPJ</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-cnpj">CNPJ</label>
+                <input id="fornecedores-cadastro-cnpj"
                   value={fornecedor.cnpj}
                   onChange={(event) =>
                     atualizarCampo('cnpj', formatarCnpj(event.target.value))
@@ -336,32 +344,30 @@ function CadastrarFornecedor() {
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>Inscrição estadual</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-inscricao">Inscrição estadual</label>
+                <input id="fornecedores-cadastro-inscricao"
                   value={fornecedor.inscricao}
                   onChange={(event) =>
                     atualizarCampo('inscricao', event.target.value)
                   }
-                 
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>Email</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-email">Email</label>
+                <input id="fornecedores-cadastro-email"
                   type="email"
                   value={fornecedor.email}
                   onChange={(event) =>
                     atualizarCampo('email', event.target.value)
                   }
-                 
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>Telefone (fixo)</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-telefone">Telefone (fixo)</label>
+                <input id="fornecedores-cadastro-telefone"
                   value={fornecedor.telefone}
                   onChange={(event) =>
                     atualizarCampo(
@@ -373,9 +379,9 @@ function CadastrarFornecedor() {
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>Celular (WhatsApp)</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-celular">Celular (WhatsApp)</label>
+                <input id="fornecedores-cadastro-celular"
                   value={fornecedor.celular}
                   onChange={(event) =>
                     atualizarCampo(
@@ -389,99 +395,92 @@ function CadastrarFornecedor() {
             </div>
           </section>
 
-          <section className="cadastro-fornecedor-section">
-            <div className="cadastro-fornecedor-section-title">
-              <h2>Endereço</h2>
+          <section className="admin-form-section">
+            <div className="oficina-panel-title">
+              <h2 className="oficina-section-heading"><FiMapPin aria-hidden="true" /> Endereço</h2>
               <span>Dados de localização do fornecedor.</span>
             </div>
 
-            <div className="cadastro-fornecedor-grid">
-              <div className="cadastro-fornecedor-field">
-                <label>CEP</label>
-                <input
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-cep">CEP</label>
+                <input id="fornecedores-cadastro-cep"
                   value={fornecedor.cep}
                   onChange={(event) =>
                     atualizarCampo('cep', formatarCep(event.target.value))
                   }
-                
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field field-large">
-                <label>Endereço</label>
-                <input
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="fornecedores-cadastro-endereco">Endereço</label>
+                <input id="fornecedores-cadastro-endereco"
                   value={fornecedor.endereco}
                   onChange={(event) =>
                     atualizarCampo('endereco', event.target.value)
                   }
-               
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>Número</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-numero">Número</label>
+                <input id="fornecedores-cadastro-numero"
                   value={fornecedor.numero}
                   onChange={(event) =>
                     atualizarCampo('numero', event.target.value)
                   }
-               
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>UF</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-uf">UF</label>
+                <input id="fornecedores-cadastro-uf"
                   value={fornecedor.uf}
                   onChange={(event) =>
                     atualizarCampo('uf', formatarUf(event.target.value))
                   }
-              
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>Bairro</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-bairro">Bairro</label>
+                <input id="fornecedores-cadastro-bairro"
                   value={fornecedor.bairro}
                   onChange={(event) =>
                     atualizarCampo('bairro', event.target.value)
                   }
-           
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field">
-                <label>Cidade</label>
-                <input
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-cadastro-cidade">Cidade</label>
+                <input id="fornecedores-cadastro-cidade"
                   value={fornecedor.cidade}
                   onChange={(event) =>
                     atualizarCampo('cidade', event.target.value)
                   }
-             
                 />
               </div>
 
-              <div className="cadastro-fornecedor-field field-large">
-                <label>Complemento</label>
-                <input
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="fornecedores-cadastro-complemento">Complemento</label>
+                <input id="fornecedores-cadastro-complemento"
                   value={fornecedor.complemento}
                   onChange={(event) =>
                     atualizarCampo('complemento', event.target.value)
                   }
-              
                 />
               </div>
             </div>
           </section>
 
-          <section className="cadastro-fornecedor-section">
-            <div className="cadastro-fornecedor-section-title">
-              <h2>Tipo de fornecimento</h2>
+          <section className="admin-form-section">
+            <div className="oficina-panel-title">
+              <h2 className="oficina-section-heading"><FiTruck aria-hidden="true" /> Tipo de fornecimento</h2>
               <span>Indique o que este fornecedor oferece.</span>
             </div>
 
-            <div className="cadastro-fornecedor-options">
+            <div className="admin-options">
               <label>
                 <input
                   type="checkbox"
@@ -505,34 +504,33 @@ function CadastrarFornecedor() {
               </label>
             </div>
 
-            <div className="cadastro-fornecedor-field field-full">
-              <label>Observações</label>
-              <textarea
+            <div className="oficina-field oficina-col-full">
+              <label htmlFor="fornecedores-cadastro-observacoes">Observações</label>
+              <textarea id="fornecedores-cadastro-observacoes"
                 value={fornecedor.observacoes}
                 onChange={(event) =>
                   atualizarCampo('observacoes', event.target.value)
                 }
-               
               />
             </div>
           </section>
 
-          <div className="cadastro-fornecedor-actions">
+          <div className="oficina-form-actions">
             <button
               type="button"
-              className="cadastro-fornecedor-btn cadastro-fornecedor-btn-red"
+              className="oficina-btn"
               onClick={limparFormulario}
               disabled={carregando}
             >
-              Limpar
+              <FiRotateCcw aria-hidden="true" /> Limpar
             </button>
 
             <button
               type="submit"
-              className="cadastro-fornecedor-btn cadastro-fornecedor-btn-dark"
+              className="oficina-btn oficina-btn-primary"
               disabled={carregando}
             >
-              {carregando ? 'Cadastrando...' : 'Cadastrar'}
+              <FiSave aria-hidden="true" /> {carregando ? 'Cadastrando...' : 'Cadastrar fornecedor'}
             </button>
           </div>
         </form>

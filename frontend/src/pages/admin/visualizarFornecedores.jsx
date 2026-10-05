@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { Link } from 'react-router-dom';
+import { FiEdit2, FiMapPin, FiPlus, FiRefreshCw, FiSave, FiSearch, FiTrash2, FiTruck, FiX } from 'react-icons/fi';
+import ModalOficina from '../../components/ModalOficina';
+import '../../styles/adminStyles/administracao.css';
 import api from '../../services/api';
-import '../../styles/adminStyles/visualizarFornecedores.css';
 
 
 /**
@@ -109,6 +114,7 @@ function formatarUf(valor) {
  * @returns {JSX.Element} Tela de gerenciamento de fornecedores.
  */
 function VisualizarFornecedor() {
+  const [tema, setTema] = useTemaOficina();
   const [fornecedores, setFornecedores] = useState([]);
   const [busca, setBusca] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -378,249 +384,251 @@ function VisualizarFornecedor() {
     if (!editando) return null;
 
     return (
-      <div className="fornecedores-modal-overlay">
-        <div className="fornecedores-modal">
-          <div className="fornecedores-modal-header">
-            <div>
-              <h2>Editar fornecedor</h2>
-              <span>Atualize os dados cadastrais do fornecedor.</span>
-            </div>
-
-            <button type="button" onClick={fecharEdicao}>
-              ×
-            </button>
+      <ModalOficina className="admin-modal" labelledBy="fornecedores-editar-titulo" onClose={fecharEdicao}>
+        <div className="admin-modal-header">
+          <div>
+            <h2 id="fornecedores-editar-titulo">Editar fornecedor</h2>
+            <span>Atualize os dados cadastrais do fornecedor.</span>
           </div>
 
-          <form onSubmit={salvarEdicao}>
-            <section className="fornecedores-modal-section">
-              <h3>Dados do fornecedor</h3>
+          <button type="button" className="oficina-btn admin-close" onClick={fecharEdicao} aria-label="Fechar edição de fornecedor">
+            <FiX aria-hidden="true" />
+          </button>
+        </div>
 
-              <div className="fornecedores-form-grid">
-                <div className="fornecedores-field">
-                  <label>Código</label>
-                  <input value={fornecedorEditando.codigo} disabled />
-                </div>
+        <form onSubmit={salvarEdicao}>
+          <section className="admin-form-section">
+            <h3 className="oficina-section-heading"><FiTruck aria-hidden="true" /> Dados do fornecedor</h3>
 
-                <div className="fornecedores-field field-large">
-                  <label>Nome / Razão social</label>
-                  <input
-                    value={fornecedorEditando.nome}
-                    onChange={(event) =>
-                      atualizarCampo('nome', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>CNPJ</label>
-                  <input
-                    value={fornecedorEditando.cnpj}
-                    onChange={(event) =>
-                      atualizarCampo('cnpj', formatarCnpj(event.target.value))
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>Inscrição estadual</label>
-                  <input
-                    value={fornecedorEditando.inscricao}
-                    onChange={(event) =>
-                      atualizarCampo('inscricao', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    value={fornecedorEditando.email}
-                    onChange={(event) =>
-                      atualizarCampo('email', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>Telefone</label>
-                  <input
-                    value={fornecedorEditando.telefone}
-                    onChange={(event) =>
-                      atualizarCampo(
-                        'telefone',
-                        formatarTelefone(event.target.value)
-                      )
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>Celular</label>
-                  <input
-                    value={fornecedorEditando.celular}
-                    onChange={(event) =>
-                      atualizarCampo(
-                        'celular',
-                        formatarCelular(event.target.value)
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section className="fornecedores-modal-section">
-              <h3>Endereço</h3>
-
-              <div className="fornecedores-form-grid">
-                <div className="fornecedores-field">
-                  <label>CEP</label>
-                  <input
-                    value={fornecedorEditando.cep}
-                    onChange={(event) =>
-                      atualizarCampo('cep', formatarCep(event.target.value))
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field field-large">
-                  <label>Endereço</label>
-                  <input
-                    value={fornecedorEditando.endereco}
-                    onChange={(event) =>
-                      atualizarCampo('endereco', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>Número</label>
-                  <input
-                    value={fornecedorEditando.numero}
-                    onChange={(event) =>
-                      atualizarCampo('numero', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>UF</label>
-                  <input
-                    value={fornecedorEditando.uf}
-                    onChange={(event) =>
-                      atualizarCampo('uf', formatarUf(event.target.value))
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>Bairro</label>
-                  <input
-                    value={fornecedorEditando.bairro}
-                    onChange={(event) =>
-                      atualizarCampo('bairro', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field">
-                  <label>Cidade</label>
-                  <input
-                    value={fornecedorEditando.cidade}
-                    onChange={(event) =>
-                      atualizarCampo('cidade', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="fornecedores-field field-large">
-                  <label>Complemento</label>
-                  <input
-                    value={fornecedorEditando.complemento}
-                    onChange={(event) =>
-                      atualizarCampo('complemento', event.target.value)
-                    }
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section className="fornecedores-modal-section">
-              <h3>Tipo de fornecimento</h3>
-
-              <div className="fornecedores-options">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={fornecedorEditando.fornecePecas}
-                    onChange={(event) =>
-                      atualizarCampo('fornecePecas', event.target.checked)
-                    }
-                  />
-                  <span>Fornece peças</span>
-                </label>
-
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={fornecedorEditando.forneceServicos}
-                    onChange={(event) =>
-                      atualizarCampo('forneceServicos', event.target.checked)
-                    }
-                  />
-                  <span>Fornece serviços</span>
-                </label>
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-codigo">Código</label>
+                <input id="fornecedores-editar-codigo" value={fornecedorEditando.codigo} disabled />
               </div>
 
-              <div className="fornecedores-field field-full">
-                <label>Observações</label>
-                <textarea
-                  value={fornecedorEditando.observacoes}
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="fornecedores-editar-nome">Nome / Razão social</label>
+                <input id="fornecedores-editar-nome"
+                  value={fornecedorEditando.nome}
                   onChange={(event) =>
-                    atualizarCampo('observacoes', event.target.value)
+                    atualizarCampo('nome', event.target.value)
                   }
-                  placeholder="Digite observações sobre o fornecedor..."
                 />
               </div>
-            </section>
 
-            <div className="fornecedores-modal-actions">
-              <button
-                type="button"
-                className="fornecedores-btn fornecedores-btn-outline"
-                onClick={fecharEdicao}
-              >
-                Cancelar
-              </button>
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-cnpj">CNPJ</label>
+                <input id="fornecedores-editar-cnpj"
+                  value={fornecedorEditando.cnpj}
+                  onChange={(event) =>
+                    atualizarCampo('cnpj', formatarCnpj(event.target.value))
+                  }
+                />
+              </div>
 
-              <button
-                type="submit"
-                className="fornecedores-btn fornecedores-btn-dark"
-              >
-                Salvar alterações
-              </button>
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-inscricao">Inscrição estadual</label>
+                <input id="fornecedores-editar-inscricao"
+                  value={fornecedorEditando.inscricao}
+                  onChange={(event) =>
+                    atualizarCampo('inscricao', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-email">Email</label>
+                <input id="fornecedores-editar-email"
+                  type="email"
+                  value={fornecedorEditando.email}
+                  onChange={(event) =>
+                    atualizarCampo('email', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-telefone">Telefone</label>
+                <input id="fornecedores-editar-telefone"
+                  value={fornecedorEditando.telefone}
+                  onChange={(event) =>
+                    atualizarCampo(
+                      'telefone',
+                      formatarTelefone(event.target.value)
+                    )
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-celular">Celular</label>
+                <input id="fornecedores-editar-celular"
+                  value={fornecedorEditando.celular}
+                  onChange={(event) =>
+                    atualizarCampo(
+                      'celular',
+                      formatarCelular(event.target.value)
+                    )
+                  }
+                />
+              </div>
             </div>
-          </form>
-        </div>
-      </div>
+          </section>
+
+          <section className="admin-form-section">
+            <h3 className="oficina-section-heading"><FiMapPin aria-hidden="true" /> Endereço</h3>
+
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-cep">CEP</label>
+                <input id="fornecedores-editar-cep"
+                  value={fornecedorEditando.cep}
+                  onChange={(event) =>
+                    atualizarCampo('cep', formatarCep(event.target.value))
+                  }
+                />
+              </div>
+
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="fornecedores-editar-endereco">Endereço</label>
+                <input id="fornecedores-editar-endereco"
+                  value={fornecedorEditando.endereco}
+                  onChange={(event) =>
+                    atualizarCampo('endereco', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-numero">Número</label>
+                <input id="fornecedores-editar-numero"
+                  value={fornecedorEditando.numero}
+                  onChange={(event) =>
+                    atualizarCampo('numero', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-uf">UF</label>
+                <input id="fornecedores-editar-uf"
+                  value={fornecedorEditando.uf}
+                  onChange={(event) =>
+                    atualizarCampo('uf', formatarUf(event.target.value))
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-bairro">Bairro</label>
+                <input id="fornecedores-editar-bairro"
+                  value={fornecedorEditando.bairro}
+                  onChange={(event) =>
+                    atualizarCampo('bairro', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="fornecedores-editar-cidade">Cidade</label>
+                <input id="fornecedores-editar-cidade"
+                  value={fornecedorEditando.cidade}
+                  onChange={(event) =>
+                    atualizarCampo('cidade', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="fornecedores-editar-complemento">Complemento</label>
+                <input id="fornecedores-editar-complemento"
+                  value={fornecedorEditando.complemento}
+                  onChange={(event) =>
+                    atualizarCampo('complemento', event.target.value)
+                  }
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="admin-form-section">
+            <h3 className="oficina-section-heading"><FiTruck aria-hidden="true" /> Tipo de fornecimento</h3>
+
+            <div className="admin-options">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fornecedorEditando.fornecePecas}
+                  onChange={(event) =>
+                    atualizarCampo('fornecePecas', event.target.checked)
+                  }
+                />
+                <span>Fornece peças</span>
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fornecedorEditando.forneceServicos}
+                  onChange={(event) =>
+                    atualizarCampo('forneceServicos', event.target.checked)
+                  }
+                />
+                <span>Fornece serviços</span>
+              </label>
+            </div>
+
+            <div className="oficina-field oficina-col-full">
+              <label htmlFor="fornecedores-editar-observacoes">Observações</label>
+              <textarea id="fornecedores-editar-observacoes"
+                value={fornecedorEditando.observacoes}
+                onChange={(event) =>
+                  atualizarCampo('observacoes', event.target.value)
+                }
+                placeholder="Digite observações sobre o fornecedor..."
+              />
+            </div>
+          </section>
+
+          <div className="oficina-form-actions">
+            <button
+              type="button"
+              className="oficina-btn"
+              onClick={fecharEdicao}
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              className="oficina-btn oficina-btn-primary"
+            >
+              <FiSave aria-hidden="true" /> Salvar alterações
+            </button>
+          </div>
+        </form>
+      </ModalOficina>
     );
   }
 
   return (
-    <Layout>
-      <main className="visualizar-fornecedores-page">
-        <section className="visualizar-fornecedores-header">
+    <Layout className="oficina-theme admin-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page" aria-labelledby="fornecedores-titulo">
+        <header className="oficina-page-header">
           <div>
-            <h1>Fornecedores</h1>
+            <h1 id="fornecedores-titulo">Fornecedores</h1>
             <p>Visualize, edite ou exclua fornecedores cadastrados.</p>
 
             {carregando && <small>Carregando fornecedores...</small>}
           </div>
-        </section>
+          <Link className="oficina-btn oficina-btn-primary" to="/admin/fornecedores/cadastrar">
+            <FiPlus aria-hidden="true" /> Novo fornecedor
+          </Link>
+        </header>
 
-        <section className="visualizar-fornecedores-card">
-          <div className="visualizar-fornecedores-card-header">
+        <section className="oficina-panel" aria-busy={carregando}>
+          <div className="oficina-list-header">
             <div>
               <h2>Fornecedores cadastrados</h2>
               <span>
@@ -628,88 +636,93 @@ function VisualizarFornecedor() {
               </span>
             </div>
 
-            <button type="button" onClick={carregarFornecedores}>
-              Atualizar
+            <button type="button" className="oficina-btn" onClick={carregarFornecedores} disabled={carregando}>
+              <FiRefreshCw aria-hidden="true" /> Atualizar
             </button>
           </div>
 
-          <div className="visualizar-fornecedores-search">
-            <label>Pesquisar fornecedor</label>
-            <input
-              value={busca}
-              onChange={(event) => setBusca(event.target.value)}
-              placeholder="Buscar por código, nome, CNPJ, email, cidade ou UF"
-            />
+          <div className="oficina-search admin-search">
+            <label htmlFor="fornecedores-busca">Pesquisar fornecedor</label>
+            <div className="admin-search-control">
+              <FiSearch aria-hidden="true" />
+              <input id="fornecedores-busca" type="search"
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Buscar por código, nome, CNPJ, email, cidade ou UF"
+              />
+            </div>
           </div>
 
-          <div className="visualizar-fornecedores-table-wrap">
-            <table className="visualizar-fornecedores-table">
+          <div className="oficina-table-wrap">
+            <table className="oficina-table admin-table">
               <thead>
                 <tr>
-                  <th>Código</th>
-                  <th>Fornecedor</th>
-                  <th>CNPJ</th>
-                  <th>Contato</th>
-                  <th>Cidade/UF</th>
-                  <th>Tipo</th>
-                  <th>Ações</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Fornecedor</th>
+                  <th scope="col">CNPJ</th>
+                  <th scope="col">Contato</th>
+                  <th scope="col">Cidade/UF</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Ações</th>
                 </tr>
               </thead>
 
               <tbody>
-                {!carregando && fornecedoresFiltrados.length === 0 && (
+                {fornecedoresFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="fornecedores-empty">
-                      Nenhum fornecedor encontrado.
+                    <td colSpan="7" className="oficina-empty">
+                      {carregando ? 'Carregando fornecedores...' : 'Nenhum fornecedor encontrado.'}
                     </td>
                   </tr>
                 )}
 
                 {fornecedoresFiltrados.map((fornecedor) => (
                   <tr key={fornecedor.id}>
-                    <td>
+                    <td data-label="Código">
                       <strong>{fornecedor.codigo || '-'}</strong>
                     </td>
 
-                    <td>
+                    <td data-label="Fornecedor">
                       <strong>{fornecedor.nome || '-'}</strong>
                       <span>{fornecedor.email || 'Email não informado'}</span>
                     </td>
 
-                    <td>{fornecedor.cnpj || '-'}</td>
+                    <td data-label="CNPJ">{fornecedor.cnpj || '-'}</td>
 
-                    <td>
+                    <td data-label="Contato">
                       <span>{fornecedor.telefone || '-'}</span>
                       <span>{fornecedor.celular || '-'}</span>
                     </td>
 
-                    <td>
+                    <td data-label="Cidade/UF">
                       {fornecedor.cidade || '-'}
                       {fornecedor.uf ? `/${fornecedor.uf}` : ''}
                     </td>
 
-                    <td>
-                      <span className="fornecedores-tipo">
+                    <td data-label="Tipo">
+                      <span className="oficina-badge">
                         {renderTipoFornecedor(fornecedor)}
                       </span>
                     </td>
 
-                    <td>
-                      <div className="fornecedores-actions">
+                    <td data-label="Ações">
+                      <div className="oficina-row-actions">
                         <button
                           type="button"
-                          className="fornecedores-action-edit"
+                          className="oficina-btn"
+                          aria-label={`Editar fornecedor: ${fornecedor.nome || 'fornecedor'}`}
                           onClick={() => abrirEdicao(fornecedor)}
                         >
-                          Editar
+                          <FiEdit2 aria-hidden="true" /> Editar
                         </button>
 
                         <button
                           type="button"
-                          className="fornecedores-action-delete"
+                          className="oficina-btn oficina-btn-danger"
+                          aria-label={`Excluir fornecedor: ${fornecedor.nome || 'fornecedor'}`}
                           onClick={() => excluirFornecedor(fornecedor)}
                         >
-                          Excluir
+                          <FiTrash2 aria-hidden="true" /> Excluir
                         </button>
                       </div>
                     </td>

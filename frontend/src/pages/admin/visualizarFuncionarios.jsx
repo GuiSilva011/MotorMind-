@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { Link } from 'react-router-dom';
+import { FiEdit2, FiLock, FiMapPin, FiPlus, FiRefreshCw, FiSave, FiSearch, FiTrash2, FiUser, FiX } from 'react-icons/fi';
+import ModalOficina from '../../components/ModalOficina';
+import '../../styles/adminStyles/administracao.css';
 import api from '../../services/api';
-import '../../styles/adminStyles/visualizarFuncionarios.css';
 
 
 /**
@@ -39,6 +44,7 @@ const funcionarioInicial = {
  * @returns {JSX.Element} Tela de gerenciamento de funcionários.
  */
 function VisualizarFuncionarios() {
+  const [tema, setTema] = useTemaOficina();
   const [funcionarios, setFuncionarios] = useState([]);
   const [busca, setBusca] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -311,243 +317,245 @@ function VisualizarFuncionarios() {
     if (!editando) return null;
 
     return (
-      <div className="funcionarios-modal-overlay">
-        <div className="funcionarios-modal">
-          <div className="funcionarios-modal-header">
-            <div>
-              <h2>Editar funcionário</h2>
-              <span>Atualize os dados cadastrais e de acesso.</span>
-            </div>
-
-            <button type="button" onClick={fecharEdicao}>
-              ×
-            </button>
+      <ModalOficina className="admin-modal" labelledBy="funcionarios-editar-titulo" onClose={fecharEdicao}>
+        <div className="admin-modal-header">
+          <div>
+            <h2 id="funcionarios-editar-titulo">Editar funcionário</h2>
+            <span>Atualize os dados cadastrais e de acesso.</span>
           </div>
 
-          <form onSubmit={salvarEdicao}>
-            <section className="funcionarios-modal-section">
-              <h3>Dados pessoais</h3>
-
-              <div className="funcionarios-form-grid">
-                <div className="funcionarios-field field-full">
-                  <label>Nome completo</label>
-                  <input
-                    value={funcionarioEditando.Nome}
-                    onChange={(event) =>
-                      atualizarCampo('Nome', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>CPF</label>
-                  <input
-                    value={funcionarioEditando.Cpf}
-                    onChange={(event) =>
-                      atualizarCampo('Cpf', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>RG</label>
-                  <input
-                    value={funcionarioEditando.Rg}
-                    onChange={(event) =>
-                      atualizarCampo('Rg', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>Data de nascimento</label>
-                  <input
-                    type="date"
-                    value={funcionarioEditando.DataNascimento}
-                    onChange={(event) =>
-                      atualizarCampo('DataNascimento', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>Celular</label>
-                  <input
-                    value={funcionarioEditando.Celular}
-                    onChange={(event) =>
-                      atualizarCampo('Celular', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>Data de admissão</label>
-                  <input
-                    type="date"
-                    value={funcionarioEditando.DataAdmissao}
-                    onChange={(event) =>
-                      atualizarCampo('DataAdmissao', event.target.value)
-                    }
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section className="funcionarios-modal-section">
-              <h3>Endereço</h3>
-
-              <div className="funcionarios-form-grid">
-                <div className="funcionarios-field">
-                  <label>CEP</label>
-                  <input
-                    value={funcionarioEditando.Cep}
-                    onChange={(event) =>
-                      atualizarCampo('Cep', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field field-large">
-                  <label>Endereço</label>
-                  <input
-                    value={funcionarioEditando.Endereco}
-                    onChange={(event) =>
-                      atualizarCampo('Endereco', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>Número</label>
-                  <input
-                    value={funcionarioEditando.Numero}
-                    onChange={(event) =>
-                      atualizarCampo('Numero', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>UF</label>
-                  <input
-                    maxLength="2"
-                    value={funcionarioEditando.Uf}
-                    onChange={(event) =>
-                      atualizarCampo('Uf', event.target.value.toUpperCase())
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>Bairro</label>
-                  <input
-                    value={funcionarioEditando.Bairro}
-                    onChange={(event) =>
-                      atualizarCampo('Bairro', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>Cidade</label>
-                  <input
-                    value={funcionarioEditando.Cidade}
-                    onChange={(event) =>
-                      atualizarCampo('Cidade', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field field-large">
-                  <label>Complemento</label>
-                  <input
-                    value={funcionarioEditando.Complemento}
-                    onChange={(event) =>
-                      atualizarCampo('Complemento', event.target.value)
-                    }
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section className="funcionarios-modal-section">
-              <h3>Acesso ao sistema</h3>
-
-              <div className="funcionarios-form-grid">
-                <div className="funcionarios-field">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    value={funcionarioEditando.Email}
-                    onChange={(event) =>
-                      atualizarCampo('Email', event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="funcionarios-field">
-                  <label>Nova senha</label>
-                  <input
-                    type="password"
-                    value={funcionarioEditando.Senha}
-                    onChange={(event) =>
-                      atualizarCampo('Senha', event.target.value)
-                    }
-                    placeholder="Deixe vazio para manter"
-                  />
-                </div>
-
-                <div className="funcionarios-field field-full">
-                  <label>Perfil de acesso</label>
-                  <select
-                    value={funcionarioEditando.Role}
-                    onChange={(event) =>
-                      atualizarCampo('Role', event.target.value)
-                    }
-                  >
-                    <option value="OPERADOR">Operador</option>
-                    <option value="TECNICO">Técnico</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <div className="funcionarios-modal-actions">
-              <button
-                type="button"
-                className="funcionarios-btn funcionarios-btn-outline"
-                onClick={fecharEdicao}
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                className="funcionarios-btn funcionarios-btn-dark"
-              >
-                Salvar alterações
-              </button>
-            </div>
-          </form>
+          <button type="button" className="oficina-btn admin-close" onClick={fecharEdicao} aria-label="Fechar edição de funcionário">
+            <FiX aria-hidden="true" />
+          </button>
         </div>
-      </div>
+
+        <form onSubmit={salvarEdicao}>
+          <section className="admin-form-section">
+            <h3 className="oficina-section-heading"><FiUser aria-hidden="true" /> Dados pessoais</h3>
+
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field oficina-col-full">
+                <label htmlFor="funcionarios-editar-nome">Nome completo</label>
+                <input id="funcionarios-editar-nome"
+                  value={funcionarioEditando.Nome}
+                  onChange={(event) =>
+                    atualizarCampo('Nome', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-cpf">CPF</label>
+                <input id="funcionarios-editar-cpf"
+                  value={funcionarioEditando.Cpf}
+                  onChange={(event) =>
+                    atualizarCampo('Cpf', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-rg">RG</label>
+                <input id="funcionarios-editar-rg"
+                  value={funcionarioEditando.Rg}
+                  onChange={(event) =>
+                    atualizarCampo('Rg', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-datanascimento">Data de nascimento</label>
+                <input id="funcionarios-editar-datanascimento"
+                  type="date"
+                  value={funcionarioEditando.DataNascimento}
+                  onChange={(event) =>
+                    atualizarCampo('DataNascimento', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-celular">Celular</label>
+                <input id="funcionarios-editar-celular"
+                  value={funcionarioEditando.Celular}
+                  onChange={(event) =>
+                    atualizarCampo('Celular', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-dataadmissao">Data de admissão</label>
+                <input id="funcionarios-editar-dataadmissao"
+                  type="date"
+                  value={funcionarioEditando.DataAdmissao}
+                  onChange={(event) =>
+                    atualizarCampo('DataAdmissao', event.target.value)
+                  }
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="admin-form-section">
+            <h3 className="oficina-section-heading"><FiMapPin aria-hidden="true" /> Endereço</h3>
+
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-cep">CEP</label>
+                <input id="funcionarios-editar-cep"
+                  value={funcionarioEditando.Cep}
+                  onChange={(event) =>
+                    atualizarCampo('Cep', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="funcionarios-editar-endereco">Endereço</label>
+                <input id="funcionarios-editar-endereco"
+                  value={funcionarioEditando.Endereco}
+                  onChange={(event) =>
+                    atualizarCampo('Endereco', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-numero">Número</label>
+                <input id="funcionarios-editar-numero"
+                  value={funcionarioEditando.Numero}
+                  onChange={(event) =>
+                    atualizarCampo('Numero', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-uf">UF</label>
+                <input id="funcionarios-editar-uf"
+                  maxLength="2"
+                  value={funcionarioEditando.Uf}
+                  onChange={(event) =>
+                    atualizarCampo('Uf', event.target.value.toUpperCase())
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-bairro">Bairro</label>
+                <input id="funcionarios-editar-bairro"
+                  value={funcionarioEditando.Bairro}
+                  onChange={(event) =>
+                    atualizarCampo('Bairro', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-cidade">Cidade</label>
+                <input id="funcionarios-editar-cidade"
+                  value={funcionarioEditando.Cidade}
+                  onChange={(event) =>
+                    atualizarCampo('Cidade', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field admin-col-2">
+                <label htmlFor="funcionarios-editar-complemento">Complemento</label>
+                <input id="funcionarios-editar-complemento"
+                  value={funcionarioEditando.Complemento}
+                  onChange={(event) =>
+                    atualizarCampo('Complemento', event.target.value)
+                  }
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="admin-form-section">
+            <h3 className="oficina-section-heading"><FiLock aria-hidden="true" /> Acesso ao sistema</h3>
+
+            <div className="oficina-form-grid admin-form-grid">
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-email">Email</label>
+                <input id="funcionarios-editar-email"
+                  type="email"
+                  value={funcionarioEditando.Email}
+                  onChange={(event) =>
+                    atualizarCampo('Email', event.target.value)
+                  }
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-senha">Nova senha</label>
+                <input id="funcionarios-editar-senha"
+                  type="password"
+                  value={funcionarioEditando.Senha}
+                  onChange={(event) =>
+                    atualizarCampo('Senha', event.target.value)
+                  }
+                  placeholder="Deixe vazio para manter"
+                />
+              </div>
+
+              <div className="oficina-field">
+                <label htmlFor="funcionarios-editar-role">Perfil de acesso</label>
+                <select id="funcionarios-editar-role"
+                  value={funcionarioEditando.Role}
+                  onChange={(event) =>
+                    atualizarCampo('Role', event.target.value)
+                  }
+                >
+                  <option value="OPERADOR">Operador</option>
+                  <option value="TECNICO">Técnico</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <div className="oficina-form-actions">
+            <button
+              type="button"
+              className="oficina-btn"
+              onClick={fecharEdicao}
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              className="oficina-btn oficina-btn-primary"
+            >
+              <FiSave aria-hidden="true" /> Salvar alterações
+            </button>
+          </div>
+        </form>
+      </ModalOficina>
     );
   }
 
   return (
-    <Layout>
-      <main className="visualizar-funcionarios-page">
-        <section className="visualizar-funcionarios-header">
+    <Layout className="oficina-theme admin-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page" aria-labelledby="funcionarios-titulo">
+        <header className="oficina-page-header">
           <div>
-            <h1>Funcionários</h1>
+            <h1 id="funcionarios-titulo">Funcionários</h1>
             <p>Visualize, edite ou exclua funcionários cadastrados.</p>
 
             {carregando && <small>Carregando funcionários...</small>}
           </div>
-        </section>
+          <Link className="oficina-btn oficina-btn-primary" to="/admin/funcionarios/cadastrar">
+            <FiPlus aria-hidden="true" /> Novo funcionário
+          </Link>
+        </header>
 
-        <section className="visualizar-funcionarios-card">
-          <div className="visualizar-funcionarios-card-header">
+        <section className="oficina-panel" aria-busy={carregando}>
+          <div className="oficina-list-header">
             <div>
               <h2>Funcionários cadastrados</h2>
               <span>
@@ -555,77 +563,82 @@ function VisualizarFuncionarios() {
               </span>
             </div>
 
-            <button type="button" onClick={carregarFuncionarios}>
-              Atualizar
+            <button type="button" className="oficina-btn" onClick={carregarFuncionarios} disabled={carregando}>
+              <FiRefreshCw aria-hidden="true" /> Atualizar
             </button>
           </div>
 
-          <div className="visualizar-funcionarios-search">
-            <label>Pesquisar funcionário</label>
-            <input
-              value={busca}
-              onChange={(event) => setBusca(event.target.value)}
-              placeholder="Buscar por nome, email, CPF, celular ou perfil"
-            />
+          <div className="oficina-search admin-search">
+            <label htmlFor="funcionarios-busca">Pesquisar funcionário</label>
+            <div className="admin-search-control">
+              <FiSearch aria-hidden="true" />
+              <input id="funcionarios-busca" type="search"
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Buscar por nome, email, CPF, celular ou perfil"
+              />
+            </div>
           </div>
 
-          <div className="visualizar-funcionarios-table-wrap">
-            <table className="visualizar-funcionarios-table">
+          <div className="oficina-table-wrap">
+            <table className="oficina-table admin-table">
               <thead>
                 <tr>
-                  <th>Nome</th>
-                  <th>Email</th>
-                  <th>Perfil</th>
-                  <th>CPF</th>
-                  <th>Celular</th>
-                  <th>Admissão</th>
-                  <th>Ações</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Perfil</th>
+                  <th scope="col">CPF</th>
+                  <th scope="col">Celular</th>
+                  <th scope="col">Admissão</th>
+                  <th scope="col">Ações</th>
                 </tr>
               </thead>
 
               <tbody>
-                {!carregando && funcionariosFiltrados.length === 0 && (
+                {funcionariosFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="funcionarios-empty">
-                      Nenhum funcionário encontrado.
+                    <td colSpan="7" className="oficina-empty">
+                      {carregando ? 'Carregando funcionários...' : 'Nenhum funcionário encontrado.'}
                     </td>
                   </tr>
                 )}
 
                 {funcionariosFiltrados.map((funcionario) => (
                   <tr key={funcionario.id}>
-                    <td>
+                    <td data-label="Nome">
                       <strong>{funcionario.usuario?.Nome || '-'}</strong>
                     </td>
 
-                    <td>{funcionario.usuario?.Email || '-'}</td>
+                    <td data-label="Email">{funcionario.usuario?.Email || '-'}</td>
 
-                    <td>
-                      <span className="funcionarios-role">
+                    <td data-label="Perfil">
+                      <span className="oficina-badge">
                         {funcionario.usuario?.Role || '-'}
                       </span>
                     </td>
 
-                    <td>{funcionario.Cpf || '-'}</td>
-                    <td>{funcionario.Celular || '-'}</td>
-                    <td>{formatarDataTela(funcionario.DataAdmissao)}</td>
+                    <td data-label="CPF">{funcionario.Cpf || '-'}</td>
+                    <td data-label="Celular">{funcionario.Celular || '-'}</td>
+                    <td data-label="Admissão">{formatarDataTela(funcionario.DataAdmissao)}</td>
 
-                    <td>
-                      <div className="funcionarios-actions">
+                    <td data-label="Ações">
+                      <div className="oficina-row-actions">
                         <button
                           type="button"
-                          className="funcionarios-action-edit"
+                          className="oficina-btn"
+                          aria-label={`Editar funcionário: ${funcionario.usuario?.Nome || 'funcionário'}`}
                           onClick={() => abrirEdicao(funcionario)}
                         >
-                          Editar
+                          <FiEdit2 aria-hidden="true" /> Editar
                         </button>
 
                         <button
                           type="button"
-                          className="funcionarios-action-delete"
+                          className="oficina-btn oficina-btn-danger"
+                          aria-label={`Excluir funcionário: ${funcionario.usuario?.Nome || 'funcionário'}`}
                           onClick={() => excluirFuncionario(funcionario)}
                         >
-                          Excluir
+                          <FiTrash2 aria-hidden="true" /> Excluir
                         </button>
                       </div>
                     </td>
