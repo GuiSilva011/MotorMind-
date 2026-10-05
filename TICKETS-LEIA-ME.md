@@ -22,14 +22,27 @@ Build e os 20 testes existentes da OS passaram. A renderização foi conferida c
 
 O refinamento foi conferido em 18 cenários de renderização React, incluindo seleção/contagem, estados vazio/carregando/erro e estoque do OPERADOR sem ações administrativas. As funções de envio, download e atendimento do ticket foram preservadas; estas verificações usam dados simulados, sem acesso à API ou ao banco da oficina.
 
+## Organização em abas — 04/10/2026
+
+O detalhe da solicitação agora mostra apenas uma seção por vez, mantendo código e status no cabeçalho:
+
+- **Pedido**: OS, veículo, participantes, peças e observações.
+- **Atendimento**: assumir a solicitação e registrar o próximo status/motivo. Esta aba não aparece para TECNICO; o mecânico mantém a opção de cancelar o próprio pedido ainda aberto na aba **Pedido**.
+- **Conversa**: mensagens e anexos privados, com orientação quando o usuário não pode acessar o chat. Assumir com sucesso abre esta aba automaticamente.
+- **Histórico**: linha do tempo permanente, sem exigir expansão adicional.
+
+As abas têm navegação por setas, Home/End e rolagem horizontal em telas estreitas. Alternar entre elas preserva os campos do atendimento, a mensagem em composição e os arquivos selecionados. O chat é montado após a primeira visita à conversa; suas consultas e prévias ficam suspensas enquanto outra aba está aberta. Ao trocar de solicitação, o estado do detalhe é reiniciado.
+
+Fluxos, permissões da API, expiração e baixa pela OS permanecem iguais. Build e lint focado passaram, assim como 57 cenários temporários de renderização React e handlers com dados/API simulados. Não há navegador disponível nesta sessão; aparência, foco e interação real continuam sem conferência manual.
+
 ## Como usar
 
 1. Reinicie o backend após a atualização. A migration `20260912120000_tickets_chat` já foi aplicada no banco local e o Prisma Client foi regenerado.
 2. Entre como OPERADOR, abra uma OS, escolha **Mecânico responsável** e salve.
 3. Entre como esse TECNICO e abra o **Painel técnico**. Somente veículos de OS salvas e atribuídas a ele aparecem. No veículo, clique em **Exibir ordem de serviço** e confira os diagnósticos, serviços e peças salvos. Nessa tela, use **Solicitar peça ao operador**, informe nomes/quantidades e confirme. Só a confirmação cria o ticket e abre sua tela de conversa.
-4. Entre como OPERADOR, abra o ticket na fila e clique em **Assumir ticket e abrir chat**. Se outro operador já assumiu, a API informa o conflito e preserva o primeiro responsável.
+4. Entre como OPERADOR, abra o ticket na fila e, na aba **Atendimento**, clique em **Assumir ticket e abrir chat**. A aba **Conversa** abre após o sucesso. Se outro operador já assumiu, a API informa o conflito e preserva o primeiro responsável.
 5. Mecânico e responsável podem enviar mensagens e até três anexos de 5 MB por envio (JPG, PNG, WebP ou PDF). Imagens aparecem em miniatura na própria conversa: clique para ampliar e use **Fechar** ou Escape para voltar, sem precisar baixar. O download permanece opcional; PDFs continuam com **Baixar**. Se a prévia falhar, há **Tentar novamente**. O chat atualiza a cada cinco segundos.
-6. O responsável registra os estados do atendimento. Para entregar, marque primeiro **Disponível**, depois **Entregue** e confirme que todas as peças/quantidades foram entregues.
+6. O responsável registra os estados na aba **Atendimento**. Para entregar, marque primeiro **Disponível**, depois **Entregue** e confirme que todas as peças/quantidades foram entregues.
 7. Use **Todos (inclui histórico)** para consultar tickets encerrados. Mensagens vencidas não aparecem, mas pedido, itens, estados e motivos ficam registrados.
 
 O painel mantém checklist e histórico veicular. Se um veículo tiver várias OS atribuídas, aparece uma única vez, com acesso separado a cada OS. Ao salvar uma OS como `FINALIZADA`, `FECHADA` ou `CANCELADA`, ela deixa a lista e os acessos ativos do técnico e sua atribuição é encerrada sem apagar o histórico. O histórico inclui atendimentos anteriores enquanto o técnico mantiver outra OS ativa nesse veículo. Trocar o nome no formulário do operador sem salvar não altera o painel.

@@ -1,9 +1,14 @@
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { FiArrowLeft, FiCamera, FiCheck, FiClipboard, FiSave, FiTrash2, FiX } from 'react-icons/fi';
+import { TbCar } from 'react-icons/tb';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
 import api from '../../services/api';
-import '../../styles/tecnicoStyles/checklist.css';
+import '../../styles/tecnicoStyles/tecnico.css';
+import '../../styles/tecnicoStyles/inspecao.css';
 
 
 /**
@@ -131,6 +136,7 @@ function converterItensParaEnvio(itens) {
  * @returns {JSX.Element} Tela de preenchimento da checklist.
  */
 function Checklist() {
+  const [tema, setTema] = useTemaOficina();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -401,6 +407,8 @@ function Checklist() {
           key={item}
           onClick={() => alternarItem(tipo, item)}
           title="Clique para alternar entre ✓, X e vazio"
+          aria-label={`${item}: ${valor === true ? 'marcado com ✓' : valor === false ? 'marcado com X' : 'não preenchido'}`}
+          aria-describedby="checklist-legenda"
         >
           <span className="checklist-status-box">
             {obterTextoValor(valor)}
@@ -430,17 +438,20 @@ function Checklist() {
             <img src={foto.preview} alt={titulo} />
           ) : (
             <div className="checklist-photo-empty">
+              <FiCamera aria-hidden="true" />
               <strong>{subtitulo}</strong>
             </div>
           )}
         </div>
 
         <div className="checklist-photo-actions">
-          <label className="checklist-photo-btn">
+          <label className="oficina-btn checklist-photo-btn">
+            <FiCamera aria-hidden="true" />
             Inserir foto
             <input
               type="file"
               accept="image/*"
+              aria-label={`Inserir ${titulo.toLowerCase()}`}
               onChange={(event) => alterarFoto(campo, event.target.files[0])}
             />
           </label>
@@ -448,10 +459,11 @@ function Checklist() {
           {foto && (
             <button
               type="button"
-              className="checklist-photo-remove"
+              className="oficina-btn oficina-btn-danger checklist-photo-remove"
               onClick={() => removerFoto(campo)}
+              aria-label={`Remover ${titulo.toLowerCase()}`}
             >
-              Remover
+              <FiTrash2 aria-hidden="true" /> Remover
             </button>
           )}
         </div>
@@ -460,19 +472,29 @@ function Checklist() {
   }
 
   return (
-    <Layout>
-      <main className="checklist-page">
-        <section className="checklist-top">
+    <Layout className="oficina-theme tecnico-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page checklist-page">
+        <header className="oficina-page-header">
           <div>
-            <h1>Checklist</h1>
+            <h1>Nova checklist</h1>
             <p>
               Registre a inspeção mecânica do veículo na entrada e na fase de
               diagnóstico.
             </p>
           </div>
-        </section>
+          <button type="button" className="oficina-btn" onClick={cancelarChecklist}>
+            <FiArrowLeft aria-hidden="true" /> Voltar às checklists
+          </button>
+        </header>
 
-        <section className="checklist-vehicle-card">
+        {!veiculoSelecionado && <div className="oficina-empty-state checklist-sem-veiculo">
+          <TbCar aria-hidden="true" /><h2>Selecione um veículo</h2><p>Abra a checklist pelo painel de veículos em atendimento.</p>
+          <button type="button" className="oficina-btn oficina-btn-primary" onClick={() => navigate('/tecnico/painel')}>Ir ao painel</button>
+        </div>}
+
+        <section className="oficina-panel tecnico-resumo-veiculo" aria-label="Veículo da checklist">
+          <div className="tecnico-veiculo-icon"><TbCar aria-hidden="true" /></div>
           <div className="checklist-vehicle-main">
             <span>Veículo selecionado</span>
             <strong>{montarNomeVeiculo()}</strong>
@@ -488,23 +510,23 @@ function Checklist() {
             <strong>{veiculoSelecionado?.cliente?.nome || '-'}</strong>
           </div>
 
-          <button type="button" onClick={() => navigate('/tecnico/painel')}>
-            Trocar veículo
-          </button>
         </section>
+
+        <div className="checklist-legenda" id="checklist-legenda">
+          <span><FiCheck aria-hidden="true" /> Marcado com ✓</span><span><FiX aria-hidden="true" /> Marcado com X</span>
+          <p>Clique em um item para alternar entre ✓, X e não preenchido.</p>
+        </div>
 
         <section className="checklist-layout">
           <div className="checklist-content">
-            <section className="checklist-section">
+            <section className="oficina-panel checklist-section">
               <div className="checklist-section-header">
                 <div>
-                  <h2>
-                    Inspeção mecânica na ENTRADA{' '}
-                    <span>(execute na presença do cliente)</span>
-                  </h2>
+                  <h2 className="oficina-section-heading"><FiClipboard aria-hidden="true" /> Inspeção na entrada</h2>
+                  <p>Execute na presença do cliente.</p>
                 </div>
 
-                <strong>
+                <strong className="oficina-badge" aria-label="Itens preenchidos na entrada">
                   {totais.entradaPreenchidos}/{itensEntrada.length}
                 </strong>
               </div>
@@ -514,9 +536,11 @@ function Checklist() {
                   {renderItens(itensEntrada, 'entrada')}
                 </div>
 
-                <div className="checklist-observacoes checklist-observacoes-table">
-                  <label>Observações:</label>
+                <div className="oficina-field checklist-observacoes">
+                  <label htmlFor="checklist-observacoes-entrada">Observações da entrada</label>
                   <textarea
+                    id="checklist-observacoes-entrada"
+                    placeholder="Registre as condições identificadas na entrada."
                     value={observacoesEntrada}
                     onChange={(event) =>
                       setObservacoesEntrada(event.target.value)
@@ -526,13 +550,14 @@ function Checklist() {
               </div>
             </section>
 
-            <section className="checklist-section">
+            <section className="oficina-panel checklist-section">
               <div className="checklist-section-header">
                 <div>
-                  <h2>Inspeção mecânica na fase de DIAGNÓSTICO</h2>
+                  <h2 className="oficina-section-heading"><FiClipboard aria-hidden="true" /> Inspeção no diagnóstico</h2>
+                  <p>Registre os itens verificados durante a avaliação técnica.</p>
                 </div>
 
-                <strong>
+                <strong className="oficina-badge" aria-label="Itens preenchidos no diagnóstico">
                   {totais.diagnosticoPreenchidos}/{itensDiagnostico.length}
                 </strong>
               </div>
@@ -542,9 +567,11 @@ function Checklist() {
                   {renderItens(itensDiagnostico, 'diagnostico')}
                 </div>
 
-                <div className="checklist-observacoes checklist-observacoes-table">
-                  <label>Observações:</label>
+                <div className="oficina-field checklist-observacoes">
+                  <label htmlFor="checklist-observacoes-diagnostico">Observações do diagnóstico</label>
                   <textarea
+                    id="checklist-observacoes-diagnostico"
+                    placeholder="Descreva os pontos que precisam de atenção."
                     value={observacoesDiagnostico}
                     onChange={(event) =>
                       setObservacoesDiagnostico(event.target.value)
@@ -555,9 +582,9 @@ function Checklist() {
             </section>
           </div>
 
-          <aside className="checklist-photos">
+          <aside className="oficina-panel checklist-photos">
             <div className="checklist-photos-header">
-              <h2>Fotos do veículo</h2>
+              <h2 className="oficina-section-heading"><FiCamera aria-hidden="true" /> Fotos do veículo</h2>
               <p>Registre o estado visual do veículo.</p>
             </div>
 
@@ -570,21 +597,22 @@ function Checklist() {
           </aside>
         </section>
 
-        <section className="checklist-actions">
+        <section className="oficina-form-actions">
           <button
             type="button"
-            className="checklist-btn checklist-btn-red"
+            className="oficina-btn"
             onClick={cancelarChecklist}
           >
-            Cancelar
+            <FiX aria-hidden="true" /> Cancelar
           </button>
 
           <button
             type="button"
-            className="checklist-btn checklist-btn-dark"
+            className="oficina-btn oficina-btn-primary"
             onClick={salvarChecklist}
+            disabled={!veiculoSelecionado?.id}
           >
-            Salvar
+            <FiSave aria-hidden="true" /> Salvar checklist
           </button>
         </section>
       </main>

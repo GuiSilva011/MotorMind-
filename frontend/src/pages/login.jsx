@@ -1,222 +1,216 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import {
+  TbAlertCircle, TbArrowLeft, TbArrowRight, TbBox, TbCar,
+  TbChevronDown, TbEngine, TbEye, TbEyeOff, TbFlask,
+  TbLock, TbMail, TbShieldCheck, TbUsers,
+} from 'react-icons/tb';
 import api from '../services/api';
 import '../styles/login.css';
 
-
-/**
- * Lista de usuários de teste disponíveis para preenchimento rápido
- * das credenciais de acesso.
- *
- * @constant {Array<Object>}
- */
 const usuariosTeste = [
-  {
-    perfil: 'Admin',
-    email: 'admin@motormind.com',
-    senha: 'admin123',
-  },
-  {
-    perfil: 'Operador',
-    email: 'operador@motormind.com',
-    senha: 'operador123',
-  },
-  {
-    perfil: 'Técnico',
-    email: 'tecnico@motormind.com',
-    senha: 'tecnico123',
-  },
+  { perfil: 'Admin', email: 'admin@motormind.com', senha: 'admin123' },
+  { perfil: 'Operador', email: 'operador@motormind.com', senha: 'operador123' },
+  { perfil: 'Técnico', email: 'tecnico@motormind.com', senha: 'tecnico123' },
 ];
 
-/**
- * Tela responsável pela autenticação dos usuários no sistema,
- * com suporte a credenciais manuais e atalhos para usuários de teste.
- *
- * @component
- * @function Login
- * @returns {JSX.Element} Tela de login do sistema.
- */
+const errosVazios = { email: '', senha: '', geral: '' };
+
+function obterRotaInicialPorRole(role) {
+  if (role === 'OWNER' || role === 'ADMIN') return '/admin/relatorios';
+  if (role === 'OPERADOR') return '/operador/agendamentos/calendario';
+  if (role === 'TECNICO') return '/tecnico/painel';
+  return '/login';
+}
+
 function Login() {
   const navigate = useNavigate();
-
-  const [form, setForm] = useState({
-    Email: '',
-    Senha: '',
-  });
-
+  const emailRef = useRef(null);
+  const senhaRef = useRef(null);
+  const envioEmAndamento = useRef(false);
+  const [form, setForm] = useState({ Email: '', Senha: '' });
   const [carregando, setCarregando] = useState(false);
+  const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const [capsLock, setCapsLock] = useState(false);
+  const [erros, setErros] = useState(errosVazios);
 
-/**
- * Atualiza um campo específico do formulário de login.
- *
- * @param {string} campo - Nome do campo que será atualizado.
- * @param {string} valor - Novo valor do campo.
- * @returns {void}
- */
+  useEffect(() => {
+    const tituloAnterior = document.title;
+    document.title = 'Entrar — MotorMind';
+    return () => { document.title = tituloAnterior; };
+  }, []);
+
   function atualizarCampo(campo, valor) {
-    setForm((prev) => ({
+    setForm((prev) => ({ ...prev, [campo]: valor }));
+    setErros((prev) => ({
       ...prev,
-      [campo]: valor,
+      [campo === 'Email' ? 'email' : 'senha']: '',
+      geral: '',
     }));
   }
 
-/**
- * Preenche o formulário com as credenciais de um usuário de teste.
- *
- * @param {string} email - E-mail do usuário.
- * @param {string} senha - Senha do usuário.
- * @returns {void}
- */
   function preencherUsuario(email, senha) {
-    setForm({
-      Email: email,
-      Senha: senha,
-    });
+    setForm({ Email: email, Senha: senha });
+    setErros(errosVazios);
+    setSenhaVisivel(false);
+    setCapsLock(false);
+    senhaRef.current?.focus();
   }
 
-/**
- * Retorna a rota inicial correspondente ao perfil do usuário autenticado.
- *
- * @param {string} role - Perfil de acesso do usuário.
- * @returns {string} Rota inicial do perfil ou rota de login.
- */
-  function obterRotaInicialPorRole(role) {
-    if (role === "OWNER") {
-      return "/admin/relatorios";
-    }
-
-    if (role === "ADMIN") {
-      return "/admin/relatorios";
-    }
-
-    if (role === "OPERADOR") {
-      return "/operador/agendamentos/calendario";
-    }
-
-    if (role === "TECNICO") {
-      return "/tecnico/painel";
-    }
-
-    return "/login";
+  function verificarCapsLock(event) {
+    setCapsLock(Boolean(event.getModifierState?.('CapsLock')));
   }
 
-/**
- * Valida as credenciais, realiza a autenticação na API
- * e redireciona o usuário para o painel correspondente ao seu perfil.
- *
- * @async
- * @param {Object} event - Evento de envio do formulário.
- * @returns {Promise<void>}
- */
   async function entrar(event) {
     event.preventDefault();
+    if (envioEmAndamento.current) return;
+
+    const novosErros = { ...errosVazios };
+    if (!form.Email.trim()) {
+      novosErros.email = 'Informe seu e-mail de acesso.';
+    } else if (emailRef.current?.validity.typeMismatch) {
+      novosErros.email = 'Informe um e-mail válido.';
+    }
+    if (!form.Senha.trim()) novosErros.senha = 'Informe sua senha.';
+    setErros(novosErros);
+
+    if (novosErros.email || novosErros.senha) {
+      (novosErros.email ? emailRef : senhaRef).current?.focus();
+      return;
+    }
+
+    envioEmAndamento.current = true;
+    setCarregando(true);
 
     try {
-      if (!form.Email.trim()) {
-        toast.warning('Informe o email.');
-        return;
-      }
-
-      if (!form.Senha.trim()) {
-        toast.warning('Informe a senha.');
-        return;
-      }
-
-      setCarregando(true);
-
       const response = await api.post('/auth/login', {
         Email: form.Email.trim(),
         Senha: form.Senha,
       });
-
       const usuario = response.data?.usuario;
       const token = response.data?.token;
 
       if (!usuario || !token) {
-        toast.error("Resposta de login inválida.");
+        setErros({ ...errosVazios, geral: 'Não foi possível concluir o acesso. Tente novamente.' });
         return;
-}
+      }
 
-      localStorage.setItem("motormind_usuario", JSON.stringify(usuario));
-
-      localStorage.setItem("motormind_token", token);
-
-      toast.success(`Bem-vindo, ${usuario.Nome}!`);
-
+      localStorage.setItem('motormind_usuario', JSON.stringify(usuario));
+      localStorage.setItem('motormind_token', token);
+      toast.success('Bem-vindo, ' + usuario.Nome + '!');
       navigate(obterRotaInicialPorRole(usuario.Role));
     } catch (error) {
-      toast.error(
-        error.response?.data?.erro ||
-          error.response?.data?.detalhe ||
-          'Erro ao fazer login.'
-      );
+      setErros({
+        ...errosVazios,
+        geral: error.response?.data?.erro || error.response?.data?.detalhe ||
+          'Não foi possível conectar ao sistema. Tente novamente em instantes.',
+      });
     } finally {
+      envioEmAndamento.current = false;
       setCarregando(false);
     }
   }
 
   return (
     <main className="login-page">
-      <section className="login-card">
-        <section className="login-form-panel">
-          <form className="login-form" onSubmit={entrar}>
-            <div className="login-title">
-              <p>Informe suas credenciais para acessar o painel.</p>
+      <Link className="login-back-link" to="/"><TbArrowLeft aria-hidden="true" /> Voltar ao site</Link>
+
+      <div className="login-shell">
+        <section className="login-card" aria-labelledby="login-title">
+          <header className="login-title">
+            <Link className="login-brand-mark" to="/" aria-label="MotorMind — página inicial">
+              <TbEngine aria-hidden="true" />
+            </Link>
+            <h1 id="login-title">MotorMind</h1>
+            <p>Entre para acessar sua oficina.</p>
+          </header>
+
+          <form className="login-form" onSubmit={entrar} noValidate aria-busy={carregando}>
+            {erros.geral && (
+              <div className="login-error-banner" role="alert">
+                <TbAlertCircle aria-hidden="true" /><p>{erros.geral}</p>
+              </div>
+            )}
+
+            <div className="login-field">
+              <label className="login-sr-only" htmlFor="email">E-mail de acesso</label>
+              <div className={'login-input-wrap' + (erros.email ? ' login-input-invalid' : '')}>
+                <TbMail aria-hidden="true" />
+                <input ref={emailRef} id="email" name="Email" type="email" value={form.Email}
+                  onChange={(event) => atualizarCampo('Email', event.target.value)}
+                  placeholder="E-mail de acesso" autoComplete="username" autoCapitalize="none"
+                  spellCheck={false} required disabled={carregando}
+                  aria-invalid={Boolean(erros.email)} aria-describedby={erros.email ? 'login-email-error' : undefined} />
+              </div>
+              {erros.email && <p id="login-email-error" className="login-field-error" role="alert">{erros.email}</p>}
             </div>
 
             <div className="login-field">
-              <label htmlFor="email">E-mail</label>
-              <input
-                id="email"
-                type="email"
-                value={form.Email}
-                onChange={(event) => atualizarCampo('Email', event.target.value)}
-                placeholder="seuemail@motormind.com"
-                autoComplete="email"
-              />
+              <label className="login-sr-only" htmlFor="senha">Senha</label>
+              <div className={'login-input-wrap' + (erros.senha ? ' login-input-invalid' : '')}>
+                <TbLock aria-hidden="true" />
+                <input ref={senhaRef} id="senha" name="Senha" type={senhaVisivel ? 'text' : 'password'} value={form.Senha}
+                  onChange={(event) => atualizarCampo('Senha', event.target.value)}
+                  onKeyDown={verificarCapsLock} onKeyUp={verificarCapsLock} onBlur={() => setCapsLock(false)}
+                  placeholder="Senha" autoComplete="current-password" required disabled={carregando}
+                  aria-invalid={Boolean(erros.senha)}
+                  aria-describedby={(erros.senha ? 'login-password-error ' : '') + (capsLock ? 'login-caps-warning' : '') || undefined} />
+                <button className="login-password-toggle" type="button"
+                  onClick={() => setSenhaVisivel((prev) => !prev)} onMouseDown={(event) => event.preventDefault()}
+                  aria-label={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={senhaVisivel}
+                  aria-controls="senha" title={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'} disabled={carregando}>
+                  {senhaVisivel ? <TbEyeOff aria-hidden="true" /> : <TbEye aria-hidden="true" />}
+                </button>
+              </div>
+              {erros.senha && <p id="login-password-error" className="login-field-error" role="alert">{erros.senha}</p>}
+              <p id="login-caps-warning" className="login-caps-warning" role="status">
+                {capsLock && <><TbAlertCircle aria-hidden="true" /> A tecla Caps Lock está ativada.</>}
+              </p>
             </div>
 
-            <div className="login-field">
-              <label htmlFor="senha">Senha</label>
-              <input
-                id="senha"
-                type="password"
-                value={form.Senha}
-                onChange={(event) => atualizarCampo('Senha', event.target.value)}
-                placeholder="Digite sua senha"
-                autoComplete="current-password"
-              />
-            </div>
+            <div className="login-form-divider" aria-hidden="true" />
 
             <button type="submit" className="login-btn" disabled={carregando}>
-              {carregando ? 'Entrando...' : 'Acessar sistema'}
+              {carregando ? <><span className="login-spinner" aria-hidden="true" /> Entrando...</> : <>Entrar <TbArrowRight aria-hidden="true" /></>}
             </button>
+            <span className="login-sr-only" role="status">{carregando ? 'Validando suas credenciais. Aguarde.' : ''}</span>
           </form>
-          <div className="login-public-links">
-            <Link to="/">Voltar ao site</Link>
+
+          <p className="login-signup">
+            Sua oficina ainda não tem acesso?<br />
             <Link to="/cadastro-oficina">Cadastrar minha oficina</Link>
-          </div>
+          </p>
 
-          <div className="login-test-users">
-            <div className="login-test-header">
-              <span>Usuários de teste</span>
+          <details className="login-test-users">
+            <summary>
+              <TbFlask aria-hidden="true" /><span>Acessos de teste</span>
+              <TbChevronDown className="login-test-chevron" aria-hidden="true" />
+            </summary>
+            <div className="login-test-content">
+              <p>Selecione um perfil para preencher as credenciais de teste.</p>
+              <div className="login-users-list">
+                {usuariosTeste.map((usuario) => (
+                  <button key={usuario.email} type="button" disabled={carregando}
+                    onClick={() => preencherUsuario(usuario.email, usuario.senha)}>
+                    {usuario.perfil}
+                  </button>
+                ))}
+              </div>
             </div>
+          </details>
 
-            <div className="login-users-list">
-              {usuariosTeste.map((usuario) => (
-                <button
-                  key={usuario.email}
-                  type="button"
-                  onClick={() => preencherUsuario(usuario.email, usuario.senha)}
-                >
-                  {usuario.perfil}
-                </button>
-              ))}
-            </div>
-          </div>
+          <p className="login-security-note"><TbShieldCheck aria-hidden="true" /> Acesso exclusivo para sua equipe.</p>
         </section>
-      </section>
+
+        <footer className="login-page-footer">
+          <p>Menos tarefas soltas.<br /><strong>Mais controle da sua oficina.</strong></p>
+          <div className="login-workshop-icons" aria-hidden="true">
+            <span><TbCar /></span><span><TbBox /></span><span><TbUsers /></span>
+          </div>
+          <span className="login-footer-caption">Atendimento · Estoque · Equipe</span>
+        </footer>
+      </div>
     </main>
   );
 }

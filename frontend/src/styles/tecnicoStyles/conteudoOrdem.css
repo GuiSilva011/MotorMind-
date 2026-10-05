@@ -1,0 +1,87 @@
+.tecnico-workspace .os-tecnica-acoes {
+  margin-bottom: 24px;
+}
+
+.tecnico-workspace .os-tecnica-nota {
+  margin-bottom: 16px;
+}
+
+.tecnico-workspace .os-tecnica-conteudo {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.tecnico-workspace .os-tecnica-conteudo h2 {
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tecnico-workspace .os-tecnica-conteudo :is(h3, h4) {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tecnico-workspace .os-tecnica-conteudo h4 {
+  margin: 16px 0 12px;
+}
+
+.tecnico-workspace .os-tecnica-conteudo h5 {
+  margin: 16px 0 8px;
+  color: var(--ui-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tecnico-workspace .os-tecnica-conteudo p {
+  margin-top: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.tecnico-workspace .os-tecnica-diagnostico {
+  padding: 16px;
+  margin-top: 16px;
+  border: 1px solid var(--ui-border);
+  border-left: 3px solid var(--ui-link);
+  border-radius: 6px;
+  background: var(--ui-secondary);
+}
+
+.tecnico-workspace .os-tecnica-servico {
+  padding: 16px;
+  margin-top: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  background: var(--ui-surface);
+}
+
+.tecnico-workspace .os-tecnica-servico > h4:first-child {
+  margin-top: 0;
+}
+
+.tecnico-workspace .os-tecnica-vazio {
+  color: var(--ui-muted);
+}
+
+.tecnico-workspace .tecnico-historico-resumo {
+  margin-bottom: 24px;
+}
+
+.tecnico-workspace .tecnico-historico-resumo + .tecnico-observacao {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 650px) {
+  .tecnico-workspace .os-tecnica-conteudo {
+    gap: 16px;
+  }
+
+  .tecnico-workspace .os-tecnica-diagnostico,
+  .tecnico-workspace .os-tecnica-servico {
+    padding: 12px;
+  }
+}

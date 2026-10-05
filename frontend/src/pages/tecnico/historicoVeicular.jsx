@@ -1,10 +1,16 @@
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { FiArrowLeft, FiClipboard, FiEye, FiPackage, FiRefreshCw, FiTool, FiX } from 'react-icons/fi';
+import { TbCar } from 'react-icons/tb';
+import StatusOrdemTecnica from '../../components/StatusOrdemTecnica';
+import ModalOficina from '../../components/ModalOficina';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import ConteudoOrdemTecnica from '../../components/ConteudoOrdemTecnica';
 import useConsultaTickets from '../../hooks/useConsultaTickets';
 import api from '../../services/api';
-import '../../styles/tecnicoStyles/historicoVeicular.css';
+import '../../styles/tecnicoStyles/tecnico.css';
 
 /**
  * Tela responsável pela consulta do histórico veicular,
@@ -15,6 +21,7 @@ import '../../styles/tecnicoStyles/historicoVeicular.css';
  * @returns {JSX.Element} Tela de histórico veicular.
  */
 function HistoricoVeicular() {
+  const [tema, setTema] = useTemaOficina();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,7 +30,6 @@ function HistoricoVeicular() {
   const [versao, setVersao] = useState(0);
   const consulta = useConsultaTickets(veiculoSelecionado?.id ? `/tecnico/veiculos/${veiculoSelecionado.id}/historico` : null, 15000, versao);
   const historico = useMemo(() => consulta.dados || [], [consulta.dados]);
-  const busca = veiculoSelecionado?.placa || '';
   const [ordemDetalhada, setOrdemDetalhada] = useState(null);
 
   const carregando = consulta.carregando;
@@ -158,38 +164,6 @@ function HistoricoVeicular() {
   }
 
 /**
- * Retorna a classe CSS correspondente ao status da ordem de serviço.
- *
- * @param {string|null|undefined} status - Status da ordem.
- * @returns {string} Classe CSS usada na exibição do status.
- */
-  function obterClasseStatus(status) {
-    const statusNormalizado = String(status || '').toLowerCase();
-
-    if (statusNormalizado.includes('finalizado')) {
-      return 'historico-status-green';
-    }
-
-    if (statusNormalizado.includes('concluido')) {
-      return 'historico-status-green';
-    }
-
-    if (statusNormalizado.includes('manutencao')) {
-      return 'historico-status-blue';
-    }
-
-    if (statusNormalizado.includes('andamento')) {
-      return 'historico-status-blue';
-    }
-
-    if (statusNormalizado.includes('cancelado')) {
-      return 'historico-status-red';
-    }
-
-    return 'historico-status-gray';
-  }
-
-/**
  * Renderiza um card resumido de uma ordem de serviço encontrada.
  *
  * @param {Object} ordem - Ordem de serviço que será exibida.
@@ -209,12 +183,10 @@ function HistoricoVeicular() {
               <span>{formatarData(ordem.dataEmissao || ordem.createdAt)}</span>
             </div>
 
-            <span className={`historico-status ${obterClasseStatus(ordem.status)}`}>
-              {ordem.status || 'SEM STATUS'}
-            </span>
+            <StatusOrdemTecnica status={ordem.status} />
           </div>
 
-          <div className="historico-item-main">
+          <div className="tecnico-dados">
             <div>
               <span>Cliente</span>
               <strong>{ordem.clienteNome || ordem.veiculo?.cliente?.nome || '-'}</strong>
@@ -242,10 +214,12 @@ function HistoricoVeicular() {
 
             <button
               type="button"
+              className="oficina-btn"
+              aria-label={`Ver detalhes da ordem ${ordem.codigo || ordem.id}`}
               onClick={() => abrirDetalhesOrdem(ordem.id)}
               disabled={carregandoDetalhes}
             >
-              {carregandoDetalhes ? 'Carregando...' : 'Ver detalhes'}
+              <FiEye aria-hidden="true" /> {carregandoDetalhes ? 'Carregando...' : 'Ver detalhes'}
             </button>
           </div>
         </div>
@@ -265,24 +239,24 @@ function HistoricoVeicular() {
     const cliente = veiculo.cliente || {};
 
     return (
-      <div className="historico-modal-overlay">
-        <div className="historico-modal">
-          <div className="historico-modal-header">
+      <ModalOficina className="tecnico-modal" labelledBy="historico-detalhes-titulo" onClose={fecharDetalhes}>
+          <div className="tecnico-modal-header">
             <div>
-              <h2>{ordemDetalhada.codigo || 'Ordem de serviço'}</h2>
+              <h2 id="historico-detalhes-titulo">{ordemDetalhada.codigo || 'Ordem de serviço'}</h2>
               <span>Detalhes técnicos da ordem selecionada.</span>
             </div>
 
             <button
               type="button"
-              className="historico-modal-close"
+              className="oficina-btn"
+              aria-label="Fechar detalhes da ordem de serviço"
               onClick={fecharDetalhes}
             >
-              ×
+              <FiX aria-hidden="true" />
             </button>
           </div>
 
-          <div className="historico-modal-summary">
+          <div className="tecnico-dados tecnico-historico-resumo">
             <div>
               <span>Cliente</span>
               <strong>{cliente.nome || ordemDetalhada.clienteNome || '-'}</strong>
@@ -300,7 +274,7 @@ function HistoricoVeicular() {
 
             <div>
               <span>Status</span>
-              <strong>{ordemDetalhada.status || '-'}</strong>
+              <strong><StatusOrdemTecnica status={ordemDetalhada.status} /></strong>
             </div>
 
             <div>
@@ -320,46 +294,45 @@ function HistoricoVeicular() {
           </div>
 
           {ordemDetalhada.observacoes && (
-            <div className="historico-modal-observacao">
+            <div className="tecnico-observacao">
               <span>Observações da OS</span>
               <p>{ordemDetalhada.observacoes}</p>
             </div>
           )}
 
           <ConteudoOrdemTecnica ordem={ordemDetalhada} />
-        </div>
-      </div>
+      </ModalOficina>
     );
   }
 
   return (
-    <Layout>
-      <main className="historico-veicular-page">
-        <section className="historico-veicular-top">
+    <Layout className="oficina-theme tecnico-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page historico-veicular-page">
+        <header className="oficina-page-header">
           <div>
             <h1>Histórico veicular</h1>
             <p>
               Consulte diagnósticos, serviços realizados e peças trocadas.
             </p>
 
-            {carregando && <small>Buscando histórico...</small>}
           </div>
 
           <div className="tecnico-page-actions">
             <button
               type="button"
-              className="tecnico-voltar-painel"
+              className="oficina-btn"
               onClick={() => navigate('/tecnico/painel')}
             >
-              Voltar ao painel
+              <FiArrowLeft aria-hidden="true" /> Voltar ao painel
             </button>
           </div>
-        </section>
+        </header>
 
         {veiculoSelecionado && (
-          <section className="historico-veicular-vehicle-card">
-            <div className="historico-vehicle-icon">
-              <img src="/icons/veiculo.svg" alt="Veículo" />
+          <section className="oficina-panel tecnico-resumo-veiculo" aria-label="Veículo do histórico">
+            <div className="tecnico-veiculo-icon">
+              <TbCar aria-hidden="true" />
             </div>
 
             <div>
@@ -372,64 +345,47 @@ function HistoricoVeicular() {
               <strong>{veiculoSelecionado.placa || '-'}</strong>
             </div>
 
-            <button type="button" onClick={() => navigate('/tecnico/painel')}>
-              Trocar veículo
-            </button>
           </section>
         )}
 
-        <section className="historico-veicular-card">
-          <div className="historico-veicular-search">
-            <div>
-              <label>Veículo vinculado</label>
 
-              <input
-                value={busca}
-                readOnly
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    buscarHistorico();
-                  }
-                }}
-                placeholder="Selecione um veículo pelo painel técnico"
-              />
-            </div>
-
-            <button type="button" onClick={buscarHistorico} disabled={!veiculoSelecionado?.id || carregando}>
-              Atualizar histórico
-            </button>
-          </div>
-        </section>
-
-        <section className="historico-resumo-grid historico-resumo-grid-three">
-          {consulta.erro && <p className="os-tecnica-erro" role="alert">{consulta.erro}</p>}
-          <div>
+        {consulta.erro && <p className="tecnico-erro" role="alert">{consulta.erro}</p>}
+        <section className="tecnico-indicadores" aria-label="Resumo do histórico">
+          <div className="tecnico-indicador"><FiClipboard aria-hidden="true" /><div>
             <span>Diagnósticos</span>
-            <strong>{totaisHistorico.totalDiagnosticos}</strong>
+            <strong>{carregando || consulta.erro ? '—' : totaisHistorico.totalDiagnosticos}</strong>
+          </div>
           </div>
 
-          <div>
+          <div className="tecnico-indicador"><FiTool aria-hidden="true" /><div>
             <span>Serviços realizados</span>
-            <strong>{totaisHistorico.totalServicos}</strong>
+            <strong>{carregando || consulta.erro ? '—' : totaisHistorico.totalServicos}</strong>
+          </div>
           </div>
 
-          <div>
+          <div className="tecnico-indicador"><FiPackage aria-hidden="true" /><div>
             <span>Peças trocadas</span>
-            <strong>{totaisHistorico.totalPecas}</strong>
+            <strong>{carregando || consulta.erro ? '—' : totaisHistorico.totalPecas}</strong>
+          </div>
           </div>
         </section>
 
-        <section className="historico-veicular-card">
-          <div className="historico-veicular-title">
+        <section className="oficina-panel">
+          <div className="oficina-list-header">
             <div>
-              <h2>Linha do tempo</h2>
+              <h2 className="oficina-section-heading"><FiClipboard aria-hidden="true" /> Linha do tempo</h2>
               <span>{historico.length} registro(s) encontrado(s)</span>
             </div>
+            <button type="button" className="oficina-btn" onClick={buscarHistorico} disabled={!veiculoSelecionado?.id || carregando}>
+              <FiRefreshCw aria-hidden="true" /> Atualizar histórico
+            </button>
           </div>
 
-          {historico.length === 0 && (
-            <div className="historico-veicular-empty">
-              Nenhum histórico encontrado para esta busca.
+          {carregando && <p className="tecnico-loading" role="status">Buscando histórico...</p>}
+          {!carregando && !consulta.erro && historico.length === 0 && (
+            <div className="oficina-empty-state">
+              <FiClipboard aria-hidden="true" /><h3>{veiculoSelecionado ? 'Nenhuma OS no histórico' : 'Selecione um veículo'}</h3>
+              <p>{veiculoSelecionado ? 'As ordens registradas para este veículo aparecerão nesta linha do tempo.' : 'Acesse o histórico de um veículo pelo painel de atendimentos.'}</p>
             </div>
           )}
 

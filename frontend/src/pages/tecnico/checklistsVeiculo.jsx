@@ -1,9 +1,14 @@
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { FiArrowLeft, FiClipboard, FiEye, FiPlus, FiPrinter, FiRefreshCw, FiX } from 'react-icons/fi';
+import { TbCar } from 'react-icons/tb';
+import ModalOficina from '../../components/ModalOficina';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
 import api from '../../services/api';
-import '../../styles/tecnicoStyles/checklistsVeiculo.css';
+import '../../styles/tecnicoStyles/tecnico.css';
 
 /**
  * Tela responsável por consultar, visualizar e imprimir as checklists
@@ -14,6 +19,7 @@ import '../../styles/tecnicoStyles/checklistsVeiculo.css';
  * @returns {JSX.Element} Tela de consulta das checklists do veículo.
  */
 function ChecklistsVeiculo() {
+  const [tema, setTema] = useTemaOficina();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -934,34 +940,34 @@ function ChecklistsVeiculo() {
     if (!checklistSelecionada) return null;
 
     return (
-      <div className="checklists-modal-overlay">
-        <div className="checklists-modal">
-          <div className="checklists-modal-header">
+      <ModalOficina className="tecnico-modal" labelledBy="checklists-detalhes-titulo" onClose={() => setChecklistSelecionada(null)}>
+          <div className="tecnico-modal-header">
             <div>
-              <h2>Checklist #{checklistSelecionada.id}</h2>
+              <h2 id="checklists-detalhes-titulo">Checklist #{checklistSelecionada.id}</h2>
               <span>{formatarData(checklistSelecionada.createdAt)}</span>
             </div>
 
-            <div className="checklists-modal-header-actions">
+            <div className="tecnico-page-actions">
               <button
                 type="button"
-                className="checklists-print-btn desktop-only-print"
+                className="oficina-btn"
                 onClick={() => imprimirChecklist(checklistSelecionada)}
               >
-                Imprimir checklist
+                <FiPrinter aria-hidden="true" /> Imprimir checklist
               </button>
 
               <button
                 type="button"
-                className="checklists-modal-close"
+                className="oficina-btn"
+                aria-label="Fechar detalhes da checklist"
                 onClick={() => setChecklistSelecionada(null)}
               >
-                ×
+                <FiX aria-hidden="true" />
               </button>
             </div>
           </div>
 
-          <div className="checklists-modal-vehicle">
+          <div className="oficina-panel tecnico-resumo-veiculo">
             <div>
               <span>Veículo</span>
               <strong>{montarNomeVeiculo()}</strong>
@@ -979,7 +985,7 @@ function ChecklistsVeiculo() {
 
               {renderItens(checklistSelecionada.itensEntrada)}
 
-              <div className="checklists-observacao-box">
+              <div className="tecnico-observacao">
                 <span>Observações</span>
                 <p>
                   {checklistSelecionada.observacoesEntrada ||
@@ -993,7 +999,7 @@ function ChecklistsVeiculo() {
 
               {renderItens(checklistSelecionada.itensDiagnostico)}
 
-              <div className="checklists-observacao-box">
+              <div className="tecnico-observacao">
                 <span>Observações</span>
                 <p>
                   {checklistSelecionada.observacoesDiagnostico ||
@@ -1013,45 +1019,44 @@ function ChecklistsVeiculo() {
               {renderFoto(checklistSelecionada.fotoDireita, 'Lateral direita')}
             </div>
           </section>
-        </div>
-      </div>
+      </ModalOficina>
     );
   }
 
   return (
-    <Layout>
-      <main className="checklists-page">
-        <section className="checklists-top">
+    <Layout className="oficina-theme tecnico-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page checklists-page">
+        <header className="oficina-page-header">
           <div>
             <h1>Checklists do veículo</h1>
             <p>Consulte as inspeções já registradas para este veículo.</p>
 
-            {carregando && <small>Carregando checklists...</small>}
           </div>
 
-          <div className="checklists-top-actions">
+          <div className="tecnico-page-actions">
             <button
               type="button"
-              className="checklists-btn checklists-btn-outline"
+              className="oficina-btn"
               onClick={voltarPainel}
             >
-              Voltar ao painel
+              <FiArrowLeft aria-hidden="true" /> Voltar ao painel
             </button>
 
             <button
               type="button"
-              className="checklists-btn checklists-btn-blue"
+              className="oficina-btn oficina-btn-primary"
               onClick={abrirNovaChecklist}
               disabled={!veiculo}
             >
-              Nova checklist
+              <FiPlus aria-hidden="true" /> Nova checklist
             </button>
           </div>
-        </section>
+        </header>
 
-        <section className="checklists-vehicle-card">
-          <div className="checklists-vehicle-icon">
-            <img src="/icons/veiculo.svg" alt="Veículo" />
+        <section className="oficina-panel tecnico-resumo-veiculo" aria-label="Veículo das checklists">
+          <div className="tecnico-veiculo-icon">
+            <TbCar aria-hidden="true" />
           </div>
 
           <div>
@@ -1070,25 +1075,28 @@ function ChecklistsVeiculo() {
           </div>
         </section>
 
-        <section className="checklists-card">
-          <div className="checklists-card-header">
+        <section className="oficina-panel">
+          <div className="oficina-list-header">
             <div>
-              <h2>Checklists registradas</h2>
+              <h2 className="oficina-section-heading"><FiClipboard aria-hidden="true" /> Checklists registradas</h2>
               <span>{checklists.length} checklist(s) encontrada(s)</span>
             </div>
 
             <button
               type="button"
+              className="oficina-btn"
               onClick={carregarChecklists}
               disabled={carregando || !veiculo}
             >
-              Atualizar
+              <FiRefreshCw aria-hidden="true" /> Atualizar
             </button>
           </div>
 
+          {carregando && <p role="status" className="tecnico-loading">Carregando checklists...</p>}
           {!carregando && checklists.length === 0 && (
-            <div className="checklists-empty">
-              Nenhuma checklist encontrada para este veículo.
+            <div className="oficina-empty-state">
+              <FiClipboard aria-hidden="true" /><h3>{veiculo ? 'Nenhuma checklist registrada' : 'Selecione um veículo'}</h3>
+              <p>{veiculo ? 'Use Nova checklist para registrar uma inspeção deste veículo.' : 'Abra as checklists pelo painel de veículos em atendimento.'}</p>
             </div>
           )}
 
@@ -1104,9 +1112,11 @@ function ChecklistsVeiculo() {
 
                 <button
                   type="button"
+                  className="oficina-btn"
+                  aria-label={`Ver detalhes da checklist ${checklist.id}`}
                   onClick={() => setChecklistSelecionada(checklist)}
                 >
-                  Ver detalhes
+                  <FiEye aria-hidden="true" /> Ver detalhes
                 </button>
               </article>
             ))}

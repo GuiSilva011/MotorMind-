@@ -1,0 +1,227 @@
+.tecnico-workspace .checklist-sem-veiculo {
+  margin-bottom: 24px;
+}
+
+.tecnico-workspace .checklist-legenda {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-bottom: 24px;
+  color: var(--ui-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tecnico-workspace .checklist-legenda > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tecnico-workspace .checklist-legenda > span:first-child {
+  color: var(--ui-success);
+}
+
+.tecnico-workspace .checklist-legenda > span:nth-child(2) {
+  color: var(--ui-danger);
+}
+
+.tecnico-workspace .checklist-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  align-items: start;
+  gap: 24px;
+}
+
+.tecnico-workspace .checklist-content {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.tecnico-workspace .checklist-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tecnico-workspace :is(.checklist-section-header, .checklist-photos-header) p {
+  margin-top: 8px;
+  color: var(--ui-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tecnico-workspace .checklist-grid-with-notes {
+  display: grid;
+  gap: 20px;
+}
+
+.tecnico-workspace .checklist-items-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tecnico-workspace .checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tecnico-workspace .checklist-item:hover {
+  border-color: var(--ui-link);
+}
+
+.tecnico-workspace .checklist-status-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 1px solid var(--ui-border);
+  border-radius: 5px;
+  background: var(--ui-secondary);
+  font-weight: 600;
+}
+
+.tecnico-workspace .checklist-item.checklist-status-ok {
+  background: var(--ui-success-soft);
+}
+
+.tecnico-workspace .checklist-status-ok .checklist-status-box {
+  background: var(--ui-success);
+  border-color: var(--ui-success);
+  color: var(--ui-surface);
+}
+
+.tecnico-workspace .checklist-item.checklist-status-no {
+  background: var(--ui-danger-soft);
+}
+
+.tecnico-workspace .checklist-status-no .checklist-status-box {
+  background: var(--ui-danger);
+  border-color: var(--ui-danger);
+  color: var(--ui-surface);
+}
+
+.tecnico-workspace .checklist-item-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tecnico-workspace .checklist-photos-header {
+  margin-bottom: 20px;
+}
+
+.tecnico-workspace .checklist-photo-list {
+  display: grid;
+  gap: 16px;
+}
+
+.tecnico-workspace .checklist-photo-card {
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  min-width: 0;
+}
+
+.tecnico-workspace .checklist-photo-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--ui-secondary);
+}
+
+.tecnico-workspace .checklist-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tecnico-workspace .checklist-photo-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: var(--ui-muted);
+  font-size: 12px;
+}
+
+.tecnico-workspace .checklist-photo-empty svg {
+  width: 24px;
+  height: 24px;
+}
+
+.tecnico-workspace .checklist-photo-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tecnico-workspace .checklist-photo-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.tecnico-workspace .checklist-photo-btn input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.tecnico-workspace .checklist-photo-btn:focus-within {
+  outline: 2px solid var(--ui-link);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1280px) {
+  .tecnico-workspace .checklist-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tecnico-workspace .checklist-photo-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .tecnico-workspace .checklist-photo-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .tecnico-workspace .checklist-content,
+  .tecnico-workspace .checklist-layout {
+    gap: 16px;
+  }
+
+  .tecnico-workspace .checklist-items-grid,
+  .tecnico-workspace .checklist-photo-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

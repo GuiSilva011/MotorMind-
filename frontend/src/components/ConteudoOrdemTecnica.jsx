@@ -1,24 +1,25 @@
-import "../styles/tecnicoStyles/ordemServico.css";
+import { FiClipboard, FiPackage, FiTool } from 'react-icons/fi';
+import "../styles/tecnicoStyles/conteudoOrdem.css";
 
 function Pecas({ itens = [] }) {
   if (!itens.length)
     return <p className="os-tecnica-vazio">Nenhuma peça salva neste grupo.</p>;
   return (
-    <div className="os-tecnica-tabela">
-      <table>
+    <div className="oficina-table-wrap">
+      <table className="oficina-table">
         <thead>
           <tr>
-            <th>Código</th>
-            <th>Peça</th>
-            <th>Quantidade</th>
+            <th scope="col">Código</th>
+            <th scope="col">Peça</th>
+            <th scope="col">Quantidade</th>
           </tr>
         </thead>
         <tbody>
           {itens.map((peca) => (
             <tr key={peca.id}>
-              <td>{peca.codigoPeca || "—"}</td>
-              <td>{peca.nomePeca}</td>
-              <td>{peca.quantidade}</td>
+              <td data-label="Código">{peca.codigoPeca || "—"}</td>
+              <td data-label="Peça">{peca.nomePeca}</td>
+              <td data-label="Quantidade">{peca.quantidade}</td>
             </tr>
           ))}
         </tbody>
@@ -50,8 +51,8 @@ function Servicos({ itens = [] }) {
 export default function ConteudoOrdemTecnica({ ordem }) {
   return (
     <div className="os-tecnica-conteudo">
-      <section className="os-tecnica-grupo">
-        <h2>Diagnósticos</h2>
+      <section className="oficina-panel os-tecnica-grupo">
+        <h2 className="oficina-section-heading"><FiClipboard aria-hidden="true" /> Diagnósticos</h2>
         {!ordem.diagnosticos?.length && (
           <p className="os-tecnica-vazio">Nenhum diagnóstico salvo nesta OS.</p>
         )}
@@ -71,12 +72,12 @@ export default function ConteudoOrdemTecnica({ ordem }) {
           </article>
         ))}
       </section>
-      <section className="os-tecnica-grupo">
-        <h2>Serviços sem diagnóstico</h2>
+      <section className="oficina-panel os-tecnica-grupo">
+        <h2 className="oficina-section-heading"><FiTool aria-hidden="true" /> Serviços sem diagnóstico</h2>
         <Servicos itens={ordem.servicos} />
       </section>
-      <section className="os-tecnica-grupo">
-        <h2>Peças avulsas</h2>
+      <section className="oficina-panel os-tecnica-grupo">
+        <h2 className="oficina-section-heading"><FiPackage aria-hidden="true" /> Peças avulsas</h2>
         <Pecas itens={ordem.pecas} />
       </section>
     </div>

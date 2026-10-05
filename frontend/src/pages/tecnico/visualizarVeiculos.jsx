@@ -1,8 +1,12 @@
+import SeletorTema from '../../components/SeletorTema';
+import useTemaOficina from '../../hooks/useTemaOficina';
+import { FiArrowLeft, FiClipboard, FiClock, FiRefreshCw, FiSearch } from 'react-icons/fi';
+import { TbCar } from 'react-icons/tb';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../services/api';
-import '../../styles/tecnicoStyles/visualizarVeiculos.css';
+import '../../styles/tecnicoStyles/tecnico.css';
 
 /**
  * Tela responsável pela consulta e pesquisa de veículos cadastrados,
@@ -13,6 +17,7 @@ import '../../styles/tecnicoStyles/visualizarVeiculos.css';
  * @returns {JSX.Element} Tela de consulta de veículos.
  */
 function VisualizarVeiculos() {
+  const [tema, setTema] = useTemaOficina();
   const navigate = useNavigate();
 
   const [veiculos, setVeiculos] = useState([]);
@@ -144,148 +149,44 @@ function VisualizarVeiculos() {
   }, [veiculos, busca, filtro]);
 
   return (
-    <Layout>
-      <main className="visualizar-veiculos-page">
-        <section className="visualizar-veiculos-top">
-          <div>
-            <h1>Veículos cadastrados</h1>
-            <p>
-              Consulte os veículos registrados no sistema e acesse rapidamente o
-              checklist ou o histórico veicular.
-            </p>
-
-            {carregando && <small>Carregando veículos...</small>}
-          </div>
-
-          <div className="tecnico-page-actions">
-            <button
-              type="button"
-              className="tecnico-voltar-painel"
-              onClick={() => navigate('/tecnico/painel')}
-            >
-              Voltar ao painel
-            </button>
-          </div>
-        </section>
-
-        <section className="visualizar-veiculos-card">
-          <div className="visualizar-veiculos-card-header">
-            <div>
-              <h2>Lista de veículos</h2>
-              <span>{veiculosFiltrados.length} veículo(s) encontrado(s)</span>
+    <Layout className="oficina-theme tecnico-workspace" theme={tema}
+      topbarActions={<SeletorTema tema={tema} onChange={setTema} />}>
+      <main className="oficina-page visualizar-veiculos-page">
+        <header className="oficina-page-header">
+          <div><h1>Consultar veículos</h1><p>Acesse a checklist e o histórico dos veículos vinculados aos seus atendimentos.</p></div>
+          <button type="button" className="oficina-btn" onClick={() => navigate('/tecnico/painel')}><FiArrowLeft aria-hidden="true" /> Voltar ao painel</button>
+        </header>
+        <section className="oficina-panel" aria-labelledby="veiculos-lista-titulo">
+          <div className="oficina-list-header"><div><h2 id="veiculos-lista-titulo" className="oficina-section-heading"><TbCar aria-hidden="true" /> Veículos vinculados</h2>
+            <span>{veiculosFiltrados.length} veículo(s) encontrado(s)</span></div></div>
+          <div className="tecnico-toolbar">
+            <div className="oficina-field"><label htmlFor="veiculos-busca">Pesquisar veículo</label>
+              <div className="tecnico-search-control"><FiSearch aria-hidden="true" /><input id="veiculos-busca" type="search" value={busca} onChange={event => setBusca(event.target.value)} placeholder="Placa, cliente, marca, modelo ou chassi" /></div>
             </div>
-          </div>
-
-          <div className="visualizar-veiculos-toolbar">
-            <div className="visualizar-veiculos-search">
-              <label>Pesquisar veículo</label>
-
-              <input
-                value={busca}
-                onChange={(event) => setBusca(event.target.value)}
-                placeholder="Buscar por placa, cliente, marca, modelo ou chassi"
-              />
-            </div>
-
-            <div className="visualizar-veiculos-filter">
-              <label>Filtro</label>
-
-              <select
-                value={filtro}
-                onChange={(event) => setFiltro(event.target.value)}
-              >
-                <option value="todos">Todos os veículos</option>
-                <option value="com-cliente">Com cliente vinculado</option>
-                <option value="sem-cliente">Sem cliente vinculado</option>
+            <div className="oficina-field"><label htmlFor="veiculos-filtro">Vínculo com cliente</label>
+              <select id="veiculos-filtro" value={filtro} onChange={event => setFiltro(event.target.value)}>
+                <option value="todos">Todos os veículos</option><option value="com-cliente">Com cliente vinculado</option><option value="sem-cliente">Sem cliente vinculado</option>
               </select>
             </div>
-
-            <button
-              type="button"
-              className="visualizar-veiculos-refresh"
-              onClick={carregarVeiculos}
-              disabled={carregando}
-            >
-              Atualizar
-            </button>
+            <button type="button" className="oficina-btn" onClick={carregarVeiculos} disabled={carregando}><FiRefreshCw aria-hidden="true" /> Atualizar</button>
           </div>
-
-          <div className="visualizar-veiculos-list">
-            {veiculosFiltrados.length === 0 && (
-              <div className="visualizar-veiculos-empty">
-                Nenhum veículo encontrado.
-              </div>
-            )}
-
-            {veiculosFiltrados.map((veiculo) => (
-              <article className="visualizar-veiculos-item" key={veiculo.id}>
-                <div className="visualizar-veiculos-icon">
-                  <img src="/icons/veiculo.svg" alt="Veículo" />
+          {carregando && <p className="tecnico-loading" role="status">Carregando veículos...</p>}
+          {!carregando && veiculosFiltrados.length === 0 && <div className="oficina-empty-state"><TbCar aria-hidden="true" /><h3>Nenhum veículo encontrado</h3><p>Altere a busca ou consulte seus vínculos pelo painel técnico.</p></div>}
+          <div className="tecnico-veiculos">
+            {veiculosFiltrados.map(veiculo => (
+              <article className="tecnico-veiculo" key={veiculo.id}>
+                <div className="tecnico-veiculo-header"><div className="tecnico-veiculo-icon"><TbCar aria-hidden="true" /></div>
+                  <div className="tecnico-veiculo-titulo"><h3>{montarNomeVeiculo(veiculo)}</h3><span>{veiculo.cliente?.nome || 'Cliente não informado'}</span></div>
+                  <strong className="tecnico-placa">{veiculo.placa || 'SEM PLACA'}</strong>
                 </div>
-
-                <div className="visualizar-veiculos-info">
-                  <div className="visualizar-veiculos-title-row">
-                    <div>
-                      <h2>{montarNomeVeiculo(veiculo)}</h2>
-                      <span>
-                        {veiculo.cliente?.nome || 'Cliente não informado'}
-                      </span>
-                    </div>
-
-                    <strong className="visualizar-veiculos-placa">
-                      {veiculo.placa || 'SEM PLACA'}
-                    </strong>
-                  </div>
-
-                  <div className="visualizar-veiculos-details">
-                    <div>
-                      <span>Marca</span>
-                      <strong>{veiculo.fabricante || '-'}</strong>
-                    </div>
-
-                    <div>
-                      <span>Modelo</span>
-                      <strong>{veiculo.modelo || '-'}</strong>
-                    </div>
-
-                    <div>
-                      <span>Ano</span>
-                      <strong>{montarAnoVeiculo(veiculo)}</strong>
-                    </div>
-
-                    <div>
-                      <span>KM</span>
-                      <strong>{veiculo.km || '-'}</strong>
-                    </div>
-
-                    <div>
-                      <span>Cor</span>
-                      <strong>{veiculo.cor || '-'}</strong>
-                    </div>
-
-                    <div>
-                      <span>Chassi</span>
-                      <strong>{veiculo.chassi || '-'}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="visualizar-veiculos-actions">
-                  <button
-                    type="button"
-                    className="visualizar-veiculos-btn visualizar-veiculos-btn-blue"
-                    onClick={() => irParaChecklist(veiculo)}
-                  >
-                    Checklist
-                  </button>
-
-                  <button
-                    type="button"
-                    className="visualizar-veiculos-btn visualizar-veiculos-btn-dark"
-                    onClick={() => irParaHistorico(veiculo)}
-                  >
-                    Histórico
-                  </button>
+                <dl className="tecnico-dados">
+                  <div><dt>Marca</dt><dd>{veiculo.fabricante || '—'}</dd></div><div><dt>Modelo</dt><dd>{veiculo.modelo || '—'}</dd></div>
+                  <div><dt>Ano</dt><dd>{montarAnoVeiculo(veiculo)}</dd></div><div><dt>KM</dt><dd>{veiculo.km ?? '—'}</dd></div>
+                  <div><dt>Cor</dt><dd>{veiculo.cor || '—'}</dd></div><div><dt>Chassi</dt><dd>{veiculo.chassi || '—'}</dd></div>
+                </dl>
+                <div className="tecnico-veiculo-acoes">
+                  <button type="button" className="oficina-btn oficina-btn-primary" onClick={() => irParaChecklist(veiculo)}><FiClipboard aria-hidden="true" /> Checklist</button>
+                  <button type="button" className="oficina-btn" onClick={() => irParaHistorico(veiculo)}><FiClock aria-hidden="true" /> Histórico veicular</button>
                 </div>
               </article>
             ))}

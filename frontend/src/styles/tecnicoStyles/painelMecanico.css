@@ -1,0 +1,260 @@
+.tecnico-workspace .tecnico-painel-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+.tecnico-workspace .tecnico-acompanhamento {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.tecnico-workspace .tecnico-acompanhamento .oficina-panel {
+  padding: 20px;
+}
+
+.tecnico-workspace .tecnico-atendimentos .tecnico-toolbar {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.tecnico-workspace .tecnico-atendimentos .tecnico-toolbar > .oficina-field:first-child {
+  grid-column: auto;
+}
+
+.tecnico-workspace .tecnico-atendimentos .tecnico-veiculos {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tecnico-workspace .tecnico-visoes {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  background: var(--ui-secondary);
+}
+
+.tecnico-workspace .tecnico-visoes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ui-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tecnico-workspace .tecnico-visoes button[aria-pressed='true'] {
+  background: var(--ui-surface);
+  border-color: var(--ui-border);
+  color: var(--ui-text);
+}
+
+.tecnico-workspace .tecnico-filtros-rapidos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tecnico-workspace .tecnico-filtros-rapidos button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  background: var(--ui-surface);
+  color: var(--ui-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tecnico-workspace .tecnico-filtros-rapidos button[aria-pressed='true'] {
+  background: var(--ui-blue-soft);
+  border-color: var(--ui-link);
+  color: var(--ui-link);
+}
+
+.tecnico-workspace .tecnico-filtros-rapidos button > span {
+  min-width: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.tecnico-workspace .tecnico-os-lista {
+  display: grid;
+  gap: 16px;
+}
+
+.tecnico-workspace .tecnico-os-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--ui-border);
+  border-left: 3px solid var(--ui-link);
+  border-radius: 6px;
+  background: var(--ui-surface);
+}
+
+.tecnico-workspace .tecnico-os-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tecnico-workspace .tecnico-os-veiculo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.tecnico-workspace .tecnico-os-veiculo > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--ui-link);
+}
+
+.tecnico-workspace .tecnico-os-dados {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tecnico-workspace .tecnico-disponiveis {
+  border-top: 3px solid var(--ui-success);
+}
+
+.tecnico-workspace .tecnico-disponiveis .oficina-section-heading > svg {
+  color: var(--ui-success);
+}
+
+.tecnico-workspace .tecnico-disponiveis-total {
+  color: var(--ui-muted);
+  font-size: 12px;
+}
+
+.tecnico-workspace .tecnico-disponiveis-total strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ui-success);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.tecnico-workspace .tecnico-ticket-lista {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.tecnico-workspace .tecnico-ticket-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  background: var(--ui-secondary);
+  color: var(--ui-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tecnico-workspace .tecnico-ticket-link:hover {
+  border-color: var(--ui-link);
+}
+
+.tecnico-workspace .tecnico-ticket-link > div {
+  min-width: 0;
+}
+
+.tecnico-workspace .tecnico-ticket-link strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.tecnico-workspace .tecnico-ticket-link :is(div > span, small) {
+  display: block;
+  margin-top: 6px;
+  color: var(--ui-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.tecnico-workspace .tecnico-ticket-link > svg {
+  flex-shrink: 0;
+  color: var(--ui-muted);
+}
+
+.tecnico-workspace .tecnico-ticket-status {
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--ui-blue-soft);
+  color: var(--ui-link);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.tecnico-workspace .tecnico-ticket-status:is(.ABERTA, .AGUARDANDO_PECA) {
+  background: var(--ui-warning-soft);
+  color: var(--ui-warning);
+}
+
+.tecnico-workspace .tecnico-ticket-status.DISPONIVEL {
+  background: var(--ui-success-soft);
+  color: var(--ui-success);
+}
+
+.tecnico-workspace .tecnico-pedidos-vazio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  color: var(--ui-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1350px) {
+  .tecnico-workspace .tecnico-painel-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tecnico-workspace .tecnico-acompanhamento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .tecnico-workspace .tecnico-acompanhamento,
+  .tecnico-workspace .tecnico-atendimentos .tecnico-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tecnico-workspace .tecnico-painel-layout,
+  .tecnico-workspace .tecnico-acompanhamento {
+    gap: 16px;
+  }
+
+  .tecnico-workspace .tecnico-os-card {
+    padding: 16px;
+  }
+}

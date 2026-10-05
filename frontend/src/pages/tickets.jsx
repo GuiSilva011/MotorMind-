@@ -23,13 +23,19 @@ const TRANSICOES = {
   AGUARDANDO_PECA: ["EM_ATENDIMENTO", "DISPONIVEL", "CANCELADA"],
   DISPONIVEL: ["EM_ATENDIMENTO", "ENTREGUE", "CANCELADA"],
 };
+const ABAS_TICKET = [
+  { id: "pedido", nome: "Pedido", icone: FiClipboard },
+  { id: "atendimento", nome: "Atendimento", icone: FiCheck },
+  { id: "conversa", nome: "Conversa", icone: FiMessageSquare },
+  { id: "historico", nome: "Histórico", icone: FiClock },
+];
 const STATUS_OS_ENCERRADA = ["FINALIZADA", "FECHADA", "CANCELADA"];
 const dataHora = (data) => new Date(data).toLocaleString("pt-BR");
 const erroApi = (error) =>
   error.response?.data?.erro ||
   "Não foi possível concluir. Verifique sua conexão e atualize antes de tentar novamente.";
 
-function ChatTicket({ ticket, usuario }) {
+function ChatTicket({ ticket, usuario, visivel }) {
   const [versao, setVersao] = useState(0);
   const [antesDe, setAntesDe] = useState(null);
   const [conteudo, setConteudo] = useState("");
@@ -43,7 +49,9 @@ function ChatTicket({ ticket, usuario }) {
   const log = useRef(null);
   const seguir = useRef(true);
   const consulta = useConsultaTickets(
-    `/tickets/${ticket.id}/mensagens${antesDe ? `?antesDe=${antesDe}` : ""}`,
+    visivel
+      ? `/tickets/${ticket.id}/mensagens${antesDe ? `?antesDe=${antesDe}` : ""}`
+      : null,
     antesDe ? 0 : 5000,
     versao,
   );
@@ -58,9 +66,9 @@ function ChatTicket({ ticket, usuario }) {
     (usuario.Role !== "TECNICO" ||
       ticket.ordemServico.tecnicoId === usuario.id);
   useEffect(() => {
-    if (!antesDe && seguir.current && log.current)
+    if (visivel && !antesDe && seguir.current && log.current)
       log.current.scrollTop = log.current.scrollHeight;
-  }, [ultimoId, antesDe]);
+  }, [ultimoId, antesDe, visivel]);
   useEffect(() => {
     const timer = window.setInterval(() => setAgora(Date.now()), 1000);
     return () => window.clearInterval(timer);
@@ -271,13 +279,39 @@ function ChatTicket({ ticket, usuario }) {
 }
 
 function TicketDetalhe({ id, usuario, atualizado }) {
+  const [abaAtiva, setAbaAtiva] = useState("pedido");
+  const [conversaVisitada, setConversaVisitada] = useState(false);
   const [versao, setVersao] = useState(0);
   const [ocupado, setOcupado] = useState(false);
   const [destino, setDestino] = useState("");
   const [motivo, setMotivo] = useState("");
   const trava = useRef(false);
+  const abasRef = useRef(null);
   const consulta = useConsultaTickets(`/tickets/${id}`, 10000, versao);
   const ticket = consulta.dados;
+  const tecnico = usuario.Role === "TECNICO";
+  const abasDisponiveis = ABAS_TICKET.filter((aba) => !tecnico || aba.id !== "atendimento");
+
+  function selecionarAba(aba) {
+    setAbaAtiva(aba);
+    if (aba === "conversa") setConversaVisitada(true);
+  }
+
+  function navegarAbas(event) {
+    const indice = abasDisponiveis.findIndex((aba) => aba.id === abaAtiva);
+    const destinos = {
+      ArrowRight: (indice + 1) % abasDisponiveis.length,
+      ArrowLeft: (indice + abasDisponiveis.length - 1) % abasDisponiveis.length,
+      Home: 0,
+      End: abasDisponiveis.length - 1,
+    };
+    if (!(event.key in destinos)) return;
+    event.preventDefault();
+    const proxima = abasDisponiveis[destinos[event.key]].id;
+    selecionarAba(proxima);
+    abasRef.current?.querySelector(`#ticket-aba-${proxima}`)?.focus();
+  }
+
   async function executar(tipo) {
     if (trava.current) return;
     if (
@@ -298,6 +332,10 @@ function TicketDetalhe({ id, usuario, atualizado }) {
       setMotivo("");
       setVersao((v) => v + 1);
       atualizado();
+      if (tipo === "assumir") {
+        selecionarAba("conversa");
+        abasRef.current?.querySelector("#ticket-aba-conversa")?.focus();
+      }
       toast.success("Ticket atualizado.");
     } catch (error) {
       toast.error(erroApi(error));
@@ -325,6 +363,41 @@ function TicketDetalhe({ id, usuario, atualizado }) {
     : ticket.solicitanteId === usuario.id && ticket.status === "ABERTA"
       ? ["CANCELADA"]
       : [];
+  const podeAssumir = !ticket.responsavelId &&
+    ticket.status === "ABERTA" && !tecnico;
+  const formularioStatus = opcoes.length > 0 && (
+    <form className="ticket-status-form" onSubmit={(event) => {
+      event.preventDefault();
+      void executar("status");
+    }}>
+      <h3 className="oficina-section-heading">
+        <FiCheck aria-hidden="true" />{tecnico ? "Cancelar solicitação" : "Atendimento"}
+      </h3>
+      <label>
+        {tecnico ? "Ação do pedido" : "Atualizar atendimento"}
+        <select required value={opcoes.includes(destino) ? destino : ""} disabled={ocupado}
+          onChange={(event) => setDestino(event.target.value)}>
+          <option value="">{tecnico ? "Selecione uma ação" : "Selecione o próximo status"}</option>
+          {opcoes.map((status) => (
+            <option key={status} value={status}>
+              {tecnico && status === "CANCELADA" ? "Cancelar solicitação" : STATUS[status]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        {tecnico ? "Motivo do cancelamento" : "Registro permanente"}{" "}
+        {destino === "CANCELADA" ? "(obrigatório)" : "(opcional)"}
+        <textarea maxLength={500} value={motivo} required={destino === "CANCELADA"}
+          disabled={ocupado} onChange={(event) => setMotivo(event.target.value)}
+          placeholder={tecnico ? "Informe por que o pedido deve ser cancelado" : "Motivo, disponibilidade, compra ou confirmação da entrega"} />
+      </label>
+      <button className="ticket-primario" disabled={ocupado || !opcoes.includes(destino)}>
+        <FiSave aria-hidden="true" />
+        {ocupado ? "Salvando…" : tecnico ? "Confirmar cancelamento" : "Salvar status"}
+      </button>
+    </form>
+  );
   return (
     <section className="ticket-card oficina-panel ticket-detalhe" aria-labelledby="ticket-detail-title">
       {consulta.erro && (
@@ -341,56 +414,70 @@ function TicketDetalhe({ id, usuario, atualizado }) {
           {STATUS[ticket.status]}
         </span>
       </header>
-      <dl className="ticket-resumo">
-        <div><dt>Ordem de serviço</dt><dd>{ticket.ordemServico.codigo}</dd></div>
-        <div>
-          <dt>Veículo</dt>
-          <dd>
-            <span className="ticket-placa">{ticket.ordemServico.veiculo.placa}</span>
-            <span>{ticket.ordemServico.veiculo.modelo}</span>
-          </dd>
-        </div>
-        <div><dt>Solicitante</dt><dd>{ticket.solicitante.Nome}</dd></div>
-        <div>
-          <dt>Responsável</dt>
-          <dd>{ticket.responsavel?.Nome || "Aguardando atendimento"}</dd>
-        </div>
-      </dl>
-      {["OPERADOR", "OWNER"].includes(usuario.Role) && (
-        <Link className="ticket-link-os" to="/operador/ordem-servico">
-          <FiClipboard aria-hidden="true" />Acessar ordens de serviço
-        </Link>
-      )}
-      <div className="oficina-table-wrap">
-      <table className="oficina-table">
-        <caption>Peças solicitadas</caption>
-        <thead>
-          <tr>
-            <th scope="col">Peça</th>
-            <th scope="col">Quantidade</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ticket.itens.map((item) => (
-            <tr key={item.id}>
-              <td data-label="Peça">
-                {item.nomePeca}
-                {item.observacao && <small>{item.observacao}</small>}
-              </td>
-              <td data-label="Quantidade">{item.quantidadeSolicitada}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="ticket-abas" role="tablist" aria-label="Seções da solicitação"
+        ref={abasRef} onKeyDown={navegarAbas}>
+        {abasDisponiveis.map((aba) => (
+          <button key={aba.id} type="button" role="tab" id={`ticket-aba-${aba.id}`}
+            aria-controls={`ticket-painel-${aba.id}`} aria-selected={abaAtiva === aba.id}
+            tabIndex={abaAtiva === aba.id ? 0 : -1} onClick={() => selecionarAba(aba.id)}>
+            <aba.icone aria-hidden="true" />{aba.nome}
+          </button>
+        ))}
       </div>
-      {ticket.observacao && <p className="ticket-texto">{ticket.observacao}</p>}
-      <p className="ticket-aviso">
-        O ticket acompanha o pedido e a entrega. Nesta etapa, retirar peças do
-        estoque continua sendo uma ação da OS, sem baixa adicional pelo ticket.
-      </p>
-      {!ticket.responsavelId &&
-        ticket.status === "ABERTA" &&
-        usuario.Role !== "TECNICO" && (
+      <div id="ticket-painel-pedido" className="ticket-aba-panel" role="tabpanel"
+        aria-labelledby="ticket-aba-pedido" hidden={abaAtiva !== "pedido"} tabIndex={0}>
+        <dl className="ticket-resumo">
+          <div><dt>Ordem de serviço</dt><dd>{ticket.ordemServico.codigo}</dd></div>
+          <div>
+            <dt>Veículo</dt>
+            <dd>
+              <span className="ticket-placa">{ticket.ordemServico.veiculo.placa}</span>
+              <span>{ticket.ordemServico.veiculo.modelo}</span>
+            </dd>
+          </div>
+          <div><dt>Solicitante</dt><dd>{ticket.solicitante.Nome}</dd></div>
+          <div>
+            <dt>Responsável</dt>
+            <dd>{ticket.responsavel?.Nome || "Aguardando atendimento"}</dd>
+          </div>
+        </dl>
+        {["OPERADOR", "OWNER"].includes(usuario.Role) && (
+          <Link className="ticket-link-os" to="/operador/ordem-servico">
+            <FiClipboard aria-hidden="true" />Acessar ordens de serviço
+          </Link>
+        )}
+        <div className="oficina-table-wrap">
+          <table className="oficina-table">
+            <caption>Peças solicitadas</caption>
+            <thead>
+              <tr>
+                <th scope="col">Peça</th>
+                <th scope="col">Quantidade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ticket.itens.map((item) => (
+                <tr key={item.id}>
+                  <td data-label="Peça">
+                    {item.nomePeca}
+                    {item.observacao && <small>{item.observacao}</small>}
+                  </td>
+                  <td data-label="Quantidade">{item.quantidadeSolicitada}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {ticket.observacao && <p className="ticket-texto">{ticket.observacao}</p>}
+        {tecnico && formularioStatus}
+      </div>
+      {!tecnico && <div id="ticket-painel-atendimento" className="ticket-aba-panel" role="tabpanel"
+        aria-labelledby="ticket-aba-atendimento" hidden={abaAtiva !== "atendimento"} tabIndex={0}>
+        <p className="ticket-aviso">
+          Registre a retirada de peças na ordem de serviço. Atualizar este pedido
+          não altera o saldo do estoque.
+        </p>
+        {podeAssumir && (
           <button
             type="button"
             className="ticket-primario"
@@ -404,74 +491,59 @@ function TicketDetalhe({ id, usuario, atualizado }) {
             {ocupado ? "Assumindo…" : "Assumir ticket e abrir chat"}
           </button>
         )}
-      {opcoes.length > 0 && (
-        <form
-          className="ticket-status-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void executar("status");
-          }}
-        >
-          <h3 className="oficina-section-heading">
-            <FiCheck aria-hidden="true" />Atendimento
+        {formularioStatus}
+        {!podeAssumir && !opcoes.length && (
+          <p className="ticket-aviso">
+            {["ENTREGUE", "CANCELADA"].includes(ticket.status)
+              ? "Atendimento encerrado. Consulte as alterações na aba Histórico."
+              : "O status do atendimento é atualizado pelo responsável pela solicitação."}
+          </p>
+        )}
+      </div>}
+      <div id="ticket-painel-conversa" className="ticket-aba-panel" role="tabpanel"
+        aria-labelledby="ticket-aba-conversa" hidden={abaAtiva !== "conversa"} tabIndex={0}>
+        {ticket.podeLerChat ? (
+          conversaVisitada && <ChatTicket ticket={ticket} usuario={usuario} visivel={abaAtiva === "conversa"} />
+        ) : (
+          <div className="oficina-empty-state ticket-conversa-bloqueada">
+            <FiMessageSquare aria-hidden="true" />
+            <h3>{ticket.responsavelId ? "Conversa restrita" : "Aguardando atendimento"}</h3>
+            <p>
+              {ticket.responsavelId
+                ? "A conversa é exclusiva do mecânico solicitante e do responsável pelo ticket."
+                : usuario.Role === "TECNICO"
+                  ? "Aguarde um operador assumir a solicitação para conversar."
+                  : "Assuma a solicitação na aba Atendimento para iniciar a conversa."}
+            </p>
+            {podeAssumir && (
+              <button type="button" onClick={() => {
+                selecionarAba("atendimento");
+                abasRef.current?.querySelector("#ticket-aba-atendimento")?.focus();
+              }}>
+                <FiUserCheck aria-hidden="true" />Ir para atendimento
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <div id="ticket-painel-historico" className="ticket-aba-panel" role="tabpanel"
+        aria-labelledby="ticket-aba-historico" hidden={abaAtiva !== "historico"} tabIndex={0}>
+        <section className="ticket-historico" aria-labelledby="ticket-historico-titulo">
+          <h3 id="ticket-historico-titulo" className="oficina-section-heading">
+            <FiClock aria-hidden="true" />Histórico permanente ({ticket.historico.length})
           </h3>
-          <label>
-            Atualizar atendimento
-            <select
-              required
-              value={opcoes.includes(destino) ? destino : ""}
-              disabled={ocupado}
-              onChange={(e) => setDestino(e.target.value)}
-            >
-              <option value="">Selecione o próximo status</option>
-              {opcoes.map((status) => (
-                <option key={status} value={status}>
-                  {STATUS[status]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Registro permanente{" "}
-            {destino === "CANCELADA" ? "(obrigatório)" : "(opcional)"}
-            <textarea
-              maxLength={500}
-              value={motivo}
-              required={destino === "CANCELADA"}
-              disabled={ocupado}
-              onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Motivo, disponibilidade, compra ou confirmação da entrega"
-            />
-          </label>
-          <button className="ticket-primario" disabled={ocupado || !opcoes.includes(destino)}>
-            <FiSave aria-hidden="true" />
-            {ocupado ? "Salvando…" : "Salvar status"}
-          </button>
-        </form>
-      )}
-      <details className="ticket-historico">
-        <summary>
-          <span><FiClock aria-hidden="true" />Histórico permanente ({ticket.historico.length})</span>
-        </summary>
-        <ol>
-          {ticket.historico.map((item) => (
-            <li key={item.id}>
-              <strong>{STATUS[item.statusAtual]}</strong> · {item.usuarioNome}
-              <time dateTime={item.createdAt}>{dataHora(item.createdAt)}</time>
-              {item.motivo && <p>{item.motivo}</p>}
-            </li>
-          ))}
-        </ol>
-      </details>
-      {ticket.podeLerChat ? (
-        <ChatTicket ticket={ticket} usuario={usuario} />
-      ) : (
-        <p className="ticket-aviso">
-          {ticket.responsavelId
-            ? "A conversa é exclusiva do mecânico solicitante e do responsável pelo ticket."
-            : "Assuma o ticket para iniciar o chat."}
-        </p>
-      )}
+          {!ticket.historico.length && <p>Nenhuma alteração registrada.</p>}
+          <ol>
+            {ticket.historico.map((item) => (
+              <li key={item.id}>
+                <strong>{STATUS[item.statusAtual]}</strong> · {item.usuarioNome}
+                <time dateTime={item.createdAt}>{dataHora(item.createdAt)}</time>
+                {item.motivo && <p>{item.motivo}</p>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
     </section>
   );
 }
