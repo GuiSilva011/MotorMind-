@@ -243,7 +243,6 @@ export default function Relatorios() {
         <div className="relatorio-indicadores" aria-label="Resumo gerencial">
           <Indicador titulo="Ordens no período" valor={resumo.quantidade} descricao={`${resumo.canceladas} cancelada(s)`} icone={<FiBarChart2 aria-hidden="true" />} />
           <Indicador titulo="Valor das OS" valor={formatarValorRelatorio(resumo.total, 'moeda')} descricao="Total dos itens após descontos, sem canceladas" icone={<FiDollarSign aria-hidden="true" />} />
-          <Indicador titulo="Ticket médio" valor={formatarValorRelatorio(resumo.ticketMedio, 'moeda')} descricao={`Valor médio de ${resumo.quantidadeValidas} OS não cancelada(s)`} icone={<FiDollarSign aria-hidden="true" />} />
           <Indicador titulo="Ordens ativas" valor={resumo.ativas} descricao="Abertas, em andamento ou aguardando peça" icone={<FiActivity aria-hidden="true" />} />
           <Indicador titulo="Concluídas" valor={resumo.concluidas} descricao={`${formatarValorRelatorio(resumo.valorConcluidas, 'moeda')} em finalizadas e fechadas`} icone={<FiCheckCircle aria-hidden="true" />} />
           <Indicador titulo="Clientes atendidos" valor={resumo.clientes} descricao="Clientes distintos nas OS não canceladas" icone={<FiUsers aria-hidden="true" />} />

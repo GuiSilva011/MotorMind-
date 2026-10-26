@@ -107,8 +107,9 @@ test('painel gerencial usa os valores da OS, temas existentes e filtros associad
   for (tema of ['claro', 'escuro']) {
     for (role of ['ADMIN', 'OWNER']) {
       const html = renderTela();
-      for (const texto of ['Relatórios gerenciais', 'Ticket médio', 'Ordens ativas', 'Clientes atendidos', 'Evolução do período',
+      for (const texto of ['Relatórios gerenciais', 'Ordens ativas', 'Clientes atendidos', 'Evolução do período',
         'Situação das ordens', 'Composição dos valores', 'Peças mais utilizadas', '150,00', 'Técnico de teste', 'ABC1D23', 'Exportar tabela em CSV']) assert.ok(html.includes(texto), texto);
+      assert.ok(!html.includes('Ticket médio'));
       assert.ok(html.includes(`data-theme="${tema}"`));
       const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
       assert.equal(ids.length, new Set(ids).size);
