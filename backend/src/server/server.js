@@ -55,6 +55,8 @@ const PORT = process.env.PORT || 3000
  * express.json realiza a leitura de dados JSON enviados no corpo
  * das requisições.
  */
+// Atrás do Nginx, req.ip usa X-Forwarded-For no limitador de cadastro.
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
 

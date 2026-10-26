@@ -129,7 +129,7 @@ function ChecklistsVeiculo() {
       return caminho;
     }
 
-    return `http://localhost:3000${caminho}`;
+    return `${api.defaults.baseURL}${caminho}`;
   }
 
 /**
