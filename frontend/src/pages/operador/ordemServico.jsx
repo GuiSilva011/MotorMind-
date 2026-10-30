@@ -751,11 +751,13 @@ function OrdemServico() {
    */
   function adicionarDiagnostico() {
     if (!podeEditar) return;
+    const diagnostico = criarDiagnostico();
 
     setOrdem((prev) => ({
       ...prev,
-      diagnosticos: [...prev.diagnosticos, criarDiagnostico()],
+      diagnosticos: [...prev.diagnosticos, diagnostico],
     }));
+    return diagnostico;
   }
 
   /**
@@ -830,6 +832,7 @@ function OrdemServico() {
    */
   function adicionarServicoAoDiagnostico(diagnosticoId) {
     if (!podeEditar) return;
+    const servico = criarServico();
 
     setOrdem((prev) => ({
       ...prev,
@@ -837,11 +840,12 @@ function OrdemServico() {
         diagnostico.id === diagnosticoId
           ? {
               ...diagnostico,
-              servicos: [...diagnostico.servicos, criarServico()],
+              servicos: [...diagnostico.servicos, servico],
             }
           : diagnostico
       ),
     }));
+    return servico;
   }
 
   /**
@@ -850,14 +854,16 @@ function OrdemServico() {
    */
   function adicionarServicoSemDiagnostico() {
     if (!podeEditar) return;
+    const servico = criarServico();
 
     setOrdem((prev) => ({
       ...prev,
       servicosSemDiagnostico: [
         ...prev.servicosSemDiagnostico,
-        criarServico(),
+        servico,
       ],
     }));
+    return servico;
   }
 
   /**
@@ -1074,6 +1080,7 @@ function OrdemServico() {
    */
   function adicionarPecaDiagnostico(diagnosticoId, servicoId) {
     if (!podeEditar) return;
+    const peca = criarPeca();
 
     setOrdem((prev) => ({
       ...prev,
@@ -1085,7 +1092,7 @@ function OrdemServico() {
                 servico.id === servicoId
                   ? {
                       ...servico,
-                      pecas: [...servico.pecas, criarPeca()],
+                      pecas: [...servico.pecas, peca],
                     }
                   : servico
               ),
@@ -1093,6 +1100,7 @@ function OrdemServico() {
           : diagnostico
       ),
     }));
+    return peca;
   }
 
   /**
@@ -1103,6 +1111,7 @@ function OrdemServico() {
    */
   function adicionarPecaSemDiagnostico(servicoId) {
     if (!podeEditar) return;
+    const peca = criarPeca();
 
     setOrdem((prev) => ({
       ...prev,
@@ -1110,11 +1119,12 @@ function OrdemServico() {
         servico.id === servicoId
           ? {
               ...servico,
-              pecas: [...servico.pecas, criarPeca()],
+              pecas: [...servico.pecas, peca],
             }
           : servico
       ),
     }));
+    return peca;
   }
 
   /**
@@ -1123,11 +1133,56 @@ function OrdemServico() {
    */
   function adicionarPecaAvulsa() {
     if (!podeEditar) return;
+    const peca = criarPeca();
 
     setOrdem((prev) => ({
       ...prev,
-      pecasAvulsas: [...prev.pecasAvulsas, criarPeca()],
+      pecasAvulsas: [...prev.pecasAvulsas, peca],
     }));
+    return peca;
+  }
+
+  function moverServicoParaDiagnostico(servicoId, diagnosticoId) {
+    if (!podeEditar) return;
+    setOrdem((prev) => {
+      const servico = prev.servicosSemDiagnostico.find((item) => item.id === servicoId);
+      if (!servico || !prev.diagnosticos.some((item) => item.id === diagnosticoId)) return prev;
+      return {
+        ...prev,
+        servicosSemDiagnostico: prev.servicosSemDiagnostico.filter((item) => item.id !== servicoId),
+        diagnosticos: prev.diagnosticos.map((item) => item.id === diagnosticoId
+          ? { ...item, servicos: [...item.servicos, servico] } : item),
+      };
+    });
+  }
+
+  function moverPecaAvulsaParaServico(pecaId, diagnosticoId, servicoId) {
+    if (!podeEditar) return;
+    setOrdem((prev) => {
+      const peca = prev.pecasAvulsas.find((item) => item.id === pecaId);
+      if (!peca) return prev;
+      if (diagnosticoId) {
+        const existeServico = prev.diagnosticos.some((diagnostico) => diagnostico.id === diagnosticoId &&
+          diagnostico.servicos.some((servico) => servico.id === servicoId));
+        if (!existeServico) return prev;
+        return {
+          ...prev,
+          pecasAvulsas: prev.pecasAvulsas.filter((item) => item.id !== pecaId),
+          diagnosticos: prev.diagnosticos.map((diagnostico) => diagnostico.id !== diagnosticoId ? diagnostico : {
+            ...diagnostico,
+            servicos: diagnostico.servicos.map((servico) => servico.id === servicoId
+              ? { ...servico, pecas: [...servico.pecas, peca] } : servico),
+          }),
+        };
+      }
+      if (!prev.servicosSemDiagnostico.some((servico) => servico.id === servicoId)) return prev;
+      return {
+        ...prev,
+        pecasAvulsas: prev.pecasAvulsas.filter((item) => item.id !== pecaId),
+        servicosSemDiagnostico: prev.servicosSemDiagnostico.map((servico) => servico.id === servicoId
+          ? { ...servico, pecas: [...servico.pecas, peca] } : servico),
+      };
+    });
   }
 
   /**
@@ -3235,6 +3290,7 @@ Pode me enviar os valores e disponibilidade, por favor?`;
           abrirTickets: () => navigate(`/tickets?ordem=${ordem.id}`),
           abrirCotacao: () => setModalCotacaoAberto(true),
           adicionarDiagnostico, atualizarDiagnostico, removerDiagnostico,
+          moverServicoParaDiagnostico, moverPecaAvulsaParaServico,
           adicionarServicoAoDiagnostico, adicionarServicoSemDiagnostico,
           atualizarServicoDiagnostico, atualizarServicoSemDiagnostico,
           removerServicoDiagnostico, removerServicoSemDiagnostico,

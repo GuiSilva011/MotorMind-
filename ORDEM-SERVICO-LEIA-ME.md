@@ -1,4 +1,16 @@
-# Ordem de Serviço — identidade visual de 01/10/2026
+# Ordem de Serviço — atualização da edição de itens em 30/10/2026
+
+## Itens da OS: árvore e editor (30/10/2026)
+
+Na edição e criação da OS, **Itens da OS** agora apresenta uma árvore navegável à esquerda e um editor único à direita. A árvore agrupa diagnóstico, serviços e peças e mantém as seções de serviço avulso e peça avulsa. O editor mostra apenas o item selecionado; diagnóstico lista seus serviços e serviço lista suas peças como atalhos de seleção. Em telas estreitas, os cartões empilham.
+
+O item inicial é o primeiro serviço com peças ou, se não houver, o primeiro item. Inclusões selecionam o item novo e levam o foco ao primeiro controle. Exclusões pedem confirmação e selecionam o pai ou item vizinho. Serviços avulsos podem ser movidos para um diagnóstico; peças avulsas podem ser movidas para um serviço, preservando seus valores. Os menus fecham por escolha, clique fora ou Escape; setas/Home/End navegam as opções.
+
+Catálogo, estoque, fornecedores, técnicos, inputs numéricos, handlers e payload de salvamento reutilizam o fluxo anterior. Nenhuma regra de negócio, API, validação, cálculo compartilhado, schema, migration ou dependência foi alterada. Os códigos de apresentação continuam no formato atual (`D.01`, `D.01.1`, `S.01`, `P.01`), gerados por posição e renumerados após remoção. O subtotal exibido na árvore agrega serviços e peças por grupo; o total da OS permanece vindo de `calcularTotaisOrdem`.
+
+Arquivos alterados: `frontend/src/components/OrdemServicoItens.jsx` (nova árvore/editor), `OrdemServicoTela.jsx` (encaixe), `pages/operador/ordemServico.jsx` (seleção de novos itens e movimentos em memória) e `styles/operadorStyles/ordemServico.css` (layout e responsividade). O build do Vite passou nesta atualização. A conferência manual em navegador permanece pendente.
+
+## Registro anterior — identidade visual de 01/10/2026
 
 A OS passa a usar superfícies neutras, ações azuis e temas claro/escuro. O seletor no topo salva a preferência em `motormind_tema`; sem preferência, a tela abre clara. A troca preserva o estado do formulário e aplica as cores aos componentes compartilhados enquanto a OS está aberta.
 

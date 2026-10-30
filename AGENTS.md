@@ -347,6 +347,8 @@ O operador não recebe botões de ação na tela e não pode consultar o histór
 - Nenhuma API, permissão, regra de OS/estoque, schema, migration ou dependência foi alterada. Build e lint dos componentes alterados passaram, assim como os 20 testes existentes da OS. A renderização React dos dois cadastros foi conferida nos dois temas, com labels, seleção de tema, rota atual e campos somente leitura; comparação do código confirmou preservação dos fluxos operacionais.
 - Permanece o aviso anterior de tamanho do bundle. Não havia navegador disponível na sessão; aparência, responsividade e interação manual ainda precisam de conferência no ambiente local.
 
+- Em 30/10/2026, **Itens da OS** passou a usar `OrdemServicoItens.jsx`: árvore selecionável à esquerda e editor do item único à direita, com inclusão focada, exclusão confirmada, renumeração por posição e movimentos de serviço/peça avulsos mantendo valores. O editor usa os handlers e o cálculo existente; não altera API, payload, regras, validações, schema, migration ou dependências. Mantém os códigos visuais atuais (`D.01`, `D.01.1`, `S.01`, `P.01`), embora o exemplo do pedido usasse outra pontuação. O build passou; não houve conferência visual manual nesta sessão. Detalhes em `ORDEM-SERVICO-LEIA-ME.md`.
+
 ### 6.13. Cadastro de serviços e nova topbar (03/10/2026)
 
 - `pages/operador/servicos.jsx` passa a usar o padrão compartilhado de peças, diagnósticos e OS, com temas claro/escuro, cartões, campos e botões de `oficinaUi.css`. Labels/IDs, ações por registro e rótulos das células no celular foram acrescentados; `servicos.css` contém somente a grade responsiva. Código automático, valores, filtros e fluxos de cadastro/edição/exclusão foram preservados.
