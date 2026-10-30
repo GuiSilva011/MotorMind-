@@ -244,44 +244,12 @@ export default function OrdemServicoItens({ ordem, modoTela, catalogos, totais, 
     </button>;
   }
 
-  function breadcrumb(no) {
-    const caminho = [];
-    if (no.tipo === 'diagnostico') caminho.push(no);
-    if (no.tipo === 'servico' && no.diagnosticoId) {
-      const diagnostico = porChave.get(`diagnostico:${no.diagnosticoId}`);
-      if (diagnostico) caminho.push(diagnostico);
-      caminho.push(no);
-    }
-    if (no.tipo === 'servico' && !no.diagnosticoId) caminho.push({ key: 'avulsos', codigo: '', label: 'Itens avulsos' }, no);
-    if (no.tipo === 'peca') {
-      if (no.diagnosticoId) {
-        const diagnostico = porChave.get(`diagnostico:${no.diagnosticoId}`);
-        if (diagnostico) caminho.push(diagnostico);
-      }
-      if (no.servicoId) {
-        const servico = porChave.get(`servico:${no.servicoId}`);
-        if (servico?.avulso) caminho.push({ key: 'avulsos', codigo: '', label: 'Itens avulsos' });
-        if (servico) caminho.push(servico);
-      } else caminho.push({ key: 'avulsos', codigo: '', label: 'Itens avulsos' });
-      caminho.push(no);
-    }
-    return caminho.map((item, index) => <span className="os-breadcrumb-part" key={`${item.key}-${index}`}>
-      {index > 0 && <span aria-hidden="true" className="os-breadcrumb-separator">›</span>}
-      {index < caminho.length - 1
-        ? <button type="button" onClick={() => item.tipo ? selecionar(item) : document.getElementById('os-itens-avulsos')?.scrollIntoView({ block: 'nearest' })}>
-            {item.codigo ? `${item.codigo} · ` : ''}{item.label || titulo(item)}
-          </button>
-        : <span aria-current="page">{item.codigo ? `${item.codigo} · ` : ''}{item.label || titulo(item)}</span>}
-    </span>);
-  }
-
   function removerSelecionado() {
     if (itemAtivo) remover(itemAtivo);
   }
 
   function editorCabecalho(no) {
     return <div className="os-editor-toolbar">
-      <nav className="os-breadcrumb" aria-label="Localização do item">{breadcrumb(no)}</nav>
       <div className="os-editor-actions">
         {no.tipo === 'servico' && !no.diagnosticoId && podeEditar && diagnosticos.length > 0 &&
           <label className="os-move-control">

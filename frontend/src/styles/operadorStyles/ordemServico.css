@@ -790,44 +790,6 @@
   border-bottom: 1px solid var(--ui-border);
 }
 
-.os-workspace .os-breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  color: var(--ui-muted);
-  font-size: 12px;
-}
-
-.os-workspace .os-breadcrumb-part {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-}
-
-.os-workspace .os-breadcrumb-part > :is(button, span[aria-current]) {
-  max-width: 250px;
-  overflow: hidden;
-  color: var(--ui-text);
-  font: inherit;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.os-workspace .os-breadcrumb-part button {
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  color: var(--ui-link);
-  cursor: pointer;
-}
-
-.os-workspace .os-breadcrumb-separator {
-  color: var(--ui-muted);
-}
-
 .os-workspace .os-editor-actions {
   display: flex;
   align-items: flex-start;
