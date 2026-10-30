@@ -3,17 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
   TbAlertCircle, TbArrowLeft, TbArrowRight, TbBox, TbCar,
-  TbChevronDown, TbEngine, TbEye, TbEyeOff, TbFlask,
+  TbEngine, TbEye, TbEyeOff,
   TbLock, TbMail, TbShieldCheck, TbUsers,
 } from 'react-icons/tb';
 import api from '../services/api';
 import '../styles/login.css';
-
-const usuariosTeste = [
-  { perfil: 'Admin', email: 'admin@motormind.com', senha: 'admin123' },
-  { perfil: 'Operador', email: 'operador@motormind.com', senha: 'operador123' },
-  { perfil: 'Técnico', email: 'tecnico@motormind.com', senha: 'tecnico123' },
-];
 
 const errosVazios = { email: '', senha: '', geral: '' };
 
@@ -48,14 +42,6 @@ function Login() {
       [campo === 'Email' ? 'email' : 'senha']: '',
       geral: '',
     }));
-  }
-
-  function preencherUsuario(email, senha) {
-    setForm({ Email: email, Senha: senha });
-    setErros(errosVazios);
-    setSenhaVisivel(false);
-    setCapsLock(false);
-    senhaRef.current?.focus();
   }
 
   function verificarCapsLock(event) {
@@ -181,24 +167,6 @@ function Login() {
             Sua oficina ainda não tem acesso?<br />
             <Link to="/cadastro-oficina">Cadastrar minha oficina</Link>
           </p>
-
-          <details className="login-test-users">
-            <summary>
-              <TbFlask aria-hidden="true" /><span>Acessos de teste</span>
-              <TbChevronDown className="login-test-chevron" aria-hidden="true" />
-            </summary>
-            <div className="login-test-content">
-              <p>Selecione um perfil para preencher as credenciais de teste.</p>
-              <div className="login-users-list">
-                {usuariosTeste.map((usuario) => (
-                  <button key={usuario.email} type="button" disabled={carregando}
-                    onClick={() => preencherUsuario(usuario.email, usuario.senha)}>
-                    {usuario.perfil}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </details>
 
           <p className="login-security-note"><TbShieldCheck aria-hidden="true" /> Acesso exclusivo para sua equipe.</p>
         </section>

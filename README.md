@@ -339,31 +339,11 @@ http://localhost:5173
 
 ---
 
-## 🔑 USUÁRIOS DE TESTE
+## 🔑 ACESSO À APLICAÇÃO
 
-A tela de login possui atalhos para usuários de teste.
+Entre com as credenciais da sua oficina. O responsável é criado no cadastro da oficina; os demais usuários são cadastrados pela equipe autorizada dentro do ambiente da oficina. Não há perfis ou credenciais de demonstração na tela de login.
 
-Usuários usados no projeto:
-
-```txt
-Administrador
-Email: admin@motormind.com
-Senha: admin123
-```
-
-```txt
-Operador
-Email: operador@motormind.com
-Senha: operador123
-```
-
-```txt
-Técnico
-Email: tecnico@motormind.com
-Senha: tecnico123
-```
-
-Os perfis usados no sistema são:
+Os perfis de acesso usados no sistema são:
 
 ```txt
 ADMIN

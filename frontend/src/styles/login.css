@@ -215,19 +215,6 @@
 .login-signup a { display: inline-block; color: #e4e4e9; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #ffffff55; }
 .login-signup a:hover { color: #fff; text-decoration-color: #fff; }
 
-.login-test-users { margin-top: 20px; border-top: 1px solid #ffffff0d; }
-.login-test-users summary { display: flex; align-items: center; gap: 7px; min-height: 36px; padding-top: 5px; border-radius: 3px; color: #aaaab4; font-size: 10px; cursor: pointer; list-style: none; }
-.login-test-users summary::-webkit-details-marker { display: none; }
-.login-test-users summary > svg { font-size: 14px; }
-.login-test-users summary:hover { color: #eeeef2; }
-.login-test-chevron { margin-left: auto; transition: transform .18s; }
-.login-test-users[open] .login-test-chevron { transform: rotate(180deg); }
-.login-test-content { padding: 6px 0 3px; }
-.login-test-content > p { color: var(--login-muted); font-size: 11px; line-height: 1.6; }
-.login-users-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
-.login-users-list button { min-width: 0; min-height: 38px; padding: 7px; border: 1px solid #ffffff14; border-radius: 9px; background: #ffffff06; color: #dddde4; font-size: 11px; cursor: pointer; transition: border-color .18s, background .18s; }
-.login-users-list button:hover:not(:disabled) { border-color: #ffffff38; background: #ffffff12; }
-.login-users-list button:disabled { opacity: .5; }
 .login-security-note { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 14px !important; color: #aaaab4; font-size: 10px; text-align: center; }
 .login-security-note > svg { flex-shrink: 0; font-size: 14px; }
 
