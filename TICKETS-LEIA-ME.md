@@ -53,7 +53,7 @@ Esta atualização do painel não exige nova migration nem instalação de depen
 
 - Não há retirada direta de estoque pelo ticket. Use **Pegar do estoque** na OS e salve: este continua sendo o único fluxo de baixa da OS. Marcar **Entregue** confirma o relato de entrega, não prova/valida movimentação física.
 - Origem de atendimento, fornecedor estruturado, atendimento parcial, transferência de operador e baixa vinculada ao item da requisição ficam para a próxima etapa. Não emitir `SAIDA_REQUISICAO` sem reconciliar peças já retiradas pela OS ou manualmente.
-- ADMIN/OWNER podem consultar/assumir tickets da própria oficina, mas não leem chat de outro responsável. Somente o técnico atribuído pode abrir uma solicitação.
+- ADMIN pode consultar tickets, histórico, mensagens e anexos da própria oficina em modo de leitura; na tela, acessa somente as abas **Histórico** e **Conversa**. Não pode assumir, alterar status nem enviar mensagens. Somente OPERADOR pode assumir tickets. Somente o técnico atribuído pode abrir uma solicitação.
 - Não é possível fechar/cancelar a OS ou trocar o mecânico enquanto houver tickets pendentes. OS com tickets ou histórico de atribuição não pode ser excluída pela API.
 - Ticket entregue/cancelado mantém o chat em somente leitura até cada mensagem completar 48 horas.
 - Notificações de chat não copiam o texto das mensagens. Os avisos individuais são separados dos alertas ativos de estoque.

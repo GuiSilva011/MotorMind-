@@ -6,7 +6,8 @@ export const PRAZO_CHAT_MS = 48 * 60 * 60 * 1000;
 export const STATUS_FINAIS = ['ENTREGUE', 'CANCELADA'];
 export const STATUS_TICKET = ['ABERTA', 'EM_ATENDIMENTO', 'AGUARDANDO_PECA', 'DISPONIVEL', ...STATUS_FINAIS];
 export const OS_ENCERRADA = ['FINALIZADA', 'FECHADA', 'CANCELADA'];
-export const PERFIS_ATENDIMENTO = ['OPERADOR', 'ADMIN', 'OWNER'];
+export const PERFIS_CONSULTA = ['OPERADOR', 'ADMIN', 'OWNER'];
+export const PERFIS_ATENDIMENTO = ['OPERADOR', 'OWNER'];
 export const TRANSICOES = {
   EM_ATENDIMENTO: ['AGUARDANDO_PECA', 'DISPONIVEL', 'CANCELADA'],
   AGUARDANDO_PECA: ['EM_ATENDIMENTO', 'DISPONIVEL', 'CANCELADA'],
@@ -43,7 +44,7 @@ export function validarItens(itens) {
 
 export function validarAcesso(ticket, usuario) {
   if (!ticket || ticket.oficinaId !== usuario.oficinaId ||
-    (usuario.role === 'TECNICO' ? ticket.solicitanteId !== usuario.id : !PERFIS_ATENDIMENTO.includes(usuario.role))) throw new TicketError(404, 'Ticket não encontrado.');
+    (usuario.role === 'TECNICO' ? ticket.solicitanteId !== usuario.id : !PERFIS_CONSULTA.includes(usuario.role))) throw new TicketError(404, 'Ticket não encontrado.');
 }
 
 export function participante(ticket, usuario) {
@@ -52,7 +53,8 @@ export function participante(ticket, usuario) {
 
 export function validarChat(ticket, usuario, escrita = false) {
   validarAcesso(ticket, usuario);
-  if (!participante(ticket, usuario)) throw new TicketError(403, 'O chat é exclusivo do solicitante e do responsável.');
+  if (escrita && usuario.role === 'ADMIN') throw new TicketError(403, 'O administrador pode consultar o chat, mas não enviar mensagens.');
+  if (!participante(ticket, usuario) && !(usuario.role === 'ADMIN' && !escrita)) throw new TicketError(403, 'O chat é exclusivo do solicitante e do responsável.');
   if (escrita && (!ticket.responsavelId || STATUS_FINAIS.includes(ticket.status))) throw new TicketError(409, 'O chat exige um ticket assumido e em aberto.');
   if (escrita && OS_ENCERRADA.includes(ticket.ordemServico.status)) throw new TicketError(409, 'A OS está encerrada; o chat está em somente leitura.');
   if (escrita && usuario.role === 'TECNICO' && ticket.ordemServico.tecnicoId !== usuario.id) throw new TicketError(403, 'Esta OS não está mais atribuída a você.');
@@ -61,7 +63,7 @@ export function validarChat(ticket, usuario, escrita = false) {
 export function validarTransicao(ticket, usuario, status, motivo) {
   validarAcesso(ticket, usuario);
   const cancelaAberta = ticket.status === 'ABERTA' && status === 'CANCELADA' && ticket.solicitanteId === usuario.id;
-  if (!cancelaAberta && (ticket.responsavelId !== usuario.id || !PERFIS_ATENDIMENTO.includes(usuario.role))) throw new TicketError(403, 'Somente o responsável pode alterar o atendimento.');
+  if (!cancelaAberta && (ticket.responsavelId !== usuario.id || !PERFIS_ATENDIMENTO.includes(usuario.role))) throw new TicketError(403, 'Somente o operador responsável pode alterar o atendimento.');
   if (!cancelaAberta && !TRANSICOES[ticket.status]?.includes(status)) throw new TicketError(409, 'Mudança de status não permitida. Atualize o ticket.');
   if (OS_ENCERRADA.includes(ticket.ordemServico.status) && status !== 'CANCELADA') throw new TicketError(409, 'A OS está encerrada. Apenas o cancelamento do ticket é permitido.');
   if (status === 'CANCELADA' && !motivo) throw new TicketError(400, 'Informe o motivo do cancelamento.');

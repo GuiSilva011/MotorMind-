@@ -60,6 +60,7 @@ function ChatTicket({ ticket, usuario, visivel }) {
   );
   const ultimoId = mensagens.at(-1)?.id;
   const podeEnviar =
+    usuario.Role !== "ADMIN" &&
     Boolean(ticket.responsavelId) &&
     !["ENTREGUE", "CANCELADA"].includes(ticket.status) &&
     !STATUS_OS_ENCERRADA.includes(ticket.ordemServico.status) &&
@@ -279,7 +280,8 @@ function ChatTicket({ ticket, usuario, visivel }) {
 }
 
 function TicketDetalhe({ id, usuario, atualizado }) {
-  const [abaAtiva, setAbaAtiva] = useState("pedido");
+  const adminInicial = usuario.Role === "ADMIN";
+  const [abaAtiva, setAbaAtiva] = useState(adminInicial ? "historico" : "pedido");
   const [conversaVisitada, setConversaVisitada] = useState(false);
   const [versao, setVersao] = useState(0);
   const [ocupado, setOcupado] = useState(false);
@@ -290,7 +292,12 @@ function TicketDetalhe({ id, usuario, atualizado }) {
   const consulta = useConsultaTickets(`/tickets/${id}`, 10000, versao);
   const ticket = consulta.dados;
   const tecnico = usuario.Role === "TECNICO";
-  const abasDisponiveis = ABAS_TICKET.filter((aba) => !tecnico || aba.id !== "atendimento");
+  const admin = usuario.Role === "ADMIN";
+  const abasDisponiveis = ABAS_TICKET.filter(
+    (aba) => admin
+      ? ["conversa", "historico"].includes(aba.id)
+      : !tecnico || aba.id !== "atendimento",
+  );
 
   function selecionarAba(aba) {
     setAbaAtiva(aba);
@@ -358,12 +365,12 @@ function TicketDetalhe({ id, usuario, atualizado }) {
       </section>
     );
   const responsavel = ticket.responsavelId === usuario.id;
-  const opcoes = responsavel
+  const opcoes = usuario.Role === "ADMIN" ? [] : responsavel
     ? TRANSICOES[ticket.status] || []
     : ticket.solicitanteId === usuario.id && ticket.status === "ABERTA"
       ? ["CANCELADA"]
       : [];
-  const podeAssumir = !ticket.responsavelId &&
+  const podeAssumir = usuario.Role === "OPERADOR" && !ticket.responsavelId &&
     ticket.status === "ABERTA" && !tecnico;
   const formularioStatus = opcoes.length > 0 && (
     <form className="ticket-status-form" onSubmit={(event) => {
@@ -424,7 +431,7 @@ function TicketDetalhe({ id, usuario, atualizado }) {
           </button>
         ))}
       </div>
-      <div id="ticket-painel-pedido" className="ticket-aba-panel" role="tabpanel"
+      {!admin && <div id="ticket-painel-pedido" className="ticket-aba-panel" role="tabpanel"
         aria-labelledby="ticket-aba-pedido" hidden={abaAtiva !== "pedido"} tabIndex={0}>
         <dl className="ticket-resumo">
           <div><dt>Ordem de serviço</dt><dd>{ticket.ordemServico.codigo}</dd></div>
@@ -470,8 +477,8 @@ function TicketDetalhe({ id, usuario, atualizado }) {
         </div>
         {ticket.observacao && <p className="ticket-texto">{ticket.observacao}</p>}
         {tecnico && formularioStatus}
-      </div>
-      {!tecnico && <div id="ticket-painel-atendimento" className="ticket-aba-panel" role="tabpanel"
+      </div>}
+      {!tecnico && !admin && <div id="ticket-painel-atendimento" className="ticket-aba-panel" role="tabpanel"
         aria-labelledby="ticket-aba-atendimento" hidden={abaAtiva !== "atendimento"} tabIndex={0}>
         <p className="ticket-aviso">
           Registre a retirada de peças na ordem de serviço. Atualizar este pedido
@@ -513,7 +520,9 @@ function TicketDetalhe({ id, usuario, atualizado }) {
                 ? "A conversa é exclusiva do mecânico solicitante e do responsável pelo ticket."
                 : usuario.Role === "TECNICO"
                   ? "Aguarde um operador assumir a solicitação para conversar."
-                  : "Assuma a solicitação na aba Atendimento para iniciar a conversa."}
+                  : admin
+                    ? "O administrador pode consultar as mensagens e anexos deste ticket em modo de leitura."
+                    : "Assuma a solicitação na aba Atendimento para iniciar a conversa."}
             </p>
             {podeAssumir && (
               <button type="button" onClick={() => {
@@ -560,6 +569,7 @@ export default function Tickets() {
   const [pagina, setPagina] = useState(1);
   const [versao, setVersao] = useState(0);
   const tecnico = usuario?.Role === "TECNICO";
+  const admin = usuario?.Role === "ADMIN";
   const ordemFiltro = params.get("ordem");
   const consulta = useConsultaTickets(
     `/tickets?status=${filtro}&meus=${meus}&pagina=${pagina}${ordemFiltro ? `&ordemServicoId=${encodeURIComponent(ordemFiltro)}` : ""}`,
@@ -577,7 +587,9 @@ export default function Tickets() {
             <p>
               {tecnico
                 ? "Acompanhe seus pedidos e converse com o responsável pelo atendimento."
-                : "Assuma um ticket para atender o mecânico e conversar pelo chat."}
+                : admin
+                  ? "Consulte o histórico e as mensagens dos tickets da oficina."
+                  : "Assuma um ticket para atender o mecânico e conversar pelo chat."}
             </p>
           </div>
           <button type="button" onClick={atualizar}>

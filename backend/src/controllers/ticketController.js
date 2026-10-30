@@ -6,7 +6,7 @@ import {
   TicketError,
   PRAZO_CHAT_MS,
   OS_ENCERRADA,
-  PERFIS_ATENDIMENTO,
+  PERFIS_CONSULTA,
   STATUS_FINAIS,
   STATUS_TICKET,
   inteiro,
@@ -181,7 +181,7 @@ export async function listarTickets(req, res, next) {
     const pagina = inteiro(filtros.pagina || 1, "Página", 100000);
     const where = { oficinaId: usuario.oficinaId };
     if (usuario.role === "TECNICO") where.solicitanteId = usuario.id;
-    else if (!PERFIS_ATENDIMENTO.includes(usuario.role))
+    else if (!PERFIS_CONSULTA.includes(usuario.role))
       throw new TicketError(403, "Perfil sem acesso.");
     if (filtros.status === "ATIVOS" || !filtros.status)
       where.status = { notIn: STATUS_FINAIS };
@@ -228,7 +228,7 @@ export async function buscarTicketPorId(req, res, next) {
     });
     return res.json({
       ...ticket,
-      podeLerChat: participante(ticket, usuario),
+      podeLerChat: usuario.role === "ADMIN" || participante(ticket, usuario),
       historico: registros.map((h) => ({
         ...h,
         usuarioNome:
@@ -334,8 +334,8 @@ export async function assumirTicket(req, res, next) {
   try {
     const usuario = req.user;
     const id = req.params.id;
-    if (!PERFIS_ATENDIMENTO.includes(usuario.role))
-      throw new TicketError(403, "Somente o atendimento pode assumir tickets.");
+    if (usuario.role !== "OPERADOR")
+      throw new TicketError(403, "Somente o operador pode assumir tickets.");
     const resultado = await comTicket(usuario, id, async (tx, ticket) => {
       const [responsavel] =
         await tx.$queryRaw`SELECT id FROM "Usuario" WHERE id = ${usuario.id} AND "oficinaId" = ${usuario.oficinaId} AND "excluidoEm" IS NULL FOR UPDATE`;
