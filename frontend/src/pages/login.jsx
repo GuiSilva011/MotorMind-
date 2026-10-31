@@ -1,185 +1,182 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import {
-  TbAlertCircle, TbArrowLeft, TbArrowRight, TbBox, TbCar,
-  TbEngine, TbEye, TbEyeOff,
-  TbLock, TbMail, TbShieldCheck, TbUsers,
-} from 'react-icons/tb';
+import { FiArrowRight, FiCheck, FiEye, FiEyeOff, FiLock, FiMail, FiShield, FiUsers, FiTool, FiArrowLeft } from 'react-icons/fi';
 import api from '../services/api';
+import '../website/landingPage.css';
+import '../website/cadastroOficina.css';
 import '../styles/login.css';
 
-const errosVazios = { email: '', senha: '', geral: '' };
-
-function obterRotaInicialPorRole(role) {
-  if (role === 'OWNER' || role === 'ADMIN') return '/admin/relatorios';
-  if (role === 'OPERADOR') return '/operador/agendamentos/calendario';
-  if (role === 'TECNICO') return '/tecnico/painel';
-  return '/login';
-}
+const usuariosTeste = [
+  { perfil: 'Admin', email: 'admin@motormind.com', senha: 'admin123', icon: FiShield },
+  { perfil: 'Operador', email: 'operador@motormind.com', senha: 'operador123', icon: FiUsers },
+  { perfil: 'Técnico', email: 'tecnico@motormind.com', senha: 'tecnico123', icon: FiTool },
+];
 
 function Login() {
   const navigate = useNavigate();
-  const emailRef = useRef(null);
-  const senhaRef = useRef(null);
-  const envioEmAndamento = useRef(false);
   const [form, setForm] = useState({ Email: '', Senha: '' });
   const [carregando, setCarregando] = useState(false);
-  const [senhaVisivel, setSenhaVisivel] = useState(false);
-  const [capsLock, setCapsLock] = useState(false);
-  const [erros, setErros] = useState(errosVazios);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   useEffect(() => {
-    const tituloAnterior = document.title;
-    document.title = 'Entrar — MotorMind';
-    return () => { document.title = tituloAnterior; };
+    const anterior = document.title;
+    document.title = 'Entrar no MotorMind — Acesso à oficina';
+    window.scrollTo(0, 0);
+    return () => { document.title = anterior; };
   }, []);
 
   function atualizarCampo(campo, valor) {
-    setForm((prev) => ({ ...prev, [campo]: valor }));
-    setErros((prev) => ({
-      ...prev,
-      [campo === 'Email' ? 'email' : 'senha']: '',
-      geral: '',
-    }));
+    setForm(prev => ({ ...prev, [campo]: valor }));
   }
 
-  function verificarCapsLock(event) {
-    setCapsLock(Boolean(event.getModifierState?.('CapsLock')));
+  function preencherUsuario(email, senha) {
+    setForm({ Email: email, Senha: senha });
+  }
+
+  function obterRotaInicialPorRole(role) {
+    if (role === 'OWNER' || role === 'ADMIN') return '/admin/relatorios';
+    if (role === 'OPERADOR') return '/operador/agendamentos/calendario';
+    if (role === 'TECNICO') return '/tecnico/painel';
+    return '/login';
   }
 
   async function entrar(event) {
     event.preventDefault();
-    if (envioEmAndamento.current) return;
-
-    const novosErros = { ...errosVazios };
-    if (!form.Email.trim()) {
-      novosErros.email = 'Informe seu e-mail de acesso.';
-    } else if (emailRef.current?.validity.typeMismatch) {
-      novosErros.email = 'Informe um e-mail válido.';
-    }
-    if (!form.Senha.trim()) novosErros.senha = 'Informe sua senha.';
-    setErros(novosErros);
-
-    if (novosErros.email || novosErros.senha) {
-      (novosErros.email ? emailRef : senhaRef).current?.focus();
-      return;
-    }
-
-    envioEmAndamento.current = true;
-    setCarregando(true);
-
     try {
+      if (!form.Email.trim()) { toast.warning('Informe o email.'); return; }
+      if (!form.Senha.trim()) { toast.warning('Informe a senha.'); return; }
+      setCarregando(true);
       const response = await api.post('/auth/login', {
         Email: form.Email.trim(),
         Senha: form.Senha,
       });
       const usuario = response.data?.usuario;
       const token = response.data?.token;
-
-      if (!usuario || !token) {
-        setErros({ ...errosVazios, geral: 'Não foi possível concluir o acesso. Tente novamente.' });
-        return;
-      }
-
+      if (!usuario || !token) { toast.error('Resposta de login inválida.'); return; }
       localStorage.setItem('motormind_usuario', JSON.stringify(usuario));
       localStorage.setItem('motormind_token', token);
-      toast.success('Bem-vindo, ' + usuario.Nome + '!');
+      toast.success(`Bem-vindo, ${usuario.Nome}!`);
       navigate(obterRotaInicialPorRole(usuario.Role));
     } catch (error) {
-      setErros({
-        ...errosVazios,
-        geral: error.response?.data?.erro || error.response?.data?.detalhe ||
-          'Não foi possível conectar ao sistema. Tente novamente em instantes.',
-      });
+      toast.error(error.response?.data?.erro || error.response?.data?.detalhe || 'Erro ao fazer login.');
     } finally {
-      envioEmAndamento.current = false;
       setCarregando(false);
     }
   }
 
   return (
-    <main className="login-page">
-      <Link className="login-back-link" to="/"><TbArrowLeft aria-hidden="true" /> Voltar ao site</Link>
-
-      <div className="login-shell">
-        <section className="login-card" aria-labelledby="login-title">
-          <header className="login-title">
-            <Link className="login-brand-mark" to="/" aria-label="MotorMind — página inicial">
-              <TbEngine aria-hidden="true" />
-            </Link>
-            <h1 id="login-title">MotorMind</h1>
-            <p>Entre para acessar sua oficina.</p>
-          </header>
-
-          <form className="login-form" onSubmit={entrar} noValidate aria-busy={carregando}>
-            {erros.geral && (
-              <div className="login-error-banner" role="alert">
-                <TbAlertCircle aria-hidden="true" /><p>{erros.geral}</p>
-              </div>
-            )}
-
-            <div className="login-field">
-              <label className="login-sr-only" htmlFor="email">E-mail de acesso</label>
-              <div className={'login-input-wrap' + (erros.email ? ' login-input-invalid' : '')}>
-                <TbMail aria-hidden="true" />
-                <input ref={emailRef} id="email" name="Email" type="email" value={form.Email}
-                  onChange={(event) => atualizarCampo('Email', event.target.value)}
-                  placeholder="E-mail de acesso" autoComplete="username" autoCapitalize="none"
-                  spellCheck={false} required disabled={carregando}
-                  aria-invalid={Boolean(erros.email)} aria-describedby={erros.email ? 'login-email-error' : undefined} />
-              </div>
-              {erros.email && <p id="login-email-error" className="login-field-error" role="alert">{erros.email}</p>}
-            </div>
-
-            <div className="login-field">
-              <label className="login-sr-only" htmlFor="senha">Senha</label>
-              <div className={'login-input-wrap' + (erros.senha ? ' login-input-invalid' : '')}>
-                <TbLock aria-hidden="true" />
-                <input ref={senhaRef} id="senha" name="Senha" type={senhaVisivel ? 'text' : 'password'} value={form.Senha}
-                  onChange={(event) => atualizarCampo('Senha', event.target.value)}
-                  onKeyDown={verificarCapsLock} onKeyUp={verificarCapsLock} onBlur={() => setCapsLock(false)}
-                  placeholder="Senha" autoComplete="current-password" required disabled={carregando}
-                  aria-invalid={Boolean(erros.senha)}
-                  aria-describedby={(erros.senha ? 'login-password-error ' : '') + (capsLock ? 'login-caps-warning' : '') || undefined} />
-                <button className="login-password-toggle" type="button"
-                  onClick={() => setSenhaVisivel((prev) => !prev)} onMouseDown={(event) => event.preventDefault()}
-                  aria-label={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={senhaVisivel}
-                  aria-controls="senha" title={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'} disabled={carregando}>
-                  {senhaVisivel ? <TbEyeOff aria-hidden="true" /> : <TbEye aria-hidden="true" />}
-                </button>
-              </div>
-              {erros.senha && <p id="login-password-error" className="login-field-error" role="alert">{erros.senha}</p>}
-              <p id="login-caps-warning" className="login-caps-warning" role="status">
-                {capsLock && <><TbAlertCircle aria-hidden="true" /> A tecla Caps Lock está ativada.</>}
-              </p>
-            </div>
-
-            <div className="login-form-divider" aria-hidden="true" />
-
-            <button type="submit" className="login-btn" disabled={carregando}>
-              {carregando ? <><span className="login-spinner" aria-hidden="true" /> Entrando...</> : <>Entrar <TbArrowRight aria-hidden="true" /></>}
-            </button>
-            <span className="login-sr-only" role="status">{carregando ? 'Validando suas credenciais. Aguarde.' : ''}</span>
-          </form>
-
-          <p className="login-signup">
-            Sua oficina ainda não tem acesso?<br />
-            <Link to="/cadastro-oficina">Cadastrar minha oficina</Link>
-          </p>
-
-          <p className="login-security-note"><TbShieldCheck aria-hidden="true" /> Acesso exclusivo para sua equipe.</p>
-        </section>
-
-        <footer className="login-page-footer">
-          <p>Menos tarefas soltas.<br /><strong>Mais controle da sua oficina.</strong></p>
-          <div className="login-workshop-icons" aria-hidden="true">
-            <span><TbCar /></span><span><TbBox /></span><span><TbUsers /></span>
+    <div className="landing-page ml-page">
+      <div className="mm-ambient-light light-top" aria-hidden="true" />
+      <header className="mm-header scrolled">
+        <div className="mm-container header-inner">
+          <Link to="/" className="mm-brand" aria-label="MotorMind — página inicial">
+            <img src="/logo.png" alt="MotorMind" className="mm-logo-img" />
+          </Link>
+          <div className="header-actions">
+            <Link className="co-btn-text" to="/">Voltar ao site</Link>
+            <Link className="mm-button small" to="/cadastro-oficina">Cadastrar oficina <FiArrowRight size={16} /></Link>
           </div>
-          <span className="login-footer-caption">Atendimento · Estoque · Equipe</span>
-        </footer>
-      </div>
-    </main>
+        </div>
+      </header>
+
+      <main className="ml-main">
+        <div className="ml-layout">
+          <section className="ml-form-panel" aria-labelledby="ml-title">
+            <Link to="/" className="co-back-link"><FiArrowLeft /> Voltar ao site</Link>
+            <div className="ml-heading">
+              <span className="co-eyebrow">ACESSO RESTRITO</span>
+              <h1 id="ml-title">Bem-vindo <span>de volta.</span></h1>
+              <p>Informe as suas credenciais para aceder ao painel da sua oficina.</p>
+            </div>
+
+            <div className="ml-access-card">
+              <div className="ml-card-heading">
+                <span className="ml-step-badge"><FiLock aria-hidden="true" /></span>
+                <div>
+                  <strong>Entrar na sua oficina</strong>
+                  <p>Utilize seus dados de acesso</p>
+                </div>
+              </div>
+              <form className="ml-form" onSubmit={entrar} aria-busy={carregando}>
+                <div className="ml-field">
+                  <label htmlFor="email">E-mail</label>
+                  <div className="ml-input-wrap">
+                    <FiMail aria-hidden="true" />
+                    <input id="email" type="email" value={form.Email}
+                      onChange={e => atualizarCampo('Email', e.target.value)}
+                      placeholder="seuemail@motormind.com" autoComplete="email" disabled={carregando} />
+                  </div>
+                </div>
+                <div className="ml-field">
+                  <label htmlFor="senha">Senha</label>
+                  <div className="ml-input-wrap">
+                    <FiLock aria-hidden="true" />
+                    <input id="senha" type={mostrarSenha ? 'text' : 'password'} value={form.Senha}
+                      onChange={e => atualizarCampo('Senha', e.target.value)}
+                      placeholder="Digite a sua senha" autoComplete="current-password" disabled={carregando} />
+                    <button type="button" className="ml-password-toggle"
+                      onClick={() => setMostrarSenha(v => !v)}
+                      aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                      aria-pressed={mostrarSenha}>
+                      {mostrarSenha ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" className="co-btn-primary ml-submit" disabled={carregando}>
+                  {carregando ? <><span className="ml-spinner" /> A entrar...</> : <>Acessar sistema <FiArrowRight /></>}
+                </button>
+              </form>
+            </div>
+
+            <div className="ml-test-users">
+              <div className="ml-test-heading">
+                <div><span className="ml-test-dot" /> <strong>Usuários de teste</strong></div>
+                <small>Preenchimento rápido</small>
+              </div>
+              <div className="ml-test-grid">
+                {usuariosTeste.map(usuario => {
+                  const UserIcon = usuario.icon;
+                  return (
+                    <button key={usuario.email} type="button" disabled={carregando}
+                      onClick={() => preencherUsuario(usuario.email, usuario.senha)}>
+                      <UserIcon aria-hidden="true" />
+                      <span>{usuario.perfil}</span>
+                      <FiArrowRight className="ml-test-arrow" aria-hidden="true" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          <aside className="ml-aside" aria-label="Conheça o MotorMind">
+            <div className="ml-aside-glow" aria-hidden="true" />
+            <div className="ml-aside-content">
+              <span className="co-badge">PLATAFORMA MOTORMIND</span>
+              <h2>O controle da sua oficina, <span>em um só lugar.</span></h2>
+              <p>Da recepção ao box, mantenha a operação conectada com uma experiência feita para cada perfil da equipe.</p>
+              <div className="ml-aside-divider" />
+              <ul className="ml-feature-list">
+                <li><span><FiCheck /></span> Ordens de serviço e agendamentos integrados</li>
+                <li><span><FiCheck /></span> Estoque, checklists e solicitações de peças</li>
+                <li><span><FiCheck /></span> Comunicação entre operador e técnico</li>
+                <li><span><FiCheck /></span> Painéis específicos para cada perfil</li>
+              </ul>
+              <div className="ml-aside-note">
+                <FiShield aria-hidden="true" />
+                <div><strong>Um ambiente para a sua equipe</strong><p>Administrador, operador e técnico acedem aos recursos de acordo com as suas permissões.</p></div>
+              </div>
+              <div className="ml-aside-footer">
+                <span>Ainda não cadastrou a sua oficina?</span>
+                <Link to="/cadastro-oficina">Começar com MotorMind <FiArrowRight /></Link>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+      <footer className="co-footer ml-footer"><div className="mm-container"><p>© {new Date().getFullYear()} MotorMind · Sistema Web Integrado para Oficinas Mecânicas</p></div></footer>
+    </div>
   );
 }
 
