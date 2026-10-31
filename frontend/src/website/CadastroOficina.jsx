@@ -1,437 +1,201 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { FiArrowLeft, FiCheck, FiLock } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import { FiArrowLeft, FiArrowRight, FiCheck, FiCheckCircle, FiClock, FiInfo, FiLock, FiMail, FiRefreshCw, FiShield } from "react-icons/fi";
 import api from "../services/api";
-import { camposComMascara, formatarCampoCadastro, posicaoCursorMascara, selecionarExclusaoMascara } from "./mascarasCadastroOficina";
 import "./landingPage.css";
 import "./cadastroOficina.css";
+import "./confirmarOficina.css";
 
-const estados =
-  "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(
-    " ",
-  );
-const grupos = [
-  {
-    titulo: "Dados da oficina",
-    descricao: "Como seu negócio será identificado no MotorMind.",
-    campos: [
-      {
-        name: "nomeFantasia",
-        label: "Nome da oficina",
-        required: true,
-        maxLength: 120,
-        autoComplete: "organization",
-        largo: true,
-      },
-      { name: "razaoSocial", label: "Razão social", maxLength: 150 },
-      {
-        name: "cnpj",
-        label: "CNPJ",
-        maxLength: 18,
-        placeholder: "00.000.000/0000-00",
-        autoCapitalize: "characters",
-        spellCheck: false,
-      },
-      {
-        name: "telefone",
-        label: "Telefone com DDD",
-        required: true,
-        type: "tel",
-        maxLength: 20,
-        autoComplete: "tel",
-        inputMode: "tel",
-        placeholder: "(11) 99999-9999",
-      },
-      {
-        name: "whatsapp",
-        label: "WhatsApp com DDD",
-        type: "tel",
-        maxLength: 20,
-        inputMode: "tel",
-        placeholder: "(11) 99999-9999",
-      },
-      {
-        name: "Email",
-        label: "E-mail da oficina",
-        type: "email",
-        required: true,
-        maxLength: 120,
-        autoComplete: "username",
-        ajuda: "Este e-mail será usado para entrar como administrador.",
-        largo: true,
-      },
-    ],
-  },
-  {
-    titulo: "Endereço",
-    descricao: "Opcional. Informe o endereço de atendimento da oficina.",
-    campos: [
-      {
-        name: "cep",
-        label: "CEP",
-        maxLength: 9,
-        autoComplete: "postal-code",
-        inputMode: "numeric",
-        placeholder: "00000-000",
-      },
-      { name: "uf", label: "Estado", autoComplete: "address-level1" },
-      {
-        name: "endereco",
-        label: "Rua ou avenida",
-        maxLength: 120,
-        autoComplete: "address-line1",
-        largo: true,
-      },
-      { name: "numero", label: "Número", maxLength: 10 },
-      {
-        name: "complemento",
-        label: "Complemento",
-        maxLength: 80,
-        autoComplete: "address-line2",
-      },
-      {
-        name: "bairro",
-        label: "Bairro",
-        maxLength: 60,
-        autoComplete: "address-level3",
-      },
-      {
-        name: "cidade",
-        label: "Cidade",
-        maxLength: 60,
-        autoComplete: "address-level2",
-      },
-    ],
-  },
-  {
-    titulo: "Responsável e acesso",
-    descricao:
-      "Este será o administrador da oficina. O acesso usará o e-mail da oficina informado acima.",
-    campos: [
-      {
-        name: "Nome",
-        label: "Nome do responsável",
-        required: true,
-        maxLength: 120,
-        autoComplete: "name",
-        largo: true,
-      },
-      {
-        name: "Senha",
-        label: "Senha",
-        type: "password",
-        required: true,
-        minLength: 8,
-        maxLength: 72,
-        autoComplete: "new-password",
-      },
-      {
-        name: "confirmarSenha",
-        label: "Confirmar senha",
-        type: "password",
-        required: true,
-        minLength: 8,
-        maxLength: 72,
-        autoComplete: "new-password",
-      },
-    ],
-  },
-];
-const vazio = Object.fromEntries(
-  grupos.flatMap((g) => g.campos.map((c) => [c.name, ""])),
-);
-
-export default function CadastroOficina() {
-  const navigate = useNavigate();
-  const [form, setForm] = useState(vazio);
-  const [erros, setErros] = useState({});
-  const [erroGeral, setErroGeral] = useState("");
+export default function ConfirmarOficina() {
+  const [token, setToken] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get("token") || "");
+  const [email, setEmail] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [mostrarSenha, setMostrarSenha] = useState(false);
-  const envioEmCurso = useRef(false);
-  const formulario = useRef(null);
-  const resultado = useRef(null);
+  const [erro, setErro] = useState("");
+  const [mensagem, setMensagem] = useState("");
+  const [ativada, setAtivada] = useState(null);
+  const [aguardarAte, setAguardarAte] = useState(0);
+  const [segundosRestantes, setSegundosRestantes] = useState(0);
+  const emCurso = useRef(false);
+  const titulo = useRef(null);
 
   useEffect(() => {
     const anterior = document.title;
-    document.title = "Cadastre sua oficina — MotorMind";
+    document.title = "Confirme sua oficina — MotorMind";
     window.scrollTo(0, 0);
-    return () => {
-      document.title = anterior;
-    };
+    return () => { document.title = anterior; };
   }, []);
 
-  function mostrarErros(campos, mensagem) {
-    setErros(campos);
-    setErroGeral(mensagem);
-    const primeiro = Object.keys(campos)[0];
-    // O fieldset pode ainda estar desabilitado até a próxima renderização.
-    requestAnimationFrame(() => {
-      if (primeiro) formulario.current?.elements.namedItem(primeiro)?.focus();
-      else resultado.current?.focus();
-    });
+  useEffect(() => {
+    if (ativada) { window.scrollTo(0, 0); titulo.current?.focus(); }
+  }, [ativada]);
+
+  useEffect(() => {
+    if (!aguardarAte) { setSegundosRestantes(0); return; }
+    const atualizar = () => {
+      const restante = Math.max(0, Math.ceil((aguardarAte - Date.now()) / 1000));
+      setSegundosRestantes(restante);
+      if (restante === 0) setAguardarAte(0);
+    };
+    atualizar();
+    const intervalo = window.setInterval(atualizar, 1000);
+    return () => window.clearInterval(intervalo);
+  }, [aguardarAte]);
+
+  function limparToken() {
+    setToken("");
+    setErro("");
+    setMensagem("");
+    window.history.replaceState(window.history.state, "", "/confirmar-oficina");
   }
 
-  function atualizarCampo(event, campo) {
-    const input = event.currentTarget;
-    const digitado = input.value;
-    const formatado = formatarCampoCadastro(campo, digitado);
-    const cursor = input.selectionStart;
-    const apagando = event.nativeEvent.inputType?.startsWith("delete");
-    setForm((prev) => ({ ...prev, [campo]: formatado }));
-    setErros((prev) => ({ ...prev, [campo]: undefined }));
-    if (camposComMascara.has(campo) && cursor != null) {
-      const novaPosicao = posicaoCursorMascara(digitado, formatado, cursor, apagando);
-      requestAnimationFrame(() => {
-        if (document.activeElement === input && input.value === formatado) {
-          input.setSelectionRange(novaPosicao, novaPosicao);
-        }
-      });
-    }
-  }
-
-  async function cadastrar(event) {
-    event.preventDefault();
-    if (envioEmCurso.current) return;
-    const campos = {};
-    if (form.Senha !== form.confirmarSenha)
-      campos.confirmarSenha = "As senhas precisam ser iguais.";
-    if (
-      form.Senha.trim().length < 8 ||
-      new TextEncoder().encode(form.Senha).length > 72
-    ) {
-      campos.Senha =
-        "Use ao menos 8 caracteres. A senha deve ter até 72 bytes; acentos e símbolos podem ocupar mais de um byte.";
-    }
-    if (Object.keys(campos).length)
-      return mostrarErros(campos, "Revise os campos indicados.");
-    envioEmCurso.current = true;
+  async function confirmar() {
+    if (emCurso.current || !token) return;
+    emCurso.current = true;
     setEnviando(true);
-    setErroGeral("");
-    setErros({});
+    setErro("");
     try {
-      const { data } = await api.post("/auth/cadastro-oficina", form, {
-        timeout: 20000,
-      });
-      setForm({ ...vazio });
-      setMostrarSenha(false);
-      toast.success(data.mensagem);
-      navigate("/login", { replace: true });
+      const { data } = await api.post("/auth/confirmar-oficina", { token }, { timeout: 20000 });
+      setAtivada(data);
+      setToken("");
+      window.history.replaceState(window.history.state, "", "/confirmar-oficina");
     } catch (error) {
-      mostrarErros(
-        error.response?.data?.campos || {},
-        error.response?.data?.erro ||
-          "Não foi possível confirmar o cadastro. Verifique sua conexão e tente novamente. Se o cadastro já tiver sido recebido, ele não será duplicado.",
-      );
+      setErro(error.response?.data?.erro || "Não foi possível confirmar o acesso. Tente novamente ou entre com seu e-mail e senha se já confirmou.");
     } finally {
-      envioEmCurso.current = false;
+      emCurso.current = false;
       setEnviando(false);
     }
   }
 
+  async function reenviar(event) {
+    event.preventDefault();
+    if (emCurso.current || aguardarAte > Date.now()) return;
+    emCurso.current = true;
+    setEnviando(true);
+    setErro("");
+    setMensagem("");
+    try {
+      const { data } = await api.post("/auth/reenviar-confirmacao", { Email: email.trim() }, { timeout: 20000 });
+      setMensagem(data.mensagem || "Se o e-mail estiver cadastrado, você receberá um novo link de confirmação.");
+      setAguardarAte(Date.now() + 60000);
+    } catch (error) {
+      setErro(error.response?.data?.erro || "Não foi possível solicitar o e-mail. Tente novamente em alguns minutos.");
+    } finally {
+      emCurso.current = false;
+      setEnviando(false);
+    }
+  }
+
+  const modo = ativada ? "sucesso" : token ? "token" : "reenvio";
+
   return (
-    <div className="landing-page cadastro-oficina-page">
-      <div className="landing-flag-strip" aria-hidden="true" />
-      <header className="landing-header">
-        <div className="landing-container landing-header-inner">
-          <Link className="landing-brand" to="/">
-            <span className="landing-brand-mark" aria-hidden="true">
-              M
-            </span>
-            <span>MotorMind</span>
+    <div className="landing-page co-page cf-page">
+      <div className="mm-ambient-light light-top" aria-hidden="true" />
+
+      <header className="mm-header scrolled">
+        <div className="mm-container header-inner">
+          <Link to="/" className="mm-brand" aria-label="MotorMind — página inicial">
+            <img src="/logo.png" alt="MotorMind" className="mm-logo-img" />
           </Link>
-          <Link className="landing-btn landing-btn-ghost" to="/login">
-            Já tenho acesso
-          </Link>
+          <div className="header-actions">
+            <Link className="signin" to="/">Voltar ao site</Link>
+            <Link className="mm-button small" to="/login">Já tenho acesso <FiArrowRight size={16} /></Link>
+          </div>
         </div>
       </header>
-      <main className="landing-container cadastro-oficina-main">
-        <Link to="/" className="cadastro-voltar">
-          <FiArrowLeft aria-hidden="true" /> Voltar ao site
-        </Link>
-        <div className="cadastro-titulo">
-          <p className="landing-eyebrow">Comece com o MotorMind</p>
-          <h1>Cadastre sua oficina.</h1>
-          <p>
-            Informe os dados do negócio e crie seu acesso de administrador.
-          </p>
-        </div>
-        <div className="cadastro-layout">
-          <form
-            className="cadastro-form"
-            onSubmit={cadastrar}
-            ref={formulario}
-            aria-busy={enviando}
-          >
-            <p className="cadastro-obrigatorios">
-              Os campos com * são obrigatórios.
-            </p>
-            {erroGeral && (
-              <div
-                className="cadastro-erro-geral"
-                role="alert"
-                tabIndex={-1}
-                ref={resultado}
-              >
-                {erroGeral}
-              </div>
-            )}
-            {grupos.map((grupo, index) => (
-              <fieldset key={grupo.titulo} disabled={enviando}>
-                <legend>
-                  <span>{String(index + 1).padStart(2, "0")}</span>{" "}
-                  {grupo.titulo}
-                </legend>
-                <p className="cadastro-grupo-descricao">
-                  {grupo.descricao}
-                </p>
-                <div className="cadastro-campos">
-                  {grupo.campos.map(({ label, largo, ajuda, ...campo }) => (
-                    <div
-                      className={`cadastro-campo${largo ? " largo" : ""}`}
-                      key={campo.name}
-                    >
-                      <label htmlFor={`cadastro-${campo.name}`}>
-                        {label}
-                        {campo.required ? " *" : ""}
-                      </label>
-                      {campo.name === "uf" ? (
-                        <select
-                          id="cadastro-uf"
-                          name="uf"
-                          autoComplete={campo.autoComplete}
-                          value={form.uf}
-                          onChange={(e) => {
-                            setForm((prev) => ({
-                              ...prev,
-                              uf: e.target.value,
-                            }));
-                            setErros((prev) => ({
-                              ...prev,
-                              uf: undefined,
-                            }));
-                          }}
-                          aria-invalid={Boolean(erros.uf)}
-                          aria-describedby={
-                            erros.uf ? "erro-uf" : undefined
-                          }
-                        >
-                          <option value="">Selecione</option>
-                          {estados.map((uf) => (
-                            <option key={uf} value={uf}>
-                              {uf}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          {...campo}
-                          id={`cadastro-${campo.name}`}
-                          value={form[campo.name]}
-                          type={
-                            campo.type === "password" && mostrarSenha
-                              ? "text"
-                              : campo.type || "text"
-                          }
-                          onChange={(e) => atualizarCampo(e, campo.name)}
-                          onKeyDown={camposComMascara.has(campo.name) ? selecionarExclusaoMascara : undefined}
-                          aria-invalid={Boolean(erros[campo.name])}
-                          aria-describedby={
-                            erros[campo.name]
-                              ? `erro-${campo.name}`
-                              : campo.type === "password"
-                                ? "cadastro-senha-ajuda"
-                                : ajuda ? `ajuda-${campo.name}` : undefined
-                          }
-                        />
-                      )}
-                      {ajuda && <p className="cadastro-senha-ajuda" id={`ajuda-${campo.name}`}>{ajuda}</p>}
-                      {erros[campo.name] && (
-                        <span
-                          className="cadastro-campo-erro"
-                          id={`erro-${campo.name}`}
-                        >
-                          {erros[campo.name]}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {index === 2 && (
-                  <>
-                    <p
-                      className="cadastro-senha-ajuda"
-                      id="cadastro-senha-ajuda"
-                    >
-                      Use pelo menos 8 caracteres na senha.
-                    </p>
-                    <label className="cadastro-mostrar-senha">
-                      <input
-                        type="checkbox"
-                        checked={mostrarSenha}
-                        onChange={(e) => setMostrarSenha(e.target.checked)}
-                      />{" "}
-                      Mostrar senhas
-                    </label>
-                  </>
-                )}
-              </fieldset>
-            ))}
-            <div className="cadastro-envio">
+
+      <main className="cf-main">
+        <div className="cf-layout">
+          <section className="cf-left" aria-labelledby="cf-title" aria-busy={enviando}>
+            <Link to="/" className="cf-back"><FiArrowLeft aria-hidden="true" /> Voltar ao site</Link>
+
+            <div className="cf-heading">
+              <span className="cf-eyebrow">{modo === "sucesso" ? "ACESSO LIBERADO" : "ATIVAÇÃO DA SUA OFICINA"}</span>
+              <h1 id="cf-title" ref={titulo} tabIndex={-1}>
+                {modo === "sucesso" ? <>Sua oficina está <span>ativa!</span></> : modo === "token" ? <>Só falta confirmar <span>seu e-mail.</span></> : <>Receba seu link de <span>confirmação.</span></>}
+              </h1>
               <p>
-                Este cadastro não realiza cobrança. Ao concluir, você será
-                direcionado ao login para acessar sua oficina.
+                {modo === "sucesso" ? <>O acesso de administrador de <strong>{ativada?.oficina?.nomeFantasia || "sua oficina"}</strong> foi liberado. Agora você pode entrar no MotorMind.</> : modo === "token" ? "Seu cadastro está quase pronto. Confirme a ativação para acessar o MotorMind com o e-mail e a senha definidos anteriormente." : "Informe o e-mail utilizado no cadastro da oficina. Enviaremos um novo link de ativação válido por 24 horas."}
               </p>
-              <button
-                className="landing-btn landing-btn-primary landing-btn-block"
-                disabled={enviando}
-                type="submit"
-              >
-                {enviando
-                  ? "Cadastrando oficina..."
-                  : "Cadastrar oficina"}
-              </button>
             </div>
-          </form>
-          <aside className="cadastro-resumo" aria-label="Sobre a aquisição">
-            <span className="landing-license-badge">
-              Uma licença por oficina
-            </span>
-            <h2>
-              Mais organização.
-              <br />
-              Do atendimento ao pátio.
-            </h2>
-            <ul>
-              {[
-                "Clientes, veículos e ordens de serviço",
-                "Estoque físico e agenda",
-                "Equipe, checklists e solicitações de peças",
-                "Um ambiente exclusivo para sua oficina",
-              ].map((item) => (
-                <li key={item}>
-                  <FiCheck aria-hidden="true" /> {item}
-                </li>
-              ))}
-            </ul>
-            <div className="cadastro-resumo-nota">
-              <FiLock aria-hidden="true" />
-              <div>
-                <strong>Cadastre sua oficina e comece</strong>
-                <p>
-                  Após o cadastro, entre com seu e-mail e senha para acessar
-                  o sistema como administrador.
-                </p>
+
+            <div className="cf-form-card">
+              <div className="cf-form-card-top">
+                <span className={`cf-form-icon ${modo === "sucesso" ? "is-success" : ""}`} aria-hidden="true">
+                  {modo === "sucesso" ? <FiCheckCircle /> : modo === "token" ? <FiShield /> : <FiMail />}
+                </span>
+                <div>
+                  <span className="cf-card-caption">{modo === "sucesso" ? "03 / 03 · CONCLUÍDO" : modo === "token" ? "02 / 03 · VERIFICAÇÃO" : "02 / 03 · REENVIO"}</span>
+                  <h2>{modo === "sucesso" ? "Confirmação concluída" : modo === "token" ? "Confirmação segura" : "Reenvio de confirmação"}</h2>
+                </div>
+              </div>
+              <div className="cf-card-rule" />
+
+              {erro && <div className="cf-alert cf-error" role="alert"><FiInfo aria-hidden="true" /><span>{erro}</span></div>}
+              {mensagem && <div className="cf-alert cf-success" role="status"><FiCheckCircle aria-hidden="true" /><span>{mensagem}</span></div>}
+
+              {modo === "sucesso" ? (
+                <div className="cf-card-body">
+                  <p className="cf-card-description">O acesso de administrador está pronto para uso.</p>
+                  <div className="cf-account">
+                    <FiMail aria-hidden="true" />
+                    <div><span>Login do administrador</span><strong>{ativada?.administrador?.Email || "E-mail informado no cadastro"}</strong></div>
+                  </div>
+                  <div className="cf-info"><FiLock aria-hidden="true" /><p>Utilize a mesma senha criada no cadastro da oficina.</p></div>
+                  <Link to="/login" className="cf-primary">Acessar minha oficina <FiArrowRight aria-hidden="true" /></Link>
+                </div>
+              ) : modo === "token" ? (
+                <div className="cf-card-body">
+                  <p className="cf-card-description">O link foi identificado. Clique abaixo para concluir a ativação da oficina.</p>
+                  <div className="cf-info"><FiShield aria-hidden="true" /><p>Esta etapa valida o e-mail e libera o acesso do administrador.</p></div>
+                  <button type="button" className="cf-primary" onClick={confirmar} disabled={enviando}>
+                    {enviando ? <><span className="cf-spinner" /> Confirmando acesso...</> : <>Confirmar e ativar oficina <FiArrowRight aria-hidden="true" /></>}
+                  </button>
+                  <button className="cf-inline-link" type="button" disabled={enviando} onClick={limparToken}>Link expirado? Solicitar outro e-mail</button>
+                </div>
+              ) : (
+                <form onSubmit={reenviar} className="cf-card-body cf-form">
+                  <p className="cf-card-description">Preencha o e-mail de acesso para receber um novo link.</p>
+                  <div className="cf-field">
+                    <label htmlFor="confirmacao-email">E-mail de acesso</label>
+                    <div className="cf-input-wrap">
+                      <FiMail aria-hidden="true" />
+                      <input id="confirmacao-email" name="Email" type="email" autoComplete="email" maxLength={120} placeholder="exemplo@suaoficina.com.br" required value={email} onChange={e => setEmail(e.target.value)} disabled={enviando} />
+                    </div>
+                    <p className="cf-help">Use o mesmo e-mail informado no cadastro da oficina.</p>
+                  </div>
+                  <button className="cf-primary" disabled={enviando || segundosRestantes > 0} type="submit">
+                    {enviando ? <><span className="cf-spinner" /> Solicitando envio...</> : segundosRestantes > 0 ? <>Reenviar em {segundosRestantes}s <FiClock /></> : <>Enviar e-mail de confirmação <FiArrowRight aria-hidden="true" /></>}
+                  </button>
+                  {segundosRestantes > 0 && <p className="cf-cooldown"><FiClock aria-hidden="true" /> Aguarde antes de solicitar outro link.</p>}
+                </form>
+              )}
+            </div>
+
+            {modo !== "sucesso" && <p className="cf-bottom-link">Já confirmou seu e-mail? <Link to="/login">Ir para o login <FiArrowRight aria-hidden="true" /></Link></p>}
+          </section>
+
+          <aside className="cf-aside" aria-label="Etapas de ativação">
+            <div className="cf-aside-glow" aria-hidden="true" />
+            <div className="cf-aside-content">
+              <span className="cf-aside-badge">BEM-VINDO AO MOTORMIND</span>
+              <h2>Uma última etapa.<br /><span>Sua oficina conectada.</span></h2>
+              <p className="cf-aside-description">A confirmação protege o cadastro e permite que o administrador acesse o ambiente da oficina.</p>
+              <div className="cf-aside-divider" />
+              <div className="cf-steps">
+                <div className="cf-step complete"><span className="cf-step-number"><FiCheck /></span><div><strong>01. Cadastro realizado</strong><p>Dados da oficina e do responsável registrados.</p></div></div>
+                <div className={`cf-step ${modo === "sucesso" ? "complete" : "current"}`}><span className="cf-step-number">{modo === "sucesso" ? <FiCheck /> : "02"}</span><div><strong>02. Confirmar e-mail</strong><p>Valide o endereço informado no cadastro.</p></div></div>
+                <div className={`cf-step ${modo === "sucesso" ? "complete" : ""}`}><span className="cf-step-number">{modo === "sucesso" ? <FiCheck /> : "03"}</span><div><strong>03. Acessar o sistema</strong><p>Entre com seu e-mail e senha de administrador.</p></div></div>
+              </div>
+              <div className="cf-aside-note"><FiLock aria-hidden="true" /><div><strong>Seu acesso, com segurança</strong><p>O link de confirmação é válido por 24 horas. A senha permanece a mesma criada no cadastro.</p></div></div>
+              <div className="cf-aside-footer">
+                <span>{modo === "sucesso" ? "Tudo pronto para começar" : "Precisa de outro link?"}</span>
+                {modo === "reenvio" ? <span className="cf-current"><FiRefreshCw /> Formulário disponível ao lado</span> : modo === "token" ? <button type="button" onClick={limparToken} disabled={enviando}>Solicitar novo e-mail <FiArrowRight /></button> : <Link to="/login">Acessar sistema <FiArrowRight /></Link>}
               </div>
             </div>
-            <Link to="/login">Sua oficina já tem acesso? Entrar</Link>
           </aside>
         </div>
       </main>
-      <footer className="cadastro-rodape">
-        MotorMind · Gestão para oficinas mecânicas
-      </footer>
+      <footer className="cf-footer"><div className="mm-container"><p>© {new Date().getFullYear()} MotorMind · Sistema Web Integrado para Oficinas Mecânicas</p></div></footer>
     </div>
   );
 }
