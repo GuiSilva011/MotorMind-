@@ -24,7 +24,7 @@ export default function NovaSolicitacao({ ordem, fechar, criada }) {
     } catch (error) { toast.error(erroApi(error)); }
     finally { trava.current = false; setEnviando(false); }
   }
-  return <dialog ref={dialog} className="ticket-dialog" aria-labelledby="nova-solicitacao" onCancel={event => { event.preventDefault(); if (!enviando) fechar(); }}>
+  return <dialog ref={dialog} className="ticket-dialog ticket-dialog-solicitacao" aria-labelledby="nova-solicitacao" onCancel={event => { event.preventDefault(); if (!enviando) fechar(); }}>
     <form onSubmit={enviar}>
       <h2 id="nova-solicitacao">Solicitar peças · OS {ordem.codigo}</h2>
       <p>{ordem.veiculo.placa} · {ordem.veiculo.modelo}</p>

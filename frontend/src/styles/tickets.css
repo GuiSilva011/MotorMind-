@@ -602,6 +602,13 @@
   overscroll-behavior: contain;
 }
 
+.ticket-dialog-solicitacao {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+}
+
 .ticket-dialog::backdrop {
   background: var(--ui-overlay, #161b2380);
 }
