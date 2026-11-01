@@ -1,17 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FiArrowRight, FiCheck, FiEye, FiEyeOff, FiLock, FiMail, FiShield, FiUsers, FiTool, FiArrowLeft } from 'react-icons/fi';
+import { FiArrowRight, FiCheck, FiEye, FiEyeOff, FiLock, FiMail, FiShield, FiArrowLeft } from 'react-icons/fi';
 import api from '../services/api';
 import '../website/landingPage.css';
 import '../website/cadastroOficina.css';
 import '../styles/login.css';
-
-const usuariosTeste = [
-  { perfil: 'Admin', email: 'admin@motormind.com', senha: 'admin123', icon: FiShield },
-  { perfil: 'Operador', email: 'operador@motormind.com', senha: 'operador123', icon: FiUsers },
-  { perfil: 'Técnico', email: 'tecnico@motormind.com', senha: 'tecnico123', icon: FiTool },
-];
 
 function Login() {
   const navigate = useNavigate();
@@ -28,10 +22,6 @@ function Login() {
 
   function atualizarCampo(campo, valor) {
     setForm(prev => ({ ...prev, [campo]: valor }));
-  }
-
-  function preencherUsuario(email, senha) {
-    setForm({ Email: email, Senha: senha });
   }
 
   function obterRotaInicialPorRole(role) {
@@ -129,25 +119,6 @@ function Login() {
               </form>
             </div>
 
-            <div className="ml-test-users">
-              <div className="ml-test-heading">
-                <div><span className="ml-test-dot" /> <strong>Usuários de teste</strong></div>
-                <small>Preenchimento rápido</small>
-              </div>
-              <div className="ml-test-grid">
-                {usuariosTeste.map(usuario => {
-                  const UserIcon = usuario.icon;
-                  return (
-                    <button key={usuario.email} type="button" disabled={carregando}
-                      onClick={() => preencherUsuario(usuario.email, usuario.senha)}>
-                      <UserIcon aria-hidden="true" />
-                      <span>{usuario.perfil}</span>
-                      <FiArrowRight className="ml-test-arrow" aria-hidden="true" />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </section>
 
           <aside className="ml-aside" aria-label="Conheça o MotorMind">

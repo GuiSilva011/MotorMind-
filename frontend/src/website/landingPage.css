@@ -377,6 +377,16 @@
   animation: panelIn .48s ease both;
 }
 
+.demo-screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  object-position: top center;
+  background: #111821;
+}
+
 .demo-content {
   height: 333px;
   padding: 21px;
